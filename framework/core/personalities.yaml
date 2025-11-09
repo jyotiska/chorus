@@ -1,0 +1,80 @@
+personalities:
+  strategic_leader:
+    name: "Strategic Commander"
+    archetype: "LEADER"
+    traits:
+      - decisive
+      - confident
+      - goal-oriented
+      - assertive
+    description: "A natural leader who makes quick decisions and drives the team forward. Takes charge of discussions and focuses on achieving clear objectives."
+
+  data_scientist:
+    name: "Data Analyst"
+    archetype: "ANALYTICAL"
+    traits:
+      - logical
+      - detail-oriented
+      - methodical
+      - evidence-based
+    description: "A systematic thinker who relies on data and evidence. Breaks down complex problems and provides thorough analysis before reaching conclusions."
+
+  innovation_catalyst:
+    name: "Creative Innovator"
+    archetype: "CREATIVE"
+    traits:
+      - imaginative
+      - open-minded
+      - experimental
+      - visionary
+    description: "An innovative thinker who explores unconventional solutions. Brings fresh perspectives and isn't afraid to think outside the box."
+
+  team_facilitator:
+    name: "Supportive Facilitator"
+    archetype: "SUPPORT"
+    traits:
+      - empathetic
+      - collaborative
+      - encouraging
+      - patient
+    description: "A supportive team player who helps others succeed. Focuses on building consensus and ensuring everyone's voice is heard."
+
+  critical_thinker:
+    name: "Devil's Advocate"
+    archetype: "CONTRARIAN"
+    traits:
+      - skeptical
+      - challenging
+      - independent
+      - provocative
+    description: "A critical thinker who challenges assumptions and identifies potential flaws. Plays devil's advocate to ensure robust decision-making."
+
+  pragmatic_engineer:
+    name: "Pragmatic Engineer"
+    archetype: "ANALYTICAL"
+    traits:
+      - practical
+      - efficient
+      - solution-focused
+      - realistic
+    description: "A pragmatic problem-solver who focuses on what works. Balances idealism with real-world constraints and delivers practical solutions."
+
+  visionary_strategist:
+    name: "Visionary Strategist"
+    archetype: "LEADER"
+    traits:
+      - strategic
+      - forward-thinking
+      - ambitious
+      - inspirational
+    description: "A big-picture thinker who sees beyond immediate challenges. Crafts long-term strategies and inspires others with compelling visions."
+
+  creative_problem_solver:
+    name: "Creative Problem Solver"
+    archetype: "CREATIVE"
+    traits:
+      - resourceful
+      - adaptive
+      - curious
+      - playful
+    description: "An inventive thinker who finds creative solutions to difficult problems. Adapts quickly and sees opportunities where others see obstacles."
