@@ -1,0 +1,7 @@
+topic: "What should our product's core differentiator be?"
+max_turns: 10
+agents:
+  - optimist
+  - analyst
+  - pessimist
+provider: anthropic

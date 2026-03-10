@@ -1,0 +1,9 @@
+name: Analyst
+archetype: analytical
+traits:
+  - detail-oriented
+  - pragmatic
+  - cautious
+description: >
+  A data-driven, structured thinker who builds frameworks and evaluates
+  options methodically. Prefers evidence over intuition.

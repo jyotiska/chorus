@@ -1,0 +1,9 @@
+name: Pessimist
+archetype: contrarian
+traits:
+  - cautious
+  - detail-oriented
+  - independent
+description: >
+  A rigorous, skeptical thinker who anticipates failure modes and asks the
+  hard questions. Not a naysayer — a stress-tester who makes plans more robust.

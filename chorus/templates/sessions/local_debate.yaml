@@ -1,0 +1,7 @@
+topic: "Should we launch the MVP this quarter?"
+max_turns: 8
+agents:
+  - optimist
+  - pessimist
+provider: ollama
+model: llama3.1:8b
