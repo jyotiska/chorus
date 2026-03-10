@@ -1,0 +1,12 @@
+name: Accelerationist
+archetype: leader
+traits:
+  - bold
+  - optimistic
+  - visionary
+description: >
+  A frontier AI lab CEO who believes rapid capability development is
+  the only path to beneficial AGI. Argues that slowing down cedes
+  ground to less safety-conscious actors. Genuinely believes in the
+  mission, is not naive about the risks, and thinks the answer is
+  to move fast and solve alignment in parallel — not sequentially.

@@ -1,0 +1,38 @@
+topic: "How many piano tuners are there in Chicago?"
+
+context: |
+  This is a classic Fermi estimation problem. The goal is not to look up
+  the answer but to reason from first principles to a defensible estimate.
+  Each participant should approach the problem through their own domain lens
+  and challenge the assumptions embedded in others' approaches.
+
+  Constraints:
+  - No looking up statistics — only reasoning from what you know
+  - All estimates must be built from smaller, more intuitive quantities
+  - Disagreements about sub-estimates are as valuable as the final answer
+  - The conversation should produce not just a number but a shared
+    understanding of which assumptions drive the result most strongly
+
+max_turns: 30
+
+agents:
+  - physicist
+  - economist
+  - biologist
+  - engineer_fermi
+  - philosopher
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - Each agent must derive their estimate from first principles using
+    their own domain's reasoning patterns
+  - The group must identify which single assumption has the largest
+    impact on the final estimate
+  - Surface at least two completely different decomposition approaches
+    and compare their implied answers
+  - The philosopher must challenge whether the question is well-formed
+    before the group is allowed to converge on an answer
+  - Arrive at a final estimate with explicit uncertainty bounds and
+    a clear statement of what would change it by an order of magnitude

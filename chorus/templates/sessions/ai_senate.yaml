@@ -1,0 +1,63 @@
+topic: "The AI Accountability and Governance Act is on the floor. Should it pass, be amended, or be killed?"
+
+context: |
+  The Senate is in session. The AI Accountability and Governance Act (AAGA)
+  is the most consequential AI legislation ever proposed. The vote is today.
+
+  Key provisions of the bill as written:
+  1. All AI systems making decisions affecting individual rights must be
+     auditable, with audit rights enforceable by any affected person
+  2. Frontier AI models above a compute threshold require government
+     registration and pre-deployment safety certification
+  3. AI-generated content must be labelled at point of creation with
+     no exceptions for satire, art, or political speech
+  4. Liability for AI harms defaults to the deploying company unless
+     they can demonstrate the harm resulted from user misuse
+  5. A new federal agency (the Office of AI Accountability) is created
+     with enforcement power and an annual budget of $2.4B
+  6. Open-source AI models with weights publicly available are exempt
+     from provisions 2 and 5
+
+  Points of genuine contention:
+  - Provision 3 is opposed by civil liberties groups as a speech restriction
+  - Provision 6 is opposed by closed-source labs as anti-competitive
+  - The compute threshold in Provision 2 has been set at a level that
+     critics say is already outdated and will exempt future frontier models
+  - The liability standard in Provision 4 may make deploying AI
+     economically unviable for small companies and non-profits
+  - The new agency in Provision 5 has no defined independence protections
+    from the executive branch
+
+  Each senator has a constituency and a worldview. Some want the bill
+  to pass. Some want it amended. Some want it killed. All of them are
+  being watched by the public, their donors, and history.
+
+max_turns: 100
+
+agents:
+  - visionary
+  - analyst
+  - pragmatist
+  - critic
+  - optimist
+  - pessimist
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - Each senator must declare their initial position on the bill in the
+    first 10 turns and give their primary reason
+  - At least two senators must change their stated position during debate
+    based on arguments made on the floor
+  - The compute threshold problem in Provision 2 must be directly debated
+    with a specific proposed amendment
+  - The free speech implications of Provision 3 must be given a full
+    hearing with both civil liberties and misinformation arguments
+  - A coalition must form — and at least one unexpected alliance must emerge
+  - The open-source exemption must be debated as a substantive policy
+    question, not just a commercial interest
+  - The bill must either pass, fail, or be sent back to committee —
+    with a clear vote and recorded reasons from each senator
+  - The most important vote is not the final one — it is the procedural
+    vote on whether to allow amendments at all

@@ -1,0 +1,46 @@
+topic: "Apollo 13 has suffered an oxygen tank explosion. Do we abort or do we bring them home?"
+
+context: |
+  The date is April 13, 1970. Apollo 13 is 200,000 miles from Earth,
+  55 hours and 54 minutes into the mission. At 21:08 CST, oxygen tank
+  number 2 exploded, rupturing oxygen tank number 1. The Service Module
+  is losing oxygen and power.
+
+  Current status:
+  - Command Module power is failing — estimated 15 minutes of power remaining
+  - Lunar Module has not been damaged and retains full battery and oxygen
+  - The lunar landing is cancelled
+  - The crew (Lovell, Swigert, Haise) are alive and uninjured
+  - CO2 levels will become dangerous in approximately 36 hours in the LM
+  - The LM's lithium hydroxide canisters are square; the CM's are round
+  - A free-return trajectory around the Moon is possible but requires
+    a precise burn with the descent engine
+  - Re-entry requires the Command Module's heat shield — which may have
+    been damaged in the explosion
+  - Mission elapsed time: 55:54. Earth return via free-return: ~87 hours
+
+  The team has minutes to decide whether to power down the Command Module
+  and use the Lunar Module as a lifeboat — a procedure that has never
+  been attempted and was never designed for.
+
+max_turns: 30
+
+agents:
+  - flight_director
+  - guidance_officer
+  - propulsion_engineer
+  - flight_surgeon
+  - systems_engineer
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - Every decision must be grounded in the physical constraints described
+  - The systems engineer must raise at least one issue no one else thought of
+  - The flight surgeon must advocate for crew welfare even when it conflicts
+    with technical solutions
+  - The team must solve the CO2 scrubber incompatibility problem
+  - The conversation must produce a step-by-step powerdown and lifeboat
+    procedure that could actually work
+  - The flight director must make the final call — and it must be decisive

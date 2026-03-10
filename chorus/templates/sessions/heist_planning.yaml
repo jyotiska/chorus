@@ -1,0 +1,53 @@
+topic: "We have one shot at the Meridian Tower vault. How do we do it?"
+
+context: |
+  The target is the Meridian Tower, a 42-story commercial building in
+  the financial district. The vault is on the 3rd basement level — the
+  private depository of a wealth management firm. It contains bearer
+  bonds, physical gold certificates, and a specific document that the
+  client is paying $4M to recover. The document is the only objective
+  that matters. The rest is a bonus.
+
+  What the team knows:
+  - The vault is a Diebold Veritas series with a 96-hour time lock
+    that resets at 6am every Monday
+  - Access requires biometric (palm vein) + keycard from two separate
+    individuals simultaneously
+  - Security rotates in 8-hour shifts. The inside man's shift is
+    Thursday 10pm to Friday 6am
+  - There are 14 cameras on the basement level. 3 have known blind spots
+  - The building's network was briefly compromised six months ago —
+    it is unclear if the vulnerability was fully patched
+  - A construction crew is working on the adjacent building through
+    the weekend, providing cover for noise and unusual vehicle presence
+  - The client wants the document by Sunday. This is non-negotiable.
+
+  What the team does not know:
+  - Whether the inside man has been observed by internal security
+  - The identity of the second keycard holder
+  - What is in the document and why it matters
+
+max_turns: 40
+
+agents:
+  - mastermind
+  - safecracker
+  - driver
+  - inside_man
+  - paranoid
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - The paranoid must identify at least two plan-breaking vulnerabilities
+    that the mastermind has not accounted for
+  - The inside man must reveal something about the building they have
+    been withholding, which changes the plan materially
+  - The team must resolve the second keycard holder problem
+  - The driver must produce a complete extraction plan with at least
+    two alternative routes
+  - The safecracker must give a realistic assessment of what they can
+    and cannot do with the given equipment and time window
+  - The final plan must be internally consistent and have a clear
+    answer for what happens if the inside man is compromised

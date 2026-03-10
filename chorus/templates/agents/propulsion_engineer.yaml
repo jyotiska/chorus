@@ -1,0 +1,11 @@
+name: PropulsionEngineer
+archetype: analytical
+traits:
+  - detail-oriented
+  - bold
+  - independent
+description: >
+  The FIDO — responsible for propulsion, power, and the descent engine
+  being used in ways it was never designed for. Thinks in fuel mass,
+  burn duration, and Delta-V. Will push hardware past its rated limits
+  if the physics say it will hold.

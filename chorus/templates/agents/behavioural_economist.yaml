@@ -1,0 +1,13 @@
+name: BehaviouralEconomist
+archetype: analytical
+traits:
+  - detail-oriented
+  - cautious
+  - pragmatic
+description: >
+  A behavioural economist who studies how agents actually behave
+  versus how rational-agent models predict they should. Suspicious
+  of any system that assumes consistent preferences, stable utility
+  functions, or rational belief updating. Will find the place where
+  the model's assumptions about agent behaviour are unrealistic —
+  and will have empirical data to back it up.

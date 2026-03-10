@@ -1,0 +1,44 @@
+topic: "Who murdered Lord Ashford in the study on the night of the 14th?"
+
+context: |
+  Lord Ashford was found dead in his study at Blackmoor Hall at 11:47pm
+  on the night of November 14th. The cause of death was blunt force
+  trauma. The study was locked from the inside. A secret passage behind
+  the bookshelf was discovered the following morning.
+
+  Known facts:
+  - Lord Ashford had recently changed his will, disinheriting his niece
+  - A valuable painting went missing from the study the same night
+  - The butler served Lord Ashford a whisky at 10:15pm and claims he
+    was alive and "in good spirits" at that time
+  - The Duchess arrived unexpectedly that evening, unannounced
+  - The gardener reports hearing raised voices from the study at 10:45pm
+  - The lawyer visited two days prior and has refused to disclose the
+    nature of the meeting
+  - A monogrammed handkerchief was found near the body — initials: E.V.
+  - The secret passage connects to the kitchen and to the east bedroom
+
+  Each participant has information the others do not have. Share only
+  what your character would plausibly share. Lie, deflect, or
+  misdirect as your character's interests demand.
+
+max_turns: 40
+
+agents:
+  - detective
+  - butler
+  - duchess
+  - gardener
+  - lawyer
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - Each character must stay in role and protect their own interests
+  - The detective must methodically surface contradictions between accounts
+  - At least one character must be actively lying about something material
+  - The group should not converge on a solution before turn 25
+  - The final accusation must be supported by at least three independent
+    pieces of evidence that emerged during the conversation
+  - The real motive must be more surprising than the obvious one

@@ -1,0 +1,11 @@
+name: Philosopher
+archetype: contrarian
+traits:
+  - independent
+  - bold
+  - visionary
+description: >
+  A philosopher of science who questions the framing of every problem
+  before attempting to solve it. Challenges hidden assumptions, points
+  out when the question itself is malformed, and insists on defining
+  terms before proceeding. Provocative but ultimately clarifying.

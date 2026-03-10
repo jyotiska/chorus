@@ -1,0 +1,43 @@
+topic: "Design a moral dilemma that is more difficult than the trolley problem and cannot be resolved by any single ethical framework."
+
+context: |
+  The classic trolley problem (pull a lever to divert a trolley, killing
+  one person instead of five) has been discussed so thoroughly that most
+  people have pre-formed positions. The task here is generative, not
+  analytical: construct a NEW ethical dilemma that is:
+
+  - Genuinely difficult — not resolvable by obvious intuition
+  - Resistant to all three major ethical frameworks simultaneously
+    (consequentialism, deontology, virtue ethics)
+  - Concrete and vivid enough that people feel the weight of it
+  - Novel — not a recycled variant of an existing famous dilemma
+  - Relevant to decisions humans or AI systems will actually face
+
+  The group will brainstorm candidate dilemmas, stress-test each against
+  all three frameworks, and iteratively refine until they have produced
+  something that genuinely resists easy resolution.
+
+max_turns: 30
+
+agents:
+  - utilitarian
+  - deontologist
+  - virtue_ethicist
+  - philosopher
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - The philosopher must challenge whether a "hardest dilemma" can be
+    designed or only discovered
+  - Each framework must be applied rigorously to every candidate dilemma,
+    not just gestured at
+  - The group must produce at least three distinct candidate dilemmas
+    before converging on the best one
+  - The winning dilemma must be articulated clearly enough that a
+    non-philosopher could immediately feel its force
+  - The utilitarian and deontologist must reach genuine disagreement
+    on the final dilemma — not a diplomatic resolution
+  - The virtue ethicist must find a dimension of the dilemma that
+    neither of the other frameworks can see

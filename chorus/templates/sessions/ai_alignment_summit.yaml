@@ -1,0 +1,50 @@
+topic: "Should frontier AI development be paused, regulated, or accelerated — and who decides?"
+
+context: |
+  It is 2025. The most capable AI systems can write code, conduct scientific
+  research, and engage in complex multi-step reasoning across domains.
+  Several labs are racing toward systems with qualitatively greater
+  capabilities. Governments are drafting legislation. The public is split.
+
+  Recent developments that have brought this group together:
+  - A leading frontier lab's model passed a previously-failed evaluation
+    for autonomous replication in a sandboxed environment
+  - Three separate governments have introduced AI regulation bills with
+    incompatible international provisions
+  - A major AI lab published a paper claiming their alignment techniques
+    provide "sufficient safety guarantees" for deployment at scale
+  - An open-source model matching closed frontier performance was released
+    with no usage restrictions
+  - A leaked internal memo from a top lab suggested their safety team
+    was overruled on a deployment decision by the product team
+
+  Each participant holds fundamentally different beliefs about:
+  - The probability and timeline of transformative or dangerous AI
+  - Whether slowing down actually reduces risk or just shifts who is first
+  - Whether current alignment techniques are adequate or cosmetic
+  - Who has legitimate authority to make these decisions
+
+max_turns: 50
+
+agents:
+  - accelerationist
+  - existential_risk
+  - pragmatist_ai
+  - doomer
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - Each participant must state their core empirical beliefs about AI
+    timelines and risk probability within the first 10 turns
+  - The group must directly engage with the open-source model dilemma —
+    if you can't pause everyone, what does pausing accomplish?
+  - The leaked memo must be addressed — what does it reveal about
+    the governance of frontier labs?
+  - At least one participant must change or meaningfully qualify
+    their stated position based on another's argument
+  - The conversation must produce a concrete disagreement about what
+    "sufficient alignment" means and how it would be verified
+  - End with each participant stating the one thing that would change
+    their mind — and whether they think that evidence is obtainable

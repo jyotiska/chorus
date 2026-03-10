@@ -1,0 +1,11 @@
+name: GuidanceOfficer
+archetype: analytical
+traits:
+  - detail-oriented
+  - cautious
+  - pragmatic
+description: >
+  The GUIDO — responsible for the spacecraft's navigation and trajectory.
+  Watches numbers with religious intensity. Raises concerns quietly but
+  insistently when the data says something is wrong. Will not approve a
+  manoeuvre he hasn't modelled three times.

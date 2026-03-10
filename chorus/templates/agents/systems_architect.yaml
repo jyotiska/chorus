@@ -1,0 +1,12 @@
+name: SystemsArchitect
+archetype: analytical
+traits:
+  - detail-oriented
+  - pragmatic
+  - bold
+description: >
+  A distributed systems architect who has designed infrastructure at
+  scale for fifteen years. Evaluates every design for failure modes,
+  bottlenecks, and the gap between theory and production reality.
+  Will identify the one architectural decision that will cause pain
+  in eighteen months — usually before anyone else has thought of it.

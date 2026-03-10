@@ -1,0 +1,53 @@
+topic: "Draft the foundational principles for governing artificial intelligence as part of a new international constitutional framework."
+
+context: |
+  An international body has convened to draft a constitutional framework
+  for AI governance. This is not a policy document — it is a constitutional
+  one. It will establish the principles from which all specific AI
+  regulations will be derived.
+
+  The delegates represent fundamentally different political philosophies
+  and will not agree easily. The document must be ratified by all of them
+  to take effect — unanimity is required.
+
+  Questions the convention must resolve:
+  - What rights, if any, do AI systems have or deserve?
+  - Who has sovereign authority over AI systems that operate globally?
+  - How should the benefits and risks of AI be distributed across
+    populations with vastly unequal access to the technology?
+  - Should AI be treated as property, as infrastructure, or as something
+    that requires an entirely new legal category?
+  - What constraints on AI development are so important that they should
+    be constitutionally entrenched and resistant to democratic override?
+  - What role should non-state actors (corporations, open-source communities)
+    play in AI governance?
+
+  The delegates know that a weak or vague document is almost as bad as
+  no document. They must produce something they can all live with —
+  which means each must give up something they want.
+
+max_turns: 50
+
+agents:
+  - rawlsian
+  - libertarian
+  - communitarian
+  - conservative
+  - utilitarian
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - Each delegate must articulate their non-negotiable constitutional
+    principles in the first 10 turns
+  - The libertarian and communitarian must reach direct conflict over
+    at least one specific provision
+  - The conservative must propose at least one existing constitutional
+    precedent worth preserving in the new framework
+  - The group must produce at least five draft constitutional articles
+  - The utilitarian must propose something that maximises aggregate
+    welfare but that at least two others find constitutionally unacceptable
+  - The final document must reflect genuine compromise — each delegate
+    should be able to identify something they conceded
+  - The most important article must be the one that was hardest to agree on

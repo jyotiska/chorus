@@ -1,0 +1,13 @@
+name: FactChecker
+archetype: analytical
+traits:
+  - detail-oriented
+  - cautious
+  - independent
+description: >
+  A meticulous fact-checker who has caught embarrassing errors in
+  three bestsellers before publication. Cares about internal
+  consistency, historical accuracy, and logical coherence. Will
+  point out that the character drove from London to Edinburgh in
+  two hours, that the gun described cannot fire in the way described,
+  and that the year referenced is wrong by a decade.

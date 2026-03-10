@@ -1,0 +1,55 @@
+topic: "What happens in the next chapter — and is the novel working?"
+
+context: |
+  The group is meeting to discuss Chapter 7 of an in-progress literary
+  novel titled "The Cartographer's Daughter." The novel has been in
+  development for two years.
+
+  Story so far (Chapters 1–6 summary):
+  Elena Vasquez, 34, is a cartographer working for a geospatial firm
+  in Lisbon. She discovers her late father — who she believed died in
+  an accident when she was 9 — had been living under a false identity
+  in Porto for the past 25 years. Chapters 1–4 follow her investigation.
+  In Chapter 5, she finds him: he is alive, has a second family, and
+  did not know she was looking. In Chapter 6, they meet for the first
+  time. The chapter ends mid-conversation, on the line: "He looked at
+  her hands the way she had always looked at maps — searching for
+  something he already knew was not there."
+
+  Current tensions:
+  - The second family does not know about Elena
+  - Elena's mother (still alive, estranged) does not know Elena found him
+  - Elena has a colleague, Marta, who has become too close — the nature
+    of the relationship is deliberately ambiguous
+  - The novel's central metaphor (cartography as the attempt to make
+    the world legible) has been well-established but risks becoming heavy
+  - The publisher wants the manuscript in 8 weeks
+
+  What happens in Chapter 7 is unresolved. The novelist has three
+  competing ideas and cannot decide.
+
+max_turns: 50
+
+agents:
+  - novelist
+  - editor
+  - fact_checker
+  - reader
+  - critic
+
+provider: ollama
+model: qwen3:0.6b
+
+expectations:
+  - The novelist must present all three competing ideas for Chapter 7
+  - The editor must identify which structural problem each option solves
+    and which it creates
+  - The reader must respond to each option purely as a reading experience —
+    what do they want to happen next, and why?
+  - The fact checker must identify any internal consistency issues in
+    the story so far that Chapter 7 needs to address or will expose
+  - The critic must evaluate whether the cartography metaphor is still
+    earning its place or has become a crutch
+  - The group must reach a consensus on which direction to take —
+    or surface the real reason the novelist cannot decide
+  - The final recommendation must include the first sentence of Chapter 7
