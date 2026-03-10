@@ -40,7 +40,7 @@ agents:
   - critic
 
 provider: ollama
-model: qwen3:0.6b
+model: mistral:latest
 
 expectations:
   - Weigh the risk of launching an incomplete product against the risk of
@@ -51,8 +51,8 @@ expectations:
     should change the sequencing decision
   - Debate whether a limited launch (e.g. expanding beta to 500 users) is
     a viable middle ground that manages risk while maintaining momentum
-  - Agree on a clear recommendation: launch this quarter, delay until
-    cloud integrations are complete, or pursue a staged rollout strategy
+  - "Agree on a clear recommendation: launch this quarter, delay until
+    cloud integrations are complete, or pursue a staged rollout strategy"
   - Identify the top three risks of whichever path is recommended and
     propose concrete mitigations for each
-  - Define what "success" looks like 90 days after whatever decision is made
+  - Define what success looks like 90 days after whatever decision is made
