@@ -15,6 +15,8 @@ class Session:
     topic: str
     agents: list[PersonalityAgent]
     max_turns: int
+    context: str | None = None
+    expectations: list[str] | None = None
     history: list[Message] = field(default_factory=list)
     turn_number: int = 0
 
@@ -28,7 +30,7 @@ class Session:
 
     async def run_turn(self) -> TurnResult:
         agent = self._next_agent()
-        response = await agent.generate(self.history, self.topic)
+        response = await agent.generate(self.history, self.topic, self.context, self.expectations)
         self._record_message(agent.name, response.message)
         self.turn_number += 1
         return TurnResult(

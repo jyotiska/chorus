@@ -93,6 +93,8 @@ def run(
         topic=session_config.topic,
         agents=agent_list,
         max_turns=session_config.max_turns,
+        context=session_config.context,
+        expectations=session_config.expectations,
     )
 
     asyncio.run(_run_session(chorus_session, color_map, interactive))

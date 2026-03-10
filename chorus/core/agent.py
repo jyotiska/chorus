@@ -32,15 +32,17 @@ class PersonalityAgent:
         )
 
     def build_conversation_messages(
-        self, history: list[Message], topic: str
+        self,
+        history: list[Message],
+        topic: str,
+        context: str | None = None,
+        expectations: list[str] | None = None,
     ) -> list[dict[str, str]]:
         messages: list[dict[str, str]] = []
 
         if not history:
-            messages.append({
-                "role": "user",
-                "content": f"The discussion topic is: {topic}\n\nPlease give your opening contribution.",
-            })
+            opening = self._build_opening_prompt(topic, context, expectations)
+            messages.append({"role": "user", "content": opening})
             return messages
 
         for msg in history:
@@ -59,8 +61,32 @@ class PersonalityAgent:
 
         return messages
 
-    async def generate(self, history: list[Message], topic: str) -> ParsedResponse:
+    def _build_opening_prompt(
+        self,
+        topic: str,
+        context: str | None,
+        expectations: list[str] | None,
+    ) -> str:
+        parts = [f"The discussion topic is: {topic}"]
+
+        if context:
+            parts.append(f"\nBackground context:\n{context}")
+
+        if expectations:
+            formatted = "\n".join(f"- {e}" for e in expectations)
+            parts.append(f"\nWhat this discussion should produce:\n{formatted}")
+
+        parts.append("\nPlease give your opening contribution.")
+        return "\n".join(parts)
+
+    async def generate(
+        self,
+        history: list[Message],
+        topic: str,
+        context: str | None = None,
+        expectations: list[str] | None = None,
+    ) -> ParsedResponse:
         system_prompt = self.build_system_prompt()
-        messages = self.build_conversation_messages(history, topic)
+        messages = self.build_conversation_messages(history, topic, context, expectations)
         raw = await self.adapter.generate(system_prompt, messages)
         return parse_response(raw)

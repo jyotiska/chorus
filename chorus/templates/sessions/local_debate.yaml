@@ -1,7 +1,58 @@
-topic: "Should we launch the MVP this quarter?"
-max_turns: 8
+topic: "Should we launch our AI-powered productivity app MVP this quarter?"
+
+context: |
+  We are a 6-person startup that has been building an AI-powered productivity
+  app for knowledge workers for the past 8 months. The app uses LLMs to
+  automatically summarise meetings, draft follow-up emails, prioritise tasks,
+  and surface relevant documents at the right moment.
+
+  Current state:
+  - Core summarisation and email-drafting features are working and tested
+  - Task prioritisation is functional but the ranking algorithm still has
+    edge cases that occasionally produce wrong orderings
+  - Document surfacing is 60% complete — it works for local files but
+    cloud integrations (Google Drive, Notion, Confluence) are not yet built
+  - We have 120 beta users from a waitlist of 2,400 people
+  - Beta NPS is 47, with the top complaint being the missing cloud integrations
+  - Our runway is 14 months at current burn rate
+  - A well-funded competitor announced a similar product last week and is
+    targeting a public launch in 6 weeks
+  - We have not yet established a pricing model or payment infrastructure
+  - The founding team is split: 2 members want to launch now, 2 want to wait
+    until cloud integrations are complete, and 2 are undecided
+
+  Constraints:
+  - Engineering team cannot ship cloud integrations AND stabilise the task
+    prioritisation algorithm before end of quarter — it is one or the other
+  - A launch would require at least one person from engineering to shift to
+    support and onboarding, reducing feature velocity by roughly 20%
+  - We have a potential enterprise pilot with a 200-person company contingent
+    on having at least Google Drive integration working
+
+max_turns: 100
+
 agents:
   - optimist
   - pessimist
+  - analyst
+  - visionary
+  - pragmatist
+  - critic
+
 provider: ollama
-model: llama3.1:8b
+model: qwen3:0.6b
+
+expectations:
+  - Weigh the risk of launching an incomplete product against the risk of
+    ceding ground to the competitor who is launching in 6 weeks
+  - Assess whether the missing cloud integrations are a dealbreaker for
+    mainstream adoption or an acceptable gap for an MVP
+  - Evaluate the impact of the enterprise pilot opportunity and whether it
+    should change the sequencing decision
+  - Debate whether a limited launch (e.g. expanding beta to 500 users) is
+    a viable middle ground that manages risk while maintaining momentum
+  - Agree on a clear recommendation: launch this quarter, delay until
+    cloud integrations are complete, or pursue a staged rollout strategy
+  - Identify the top three risks of whichever path is recommended and
+    propose concrete mitigations for each
+  - Define what "success" looks like 90 days after whatever decision is made

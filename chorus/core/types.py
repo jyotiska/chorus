@@ -35,6 +35,8 @@ class AgentConfig(BaseModel):
 
 class SessionConfig(BaseModel):
     topic: str
+    context: Optional[str] = None
+    expectations: Optional[list[str]] = None
     max_turns: int = Field(default=10, ge=1)
     agents: list[str]
     provider: str = "anthropic"
