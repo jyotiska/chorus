@@ -1,6 +1,53 @@
-topic: "Should we launch the MVP this quarter?"
-max_turns: 8
+topic: "Should Volta — our B2B SaaS analytics platform — launch to general availability this quarter or delay until the data pipeline is stable?"
+
+context: |
+  Volta is a real-time analytics platform for mid-market e-commerce companies.
+  It ingests transaction, behaviour, and inventory data from multiple sources
+  and surfaces AI-generated recommendations for pricing, stock replenishment,
+  and campaign targeting. The company has been in private beta for six months.
+
+  Current state:
+  - 18 beta customers, 14 of whom are actively using the product daily
+  - Average beta NPS: 52. Top praise: recommendation quality. Top complaint: dashboard load times
+  - The core ML recommendation engine is stable and performing above benchmark
+  - The data pipeline has experienced 3 outages in the past 8 weeks,
+    each lasting between 40 minutes and 2.5 hours during business hours
+  - Engineering estimates 6 more weeks to fully harden the pipeline;
+    the current fix in progress addresses 80% of the known failure modes
+  - Sales has a pipeline of 34 qualified prospects worth $1.8M ARR;
+    11 of them have given verbal commitments contingent on GA launch
+  - Two direct competitors launched GA products in the past 90 days;
+    one has already signed 3 of Volta's beta prospects
+  - Customer success has capacity to onboard a maximum of 8 new customers
+    per month without degrading support quality for existing accounts
+  - The board has set a revenue target of $400K ARR by end of quarter —
+    currently at $190K ARR from beta contracts
+  - A launch means committing to SLAs: 99.5% uptime and 4-hour response times
+
+  The founding team cannot agree. The CEO wants to launch in 3 weeks.
+  The CTO wants to delay until the pipeline is bulletproof. The board
+  meeting is in 10 days and both sides need to present a unified position.
+
+max_turns: 20
+
 agents:
   - optimist
   - pessimist
+
 provider: anthropic
+
+expectations:
+  - Each agent must directly engage with the pipeline stability problem —
+    not dismiss it or treat it as solved when it isn't
+  - "The SLA commitment must be debated: can Volta honour 99.5% uptime with
+    the current failure rate, and what happens if it can't?"
+  - The competitive threat must be weighed against the execution risk —
+    is a rushed launch better or worse than losing prospects to competitors?
+  - "The 11 verbal commitments must be examined: how firm are they, and
+    what is the cost of asking them to wait 6 more weeks?"
+  - Customer success capacity must factor into the recommendation —
+    a launch that floods support is not a successful launch
+  - "The debate must end with a clear position: launch, delay, or a specific
+    staged alternative with named criteria for what triggers each stage"
+  - Each agent must identify the single assumption in the other's argument
+    that they consider most dangerous
