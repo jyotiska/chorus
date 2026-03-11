@@ -1,4 +1,0 @@
-# file: /Users/jyotiska/Documents/chorus/chorus/core/types.py
-# hypothesis_version: 6.151.9
-
-['agree', 'analytical', 'anthropic', 'contrarian', 'creative', 'disagree', 'leader', 'none', 'propose', 'question', 'structured', 'support', 'vote']

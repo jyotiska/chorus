@@ -1,4 +1,0 @@
-# file: /Users/jyotiska/Documents/chorus/chorus/prompts/pipeline.py
-# hypothesis_version: 6.151.9
-
-[0.3, 0.5, 0.6, 0.85, 'assistant', 'content', 'role', 'user']
