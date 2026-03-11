@@ -34,7 +34,8 @@ agents:
   - optimist
   - pessimist
 
-provider: anthropic
+provider: ollama
+model: gemma3:4b
 
 expectations:
   - Each agent must directly engage with the pipeline stability problem —

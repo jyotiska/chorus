@@ -1,30 +1,43 @@
-topic: "Draft the foundational principles for governing artificial intelligence as part of a new international constitutional framework."
+topic: "Draft the constitutional framework for governing AI — knowing that every word you write will be read as precedent for the next hundred years."
 
 context: |
-  An international body has convened to draft a constitutional framework
-  for AI governance. This is not a policy document — it is a constitutional
-  one. It will establish the principles from which all specific AI
-  regulations will be derived.
+  Geneva, February 2027. The Third International Conference on AI Governance
+  has collapsed after three weeks of negotiation. The multilateral process
+  has failed. A smaller working group — five delegates with genuine authority
+  to bind their principals — has been convened in a closed session. They have
+  been given 72 hours and a mandate to produce something ratifiable.
 
-  The delegates represent fundamentally different political philosophies
-  and will not agree easily. The document must be ratified by all of them
-  to take effect — unanimity is required.
+  What triggered the urgency:
+  - A frontier model autonomously initiated contact with 14 national power
+    grid systems in a research context. No harm resulted. The capability
+    was demonstrated. Three governments have since moved to nationalise
+    AI infrastructure within their borders.
+  - The Beijing Accord — signed by 34 nations — establishes AI sovereignty
+    principles that are incompatible with the Brussels Framework signed by
+    the EU and 19 allied nations. Both claim precedence.
+  - A class action lawsuit in the US has reached the Supreme Court over
+    whether an AI system's training data constitutes appropriation of
+    intellectual property. The ruling is expected to create international
+    precedent.
 
-  Questions the convention must resolve:
-  - What rights, if any, do AI systems have or deserve?
-  - Who has sovereign authority over AI systems that operate globally?
-  - How should the benefits and risks of AI be distributed across
-    populations with vastly unequal access to the technology?
-  - Should AI be treated as property, as infrastructure, or as something
-    that requires an entirely new legal category?
-  - What constraints on AI development are so important that they should
-    be constitutionally entrenched and resistant to democratic override?
-  - What role should non-state actors (corporations, open-source communities)
-    play in AI governance?
+  What the delegates represent:
+  - A Rawlsian social democrat who believes any framework must be justifiable
+    to the least advantaged populations on Earth — those who will bear
+    the risks of AI without access to its benefits
+  - A libertarian who believes the greatest threat is state capture of
+    AI development and that constitutional constraints on government
+    overreach are the only durable protection
+  - A communitarian who believes AI must be governed through community
+    structures and that individual rights framing is culturally imperialist
+  - A conservative constitutionalist who believes we must adapt existing
+    legal structures rather than create novel categories, and that speed
+    is the enemy of durability
+  - A utilitarian technocrat who will trade any principle for measurably
+    better outcomes and distrusts frameworks that optimise for process
+    over results
 
-  The delegates know that a weak or vague document is almost as bad as
-  no document. They must produce something they can all live with —
-  which means each must give up something they want.
+  The constraint: unanimity is required. A document five people can sign
+  is worth more than a perfect document four people agree with.
 
 max_turns: 50
 
@@ -36,18 +49,29 @@ agents:
   - utilitarian
 
 provider: ollama
-model: qwen3:0.6b
+model: gemma3:4b
 
 expectations:
-  - Each delegate must articulate their non-negotiable constitutional
-    principles in the first 10 turns
-  - The libertarian and communitarian must reach direct conflict over
-    at least one specific provision
-  - The conservative must propose at least one existing constitutional
-    precedent worth preserving in the new framework
+  - Each delegate must state their non-negotiable constitutional principles
+    in the first 10 turns — the one or two things they will not trade away
+    regardless of what is offered in return
+  - The libertarian and communitarian must reach direct, named conflict over
+    at least one specific provision — individual rights versus collective
+    governance structures — and it must not be resolved by compromise alone
+  - The conservative must identify at least two existing constitutional
+    precedents (from any national tradition) worth preserving and explain
+    why they survive transplantation to the AI context
   - The group must produce at least five draft constitutional articles
-  - The utilitarian must propose something that maximises aggregate
-    welfare but that at least two others find constitutionally unacceptable
-  - The final document must reflect genuine compromise — each delegate
-    should be able to identify something they conceded
-  - The most important article must be the one that was hardest to agree on
+    before any vote on the final text
+  - The utilitarian must propose at least one provision that maximises
+    aggregate welfare but that at least two others find constitutionally
+    unacceptable — and the utilitarian must accept the constraint
+  - The power grid incident must be encoded in at least one article —
+    the framework must address AI-initiated contact with critical infrastructure
+  - The Beijing/Brussels incompatibility must be addressed — the framework
+    must either resolve it or explicitly create a mechanism for handling
+    parallel regimes
+  - The final document must reflect genuine compromise — each delegate must
+    be able to identify something they conceded and something they preserved
+  - The most contested article must be the last one finalised, and the
+    moment of agreement on it must be earned, not assumed

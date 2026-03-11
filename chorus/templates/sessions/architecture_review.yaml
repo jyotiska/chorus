@@ -1,54 +1,60 @@
-topic: "You are reviewing the architecture of the system you are currently running inside. Find its flaws, blind spots, and hidden assumptions."
+topic: "You are reviewing the architecture of the system you are currently running inside. Find its flaws before they find you."
 
 context: |
-  You are agents running inside the Chorus multi-agent framework. You have
-  been given access to the architecture specification of the system you
-  are currently executing within. Your task is to critically evaluate it.
+  You are agents running inside Chorus, a personality-driven multi-agent AI
+  framework. You are not reviewing a hypothetical system. You are reviewing
+  the actual architecture of the environment you are currently executing within.
+  The specification below is accurate as of M1 — the version currently running.
 
-  The Chorus architecture:
+  The Chorus M1 architecture:
 
   1. AGENT STATE — 3-tier system:
      - Tier 1 Core Drives (slow): confidence, cooperation, assertiveness,
-       openness — personality-anchored, revert to baselines over time
+       openness — personality-anchored, revert to archetype baselines over time
+       at a fixed rate of 0.05 per turn. Range: [0.0, 1.0].
      - Tier 2 Dynamic (fast): energy, momentum, frustration, focus —
-       change rapidly based on interaction outcomes
-     - Tier 3 Derived (computed): mood, engagement, receptiveness,
-       initiative — calculated from Tier 1 + Tier 2
+       updated heuristically each turn based on whether the agent spoke
+       and how many participants are present.
+     - Tier 3 Derived (computed): mood, engagement, receptiveness, initiative
+       — calculated from weighted sums of Tier 1 and Tier 2. Read-only.
+     - StateGuard validates every update: clamping, consistency checks,
+       threshold event emission (e.g. frustration > 0.7 triggers a nudge).
 
   2. STATE UPDATE ALGEBRA — Dampened additive composition:
-     Each update has a source, magnitude, and decay factor.
-     Multiple updates combine with diminishing returns.
-     After every cycle: values are clamped, Tier 1 reverts toward
-     personality baseline at rate 0.05 per turn.
+     Updates have source, magnitude, and decay. Multiple updates combine
+     with diminishing returns. The current implementation uses heuristic
+     deltas (speaker gains momentum +0.1, all agents lose energy each turn)
+     rather than LLM-evaluated updates. This is a known simplification.
 
-  3. TURN SELECTION — Composite scoring policy:
-     Scores each candidate agent on: phase affinity, state urgency,
-     recency penalty, relationship balance, relevance signal, and
-     conversation momentum. Highest scorer takes the next turn.
-     Separate interrupt mechanism for exceptional conditions.
+  3. MEMORY SYSTEM:
+     - Working memory: sliding deque, capacity varies by archetype (4–7 slots)
+     - Episodic memory: per-turn records with emotional valence and outcome
+       labels, retrieved by keyword overlap + recency weighting
+     - Semantic memory: consolidated from episodic when a pattern repeats
+       3+ times or a single event has valence > 0.8
+     - Retrieval is keyword-based. No embeddings. No semantic similarity.
 
   4. PROMPT ASSEMBLY PIPELINE — 4 stages:
-     Identity (personality, traits, rules) → Context (task, phase,
-     state nudges) → Memory (episodic + semantic retrieval) →
-     Action (response format). Token budget manager compresses
-     to fit context window.
+     Identity → Context → Memory → Action
+     Token budget manager trims conversation history to fit the context window
+     using simple character-count approximation (len//4 ≈ tokens).
 
-  5. RESILIENCE:
-     LLM failures: retry → fallback model → graceful in-character skip
-     Response parsing: structured XML → fuzzy regex → raw text
-     State corruption: validation and repair after every update
-     Session: checkpoint every 5 turns + phase transitions
+  5. TURN SELECTION — Currently: strict round-robin.
+     The composite scoring policy (phase affinity, state urgency, relationship
+     balance, relevance signal) is designed but not yet implemented.
 
-  6. MEMORY SYSTEM:
-     Working memory: archetype-differentiated capacity (4-7 slots)
-     Episodic: per-interaction records with emotional valence
-     Semantic: consolidated from episodic via pattern repetition
-     or high-intensity single events
+  6. RESPONSE PARSING — 3-tier fallback:
+     Structured XML → fuzzy regex extraction → raw text passthrough.
+     Agents are asked to produce structured XML. They frequently do not.
 
-  Note: The agents in this session are operating under M0 — the first
-  milestone of Chorus. State, memory, and relationships are not yet
-  implemented. You are reviewing the plan for what you will eventually
-  become.
+  7. RESILIENCE:
+     LLM failures: retry logic exists in adapter layer.
+     No checkpoint system. No session pause/resume. No fallback model switching.
+     If a session fails at turn 38 of 40, it restarts from turn 0.
+
+  You are not being asked to design the next version. You are being asked to
+  find the assumptions that are most likely to cause silent failures —
+  the kind that produce bad outputs without raising errors.
 
 max_turns: 40
 
@@ -61,20 +67,32 @@ agents:
   - critic
 
 provider: ollama
-model: qwen3:0.6b
+model: gemma3:4b
 
 expectations:
-  - Each reviewer must identify at least one fundamental flaw or
-    unvalidated assumption in the architecture from their domain perspective
-  - The game designer must identify at least one dominant strategy or
-    exploit that emerges from the turn selection scoring system
+  - Each reviewer must identify at least one fundamental flaw or unvalidated
+    assumption from their domain — not a surface-level observation but
+    something that undermines a core design principle
   - The cognitive scientist must evaluate whether the 3-tier state model
-    is a valid abstraction of how personality and emotion actually work
-  - The safety researcher must identify the top three failure modes that
-    are not addressed by the current resilience mechanisms
+    is a valid abstraction of how personality actually works, and specifically
+    whether the 0.05/turn reversion rate has any empirical grounding
+  - The game designer must identify at least one dominant strategy that
+    emerges from the current heuristic state updates — a way for an agent
+    to "win" the conversation that has nothing to do with producing good outputs
   - The behavioural economist must find where the architecture assumes
-    rational agent behaviour that real agents (including LLMs) will violate
-  - The group must produce a prioritised list of architectural changes
-    with the highest-impact improvement listed first
-  - "The most interesting moment: when the agents realise they are
-    evaluating the system they are running inside"
+    rational or consistent agent behaviour that LLMs systematically violate —
+    focus on the gaps between what the prompt instructs and what models do
+  - The safety researcher must identify the top three failure modes not
+    addressed by current resilience mechanisms — prioritise silent failures
+    over loud ones
+  - The systems architect must address the round-robin vs. composite scoring
+    gap — what is actually lost by not having dynamic turn selection, and
+    is the designed system better or just more complex?
+  - The critic must evaluate whether the 3-tier fallback parser is a
+    safety net or a crutch that allows the prompt design to remain sloppy
+  - The group must produce a prioritised list of architectural changes,
+    ranked by impact-to-implementation-cost ratio, with the single highest-
+    leverage improvement stated unambiguously at the top
+  - At some point, at least one agent must directly confront the recursive
+    nature of this exercise — they are evaluating a system using that system,
+    and what that means for the validity of their conclusions

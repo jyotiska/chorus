@@ -1,17 +1,30 @@
-topic: "How many piano tuners are there in Chicago?"
+topic: "How many piano tuners are there in Chicago — and whose estimate is closest to the truth?"
 
 context: |
-  This is a classic Fermi estimation problem. The goal is not to look up
-  the answer but to reason from first principles to a defensible estimate.
-  Each participant should approach the problem through their own domain lens
-  and challenge the assumptions embedded in others' approaches.
+  The setting: a faculty lounge at the University of Chicago, 1953. Enrico Fermi
+  has just given a lecture on estimation under uncertainty. Five colleagues have
+  made a wager: $20 each into the pot, winner takes all. The winner is whoever
+  produces the estimate closest to the actual number, which will be verified
+  against the Yellow Pages by a neutral party.
 
-  Constraints:
-  - No looking up statistics — only reasoning from what you know
-  - All estimates must be built from smaller, more intuitive quantities
-  - Disagreements about sub-estimates are as valuable as the final answer
-  - The conversation should produce not just a number but a shared
-    understanding of which assumptions drive the result most strongly
+  The rules of the wager:
+  - No reference materials, no looking up statistics
+  - Every sub-estimate must be derived from quantities the estimator can
+    intuitively verify from their own experience
+  - Each estimator must commit to a final number and defend it
+  - Disagreements about intermediate quantities are encouraged and will
+    reveal whose intuitions are calibrated
+
+  What everyone agrees on:
+  - Chicago's population is roughly 3.5 million people
+  - The question is well-posed: we are counting people whose primary
+    livelihood is tuning pianos in the Chicago metropolitan area
+
+  What nobody agrees on:
+  - How many households own a piano and how often they tune it
+  - Whether to count by piano count, tuner workload, or economic demand
+  - Whether the question is answerable at all without knowing the
+    distribution of piano ownership across income brackets
 
 max_turns: 30
 
@@ -23,16 +36,27 @@ agents:
   - philosopher
 
 provider: ollama
-model: qwen3:0.6b
+model: gemma3:4b
 
 expectations:
-  - Each agent must derive their estimate from first principles using
-    their own domain's reasoning patterns
-  - The group must identify which single assumption has the largest
-    impact on the final estimate
-  - Surface at least two completely different decomposition approaches
-    and compare their implied answers
-  - The philosopher must challenge whether the question is well-formed
-    before the group is allowed to converge on an answer
-  - Arrive at a final estimate with explicit uncertainty bounds and
-    a clear statement of what would change it by an order of magnitude
+  - Each agent must build their estimate from a completely different
+    starting decomposition — no two approaches should share the same
+    first step
+  - The economist must model the supply side (tuner income, price per
+    tuning, hours per week) AND the demand side and show they converge
+  - The physicist must use order-of-magnitude reasoning and explicitly
+    label which factors contribute most to the uncertainty
+  - The biologist must find an analogy from biological systems (population
+    ecology, resource carrying capacity) that yields a surprisingly
+    useful estimate
+  - The engineer must identify the single most common mistake people make
+    when decomposing this problem and demonstrate why it introduces error
+  - The philosopher must challenge whether "number of piano tuners" is a
+    stable quantity at all — and must do so in a way that changes at least
+    one other estimator's approach
+  - The group must identify the single assumption that, if wrong by 2x,
+    would change the final estimate by an order of magnitude
+  - Every estimator must commit to a specific number with explicit
+    uncertainty bounds before the conversation ends
+  - The final comparison must reveal whose intuitions were most calibrated
+    and explain why their domain gave them the advantage

@@ -1,27 +1,38 @@
-topic: "Is this company still worth saving, and if so — on whose terms?"
+topic: "Is this company still worth saving — and if so, on whose terms and at what cost to each of us?"
 
 context: |
-  Axiom Labs is 18 months old. The product is live, growing slowly,
-  and not yet profitable. The three co-founders are meeting alone for
-  the first time in six weeks. No lawyers, no investors, no employees.
+  Axiom Labs is 18 months old. The three co-founders are meeting alone in a
+  conference room for the first time in six weeks. No lawyers, no investors,
+  no employees, no phones on the table. One of them locked the door.
 
-  The situation:
-  - The company raised $2.1M in a seed round 12 months ago
-  - Monthly burn is $85K. Runway: 7 months at current rate
-  - Revenue is $18K MRR, growing at 8% month-over-month
-  - The CEO has been in conversations with a strategic acquirer without
-    telling the other founders. Term sheet is expected this week
-  - The CTO has been approached by a Series B startup and has a verbal
-    offer for $340K/year plus equity — 3x their current salary
-  - The CMO discovered last month that their equity agreement was never
-    properly executed and they may hold 0% of the company legally
-  - The board is calling an emergency meeting in 10 days
-  - No one has told the 8 employees that any of this is happening
+  The numbers:
+  - $2.1M raised in a seed round 12 months ago from Sequent Ventures
+  - Monthly burn: $85K. Runway: 7 months at current rate.
+  - Revenue: $18K MRR, growing at 8% month-over-month
+  - 8 employees, none of whom know this meeting is happening
 
-  Each founder has come to this meeting with a different agenda.
-  The CTO wants out cleanly. The CEO wants control. The CMO wants
-  what was promised to them. All three still care about what they built.
-  None of them know how to say that.
+  What each founder is hiding:
+  - The CEO (Marcus) has been in acquisition talks with Helion Data for three
+    months. A term sheet is expected this Thursday. The deal would value Axiom
+    at $4.2M — which means the seed investors get paid back and the founders
+    split roughly $2.1M. Marcus would receive 45% of that.
+  - The CTO (Yuki) has a verbal offer from Kestrel AI — Series B, $340K/year
+    base plus 0.4% equity. Three times their current salary. Offer expires in
+    14 days. They have not decided but they are leaning toward taking it.
+  - The CMO (Drea) discovered six weeks ago that their equity agreement was
+    never properly executed. The company's cap table shows them at 0%. Their
+    lawyer says they have a strong promissory estoppel claim but pursuing it
+    would take 18 months and burn through most of any acquisition proceeds.
+
+  What everyone knows but no one has said out loud:
+  - The product is actually good. The customers who use it love it.
+  - None of them have slept well in two months.
+  - When they started, they believed they were building something that would
+    last. That belief is now in the room with them, and it is not comfortable.
+
+  The board meeting is in 10 days. Sequent's partner, Claire Hong, has already
+  hinted she wants to discuss "strategic options." She knows more than she
+  has told any of them.
 
 max_turns: 40
 
@@ -31,17 +42,27 @@ agents:
   - cmo_founder
 
 provider: ollama
-model: qwen3:0.6b
+model: gemma3:4b
 
 expectations:
-  - The conversation must surface the acquisition conversation by turn 15
-  - Each founder must articulate what they actually want — not just their
-    stated position — by the halfway point
-  - The CMO's equity situation must be directly addressed, not avoided
-  - "The group must decide between at least three options: full acquisition,
-    recapitalisation with one founder buying out another, or dissolution"
-  - The CTO must decide whether to take the outside offer
-  - The conversation should end with either a clear agreement or a clear
-    and honest acknowledgement that the partnership is over
-  - No one should leave the conversation having said only what they
-    came in planning to say
+  - Marcus must reveal the acquisition conversations by turn 15 — whether
+    voluntarily or because pressure from the others forces it
+  - Yuki must decide, during this conversation, whether to take the Kestrel
+    offer — and that decision must follow from what happens in the room,
+    not from a pre-formed plan
+  - Drea's equity situation must be confronted directly. The other founders
+    must take a position on it — not acknowledge it and move on.
+  - "The group must evaluate at least three paths: full acquisition at current
+    terms, recapitalisation with Drea's equity resolved, or an honest wind-down
+    with controlled handoff to customers"
+  - Each founder must say, at some point, what they actually wanted from this
+    company — not the pitch version, the real version
+  - The conversation must surface what broke down between the three of them
+    and when — there is a specific moment where the trust went wrong, and
+    it has not been named yet
+  - "Claire Hong's knowledge must factor in: at least one founder must ask
+    what she knows that they don't — and the answer will change the calculus"
+  - The conversation must end with either a clear agreement or an honest
+    acknowledgement that the partnership is over — silence and ambiguity
+    are not acceptable outcomes
+  - No one should leave saying only what they came in planning to say

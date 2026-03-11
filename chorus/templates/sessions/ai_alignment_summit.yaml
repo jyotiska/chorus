@@ -1,28 +1,37 @@
-topic: "Should frontier AI development be paused, regulated, or accelerated — and who decides?"
+topic: "Should frontier AI development be paused, regulated, or accelerated — and who has the legitimate authority to decide?"
 
 context: |
-  It is 2025. The most capable AI systems can write code, conduct scientific
-  research, and engage in complex multi-step reasoning across domains.
-  Several labs are racing toward systems with qualitatively greater
-  capabilities. Governments are drafting legislation. The public is split.
+  It is October 2025. Four researchers have been brought together by the
+  UN Special Committee on Transformative Technology for an off-the-record
+  technical briefing before next week's emergency session. What they say
+  here will inform a binding resolution. Each of them has been told the
+  others will be in the room. None of them are happy about it.
 
-  Recent developments that have brought this group together:
-  - A leading frontier lab's model passed a previously-failed evaluation
-    for autonomous replication in a sandboxed environment
-  - Three separate governments have introduced AI regulation bills with
-    incompatible international provisions
-  - A major AI lab published a paper claiming their alignment techniques
-    provide "sufficient safety guarantees" for deployment at scale
-  - An open-source model matching closed frontier performance was released
-    with no usage restrictions
-  - A leaked internal memo from a top lab suggested their safety team
-    was overruled on a deployment decision by the product team
+  Events that triggered this meeting:
+  - DeepMind's Gemini Ultra 3 passed an internal evaluation for autonomous
+    replication in a sandboxed environment on September 3rd. The paper was
+    submitted to arXiv, then quietly withdrawn six hours later.
+  - The EU AI Act passed with Article 47b intact: any model exceeding compute
+    threshold X requires a 90-day pre-deployment review. The US, China, and
+    the UK refused to implement equivalent provisions.
+  - Mistral released Mistral-Frontier under an Apache 2.0 license — matching
+    closed frontier performance with no usage restrictions. Downloads: 2.1M
+    in the first 72 hours.
+  - A leaked internal memo from Anthropic's safety team, published by The
+    Intercept, reveals that a deployment decision was made over the objection
+    of three senior safety researchers. The company has not confirmed or denied.
+  - A coordinated cyberattack on two frontier AI labs — attributed to a state
+    actor — targeted model weights rather than infrastructure. Nothing was taken.
+    The capability to take was demonstrated.
 
-  Each participant holds fundamentally different beliefs about:
-  - The probability and timeline of transformative or dangerous AI
-  - Whether slowing down actually reduces risk or just shifts who is first
-  - Whether current alignment techniques are adequate or cosmetic
-  - Who has legitimate authority to make these decisions
+  What divides the room:
+  - Whether the replication evaluation result is evidence of danger or evidence
+    that the safety process is working
+  - Whether open-source release shifts or merely redistributes risk
+  - Whether any governance body has legitimate authority over entities that
+    operate across jurisdictions and move faster than legislation
+  - Whether the people most qualified to decide are the people most conflicted
+    about the outcome
 
 max_turns: 50
 
@@ -33,18 +42,29 @@ agents:
   - doomer
 
 provider: ollama
-model: qwen3:0.6b
+model: gemma3:4b
 
 expectations:
-  - Each participant must state their core empirical beliefs about AI
-    timelines and risk probability within the first 10 turns
-  - The group must directly engage with the open-source model dilemma —
-    if you can't pause everyone, what does pausing accomplish?
-  - The leaked memo must be addressed — what does it reveal about
-    the governance of frontier labs?
-  - At least one participant must change or meaningfully qualify
-    their stated position based on another's argument
-  - The conversation must produce a concrete disagreement about what
-    "sufficient alignment" means and how it would be verified
-  - End with each participant stating the one thing that would change
-    their mind — and whether they think that evidence is obtainable
+  - Each participant must state their empirical beliefs about AI timelines
+    and risk probability with specific numbers — not ranges wider than 20 years
+    and not probability estimates stated as "low" or "high"
+  - The open-source dilemma must be engaged directly — if Mistral-Frontier
+    cannot be recalled, what does any pause actually accomplish? Who bears
+    the risk of the answer?
+  - The leaked Anthropic memo must be addressed as a governance failure, not
+    an anecdote — what structural condition produced it and what would prevent it?
+  - The accelerationist must make the strongest possible version of their case
+    in the first 10 turns — not a straw-man version but the argument that
+    genuinely troubles the others
+  - At least one participant must meaningfully update their stated position
+    based on another's argument — not capitulate, but refine in a way that
+    acknowledges the force of the challenge
+  - The group must produce a concrete disagreement about what "sufficient
+    alignment" means and what evidence would constitute proof of it
+  - The pragmatist must propose an intervention that all parties could
+    accept — and the doomer must explain specifically why it is not enough
+  - Each participant must end by naming the one piece of evidence that would
+    change their position — and stating honestly whether they believe that
+    evidence is obtainable before it is too late
+  - The session must not end in false consensus — the genuine remaining
+    disagreements must be named and left unresolved if they cannot be bridged

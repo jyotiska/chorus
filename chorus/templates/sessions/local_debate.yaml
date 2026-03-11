@@ -1,33 +1,34 @@
-topic: "Should we launch our AI-powered productivity app MVP this quarter?"
+topic: "Should we launch our AI productivity app MVP this quarter — or are we about to make a mistake we cannot undo?"
 
 context: |
-  We are a 6-person startup that has been building an AI-powered productivity
-  app for knowledge workers for the past 8 months. The app uses LLMs to
-  automatically summarise meetings, draft follow-up emails, prioritise tasks,
-  and surface relevant documents at the right moment.
+  Northlight is a 6-person startup that has spent 8 months building an
+  AI-powered productivity tool for knowledge workers. The product uses LLMs
+  to summarise meetings, draft follow-up emails, prioritise tasks, and surface
+  relevant documents at the right moment in the workflow.
 
-  Current state:
-  - Core summarisation and email-drafting features are working and tested
-  - Task prioritisation is functional but the ranking algorithm still has
-    edge cases that occasionally produce wrong orderings
-  - Document surfacing is 60% complete — it works for local files but
-    cloud integrations (Google Drive, Notion, Confluence) are not yet built
-  - We have 120 beta users from a waitlist of 2,400 people
-  - Beta NPS is 47, with the top complaint being the missing cloud integrations
-  - Our runway is 14 months at current burn rate
-  - A well-funded competitor announced a similar product last week and is
-    targeting a public launch in 6 weeks
-  - We have not yet established a pricing model or payment infrastructure
-  - The founding team is split: 2 members want to launch now, 2 want to wait
-    until cloud integrations are complete, and 2 are undecided
+  Current state — as of this week's planning session:
+  - Meeting summarisation and email drafting: working, tested, users love them
+  - Task prioritisation: functional but produces wrong orderings in ~12% of
+    real-world cases, concentrated in multi-project contexts
+  - Document surfacing: 60% complete. Works for local files. Cloud integrations
+    (Google Drive, Notion, Confluence) are not built. This is the #1 complaint.
+  - 120 beta users from a waitlist of 2,400. Beta NPS: 47.
+  - Runway: 14 months at current burn rate ($22K/month)
+  - A well-funded competitor (Relay.ai, backed by $18M Series A) announced a
+    similar product last week and is targeting general availability in 6 weeks
+  - No pricing model. No payment infrastructure. The app is currently free.
 
-  Constraints:
-  - Engineering team cannot ship cloud integrations AND stabilise the task
-    prioritisation algorithm before end of quarter — it is one or the other
-  - A launch would require at least one person from engineering to shift to
-    support and onboarding, reducing feature velocity by roughly 20%
-  - We have a potential enterprise pilot with a 200-person company contingent
-    on having at least Google Drive integration working
+  The constraint that cannot be resolved before the decision:
+  - Engineering capacity allows completing EITHER cloud integrations OR
+    stabilising the task prioritisation algorithm this quarter — not both
+  - A launch would require pulling one engineer into support and onboarding,
+    reducing feature velocity by roughly 20%
+  - Fintech Corp, a 200-person financial services company, has expressed
+    interest in an enterprise pilot — contingent specifically on Google Drive
+    integration being available. Estimated contract value: $48K ARR.
+
+  The founding team is split: two want to launch now, two want to wait,
+  two are genuinely undecided. This conversation needs to produce a decision.
 
 max_turns: 100
 
@@ -40,19 +41,28 @@ agents:
   - critic
 
 provider: ollama
-model: mistral:latest
+model: gemma3:4b
 
 expectations:
-  - Weigh the risk of launching an incomplete product against the risk of
-    ceding ground to the competitor who is launching in 6 weeks
-  - Assess whether the missing cloud integrations are a dealbreaker for
-    mainstream adoption or an acceptable gap for an MVP
-  - Evaluate the impact of the enterprise pilot opportunity and whether it
-    should change the sequencing decision
-  - Debate whether a limited launch (e.g. expanding beta to 500 users) is
-    a viable middle ground that manages risk while maintaining momentum
-  - "Agree on a clear recommendation: launch this quarter, delay until
-    cloud integrations are complete, or pursue a staged rollout strategy"
-  - Identify the top three risks of whichever path is recommended and
-    propose concrete mitigations for each
-  - Define what success looks like 90 days after whatever decision is made
+  - The Relay.ai competitive threat must be quantified — not dismissed as
+    "we should focus on our own product" or catastrophised as existential.
+    How many of the 2,400 waitlist users will actually switch if Relay launches?
+  - The 12% task prioritisation error rate must be evaluated in terms of
+    user impact, not just the number — what does a wrong ordering cost a user,
+    and how often do they catch it?
+  - The Fintech Corp pilot must be assessed as a strategic decision, not
+    just a revenue line — does an enterprise pilot at this stage help or
+    constrain the product direction?
+  - The group must evaluate a staged launch option specifically — expand
+    beta to 500 users, no public announcement, no SLA commitments — and
+    assess whether it is a real middle ground or a way of avoiding the decision
+  - "The session must produce a clear, binding recommendation: full launch
+    this quarter, delay until cloud integrations ship, or staged rollout
+    with specific named criteria that trigger the next stage"
+  - The top three risks of the recommended path must be named explicitly
+    with concrete mitigations — not "we'll monitor it" but specific actions
+    with owners and timelines
+  - Define what success looks like 90 days after the decision — a specific,
+    measurable state the team would agree constitutes validation
+  - The pessimist and optimist must directly engage with each other's
+    strongest argument at least once, not just state their positions in parallel

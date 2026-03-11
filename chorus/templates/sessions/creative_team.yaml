@@ -38,7 +38,8 @@ agents:
   - analyst
   - pessimist
 
-provider: anthropic
+provider: ollama
+model: gemma3:4b
 
 expectations:
   - Each agent must engage with the competitive landscape specifically —

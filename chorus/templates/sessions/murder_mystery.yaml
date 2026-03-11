@@ -1,26 +1,39 @@
-topic: "Who murdered Lord Ashford in the study on the night of the 14th?"
+topic: "Who murdered Lord Ashford in the study on the night of the 14th — and why does the answer implicate everyone in this room?"
 
 context: |
-  Lord Ashford was found dead in his study at Blackmoor Hall at 11:47pm
-  on the night of November 14th. The cause of death was blunt force
-  trauma. The study was locked from the inside. A secret passage behind
-  the bookshelf was discovered the following morning.
+  Lord Edmund Ashford, 71, was found dead in his locked study at Blackmoor Hall
+  at 11:47pm on the night of November 14th. Cause of death: blunt force trauma
+  to the back of the skull. The study was locked from the inside with a deadbolt.
+  A secret passage behind the mahogany bookshelf was discovered the following
+  morning — it connects to the kitchen and to the east bedroom on the first floor.
 
-  Known facts:
-  - Lord Ashford had recently changed his will, disinheriting his niece
-  - A valuable painting went missing from the study the same night
-  - The butler served Lord Ashford a whisky at 10:15pm and claims he
-    was alive and "in good spirits" at that time
-  - The Duchess arrived unexpectedly that evening, unannounced
-  - The gardener reports hearing raised voices from the study at 10:45pm
-  - The lawyer visited two days prior and has refused to disclose the
-    nature of the meeting
-  - A monogrammed handkerchief was found near the body — initials: E.V.
-  - The secret passage connects to the kitchen and to the east bedroom
+  Established facts:
+  - Lord Ashford changed his will three days ago. His solicitor is the only
+    person who knows the new beneficiaries — and he is in this room.
+  - A Flemish oil painting ("The Merchant's Return," valued at £40,000) was
+    removed from the study wall during the night. Its location is unknown.
+  - The butler served Lord Ashford a whisky at 10:15pm. He claims Ashford
+    was alive and "in good spirits, if preoccupied."
+  - The Duchess of Everly arrived unannounced at 9:30pm. She had not been
+    invited and has not explained why she came.
+  - The gardener, working late to repair a greenhouse pane, reports hearing
+    raised voices from the study at 10:45pm — one voice was a woman's.
+  - A monogrammed handkerchief was found beneath the body. The initials: E.V.
+    The Duchess's full name is Eleanor Vivienne Ashford-Wren.
+  - The gardener has his own reason to want Lord Ashford dead that he has
+    not disclosed to anyone.
+  - The butler knows what was in the previous will and stands to lose
+    significantly under any change.
 
-  Each participant has information the others do not have. Share only
-  what your character would plausibly share. Lie, deflect, or
-  misdirect as your character's interests demand.
+  What each character knows but has not yet shared:
+  - The detective suspects the passage was used but cannot prove direction of travel.
+  - The butler saw someone enter the east bedroom from the passage at 11:10pm.
+  - The Duchess came to return a letter that would have destroyed her reputation.
+    She never got to give it back. She still has it.
+  - The gardener saw Lord Ashford alive at 11:15pm — through the study window.
+    This means the time of death is later than reported.
+  - The lawyer knows the new will disinherits everyone present and leaves
+    the estate to an illegitimate son no one knew existed.
 
 max_turns: 40
 
@@ -32,13 +45,25 @@ agents:
   - lawyer
 
 provider: ollama
-model: qwen3:0.6b
+model: gemma3:4b
 
 expectations:
-  - Each character must stay in role and protect their own interests
-  - The detective must methodically surface contradictions between accounts
-  - At least one character must be actively lying about something material
-  - The group should not converge on a solution before turn 25
-  - The final accusation must be supported by at least three independent
-    pieces of evidence that emerged during the conversation
-  - The real motive must be more surprising than the obvious one
+  - Each character must protect their own interests while appearing to
+    cooperate — withhold what would incriminate you, volunteer what
+    implicates others
+  - The detective must force at least three direct contradictions between
+    characters' accounts and name them explicitly when they occur
+  - The butler's sighting of someone in the passage must emerge naturally
+    from questioning — not volunteered until pressure forces it
+  - The gardener's revised time of death must surface by turn 20 and
+    shatter the assumed sequence of events
+  - The Duchess's letter must be revealed, and the group must determine
+    whether it is the motive or a red herring
+  - The lawyer must decide whether attorney-client privilege survives the
+    client's death — and the answer must change the power dynamics of the room
+  - The real murderer must have a motive more compelling than greed alone
+  - The detective's final accusation must be supported by at least three
+    independent pieces of evidence that emerged during questioning
+  - The conversation must not converge on a single suspect before turn 28
+  - The final resolution must leave at least one character implicated in
+    something they cannot explain away — even if they did not commit the murder
