@@ -1,0 +1,4 @@
+# file: /Users/jyotiska/Documents/chorus/chorus/prompts/token_budget.py
+# hypothesis_version: 6.151.9
+
+[0.5, 1024, 8192, 'content']

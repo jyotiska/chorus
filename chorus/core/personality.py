@@ -47,6 +47,49 @@ TRAIT_DESCRIPTORS: dict[str, str] = {
 }
 
 
+WORKING_MEMORY_SLOTS: dict[Archetype, int] = {
+    Archetype.ANALYTICAL: 7,
+    Archetype.CREATIVE: 4,
+    Archetype.LEADER: 5,
+    Archetype.SUPPORT: 6,
+    Archetype.CONTRARIAN: 4,
+}
+
+# Personality-anchored baselines — Tier 1 state reverts toward these
+STATE_BASELINES: dict[Archetype, dict[str, float]] = {
+    Archetype.ANALYTICAL: {
+        "confidence": 0.6,
+        "cooperation": 0.5,
+        "assertiveness": 0.5,
+        "openness": 0.5,
+    },
+    Archetype.CREATIVE: {
+        "confidence": 0.65,
+        "cooperation": 0.7,
+        "assertiveness": 0.55,
+        "openness": 0.85,
+    },
+    Archetype.LEADER: {
+        "confidence": 0.75,
+        "cooperation": 0.65,
+        "assertiveness": 0.75,
+        "openness": 0.55,
+    },
+    Archetype.SUPPORT: {
+        "confidence": 0.5,
+        "cooperation": 0.85,
+        "assertiveness": 0.3,
+        "openness": 0.7,
+    },
+    Archetype.CONTRARIAN: {
+        "confidence": 0.7,
+        "cooperation": 0.35,
+        "assertiveness": 0.8,
+        "openness": 0.45,
+    },
+}
+
+
 def build_behavior_rules(archetype: Archetype, traits: list[str]) -> str:
     rules = [ARCHETYPE_BEHAVIOR_RULES[archetype]]
     trait_rules = [

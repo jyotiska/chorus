@@ -13,6 +13,7 @@ from rich.text import Text
 from chorus.config.loader import load_agent_config, load_agents_for_session, load_session_config
 from chorus.core.agent import PersonalityAgent
 from chorus.llm.anthropic_adapter import AnthropicAdapter
+from chorus.orchestration.session import TurnResult
 from chorus.llm.base import LLMAdapter
 from chorus.llm.ollama_adapter import OllamaAdapter, list_available_models
 from chorus.llm.openai_adapter import OpenAIAdapter
@@ -67,6 +68,8 @@ def run(
     session: Path = typer.Option(..., "--session", "-s", help="Path to session YAML config"),
     agents_dir: Path = typer.Option(TEMPLATES_DIR / "agents", "--agents-dir", help="Directory containing agent YAML files"),
     interactive: bool = typer.Option(False, "--interactive", "-i", help="Pause after each turn to inject messages"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show state changes after each turn"),
+    inspect: bool = typer.Option(False, "--inspect", help="Pause after each turn with full state and memory view"),
     topic: Optional[str] = typer.Option(None, "--topic", "-t", help="Override the topic from the session config"),
 ) -> None:
     """Start a multi-agent conversation."""
@@ -97,19 +100,33 @@ def run(
         expectations=session_config.expectations,
     )
 
-    asyncio.run(_run_session(chorus_session, color_map, interactive))
+    asyncio.run(_run_session(chorus_session, color_map, interactive, verbose, inspect))
 
 
 async def _run_session(
     session: Session,
     color_map: dict[str, str],
     interactive: bool,
+    verbose: bool = False,
+    inspect: bool = False,
 ) -> None:
     while not session.is_finished():
         with console.status("Thinking...", spinner="dots"):
             result = await session.run_turn()
 
         _render_turn(result, color_map[result.agent_name])
+
+        if verbose or inspect:
+            _render_state(result, color_map[result.agent_name])
+
+        if result.state_events:
+            for event in result.state_events:
+                console.print(f"  [yellow]⚡ {event.name}[/yellow] ({event.variable}: {event.value:.2f})")
+
+        if inspect:
+            agent = next(a for a in session.agents if a.name == result.agent_name)
+            _render_inspect(agent)
+            Prompt.ask("[dim]Press Enter to continue[/dim]", default="")
 
         if interactive and not session.is_finished():
             user_input = Prompt.ask(
@@ -124,6 +141,57 @@ async def _run_session(
                 console.print(Panel(user_input.strip(), title="[bold white]You[/bold white]", border_style="white"))
 
     console.print("[dim]Session complete.[/dim]")
+
+
+def _render_state(result: TurnResult, color: str) -> None:
+    snap = result.state_snapshot
+    if not snap:
+        return
+    table = Table(border_style="dim", show_header=True, header_style=f"bold {color}")
+    table.add_column("Variable")
+    table.add_column("Value", justify="right")
+    table.add_column("Bar", no_wrap=True)
+
+    for key in ("confidence", "energy", "frustration", "momentum", "focus", "mood"):
+        value = snap.get(key)
+        if value is None:
+            continue
+        if isinstance(value, str):
+            table.add_row(key, value, "")
+        else:
+            bar_len = int(value * 20) if value >= 0 else int((value + 1) * 10)
+            bar = "█" * bar_len + "░" * (20 - bar_len)
+            table.add_row(key, f"{value:.2f}", f"[{color}]{bar}[/{color}]")
+
+    console.print(table)
+
+
+def _render_inspect(agent: "PersonalityAgent") -> None:
+    state = agent.state
+    episodes = agent.memory.episodic.all()[-5:]
+    semantic = agent.memory.semantic.all()
+
+    lines = [
+        f"[bold]State:[/bold]",
+        f"  confidence={state.confidence:.2f}  cooperation={state.cooperation:.2f}  "
+        f"assertiveness={state.assertiveness:.2f}  openness={state.openness:.2f}",
+        f"  energy={state.energy:.2f}  momentum={state.momentum:.2f}  "
+        f"frustration={state.frustration:.2f}  focus={state.focus:.2f}",
+        f"  mood={state.mood}  engagement={state.engagement:.2f}  "
+        f"receptiveness={state.receptiveness:.2f}  initiative={state.initiative:.2f}",
+    ]
+
+    if episodes:
+        lines.append("\n[bold]Recent episodic memories:[/bold]")
+        for ep in episodes:
+            lines.append(f"  [Turn {ep.turn}] {ep.agent_name}: {ep.content[:80]}...")
+
+    if semantic:
+        lines.append("\n[bold]Semantic memory:[/bold]")
+        for fact in semantic:
+            lines.append(f"  - {fact.content}")
+
+    console.print(Panel("\n".join(lines), title=f"[bold]Inspect: {agent.name}[/bold]", border_style="dim"))
 
 
 @agents_app.command("list")

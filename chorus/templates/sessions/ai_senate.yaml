@@ -43,7 +43,7 @@ agents:
   - pessimist
 
 provider: ollama
-model: qwen3:0.6b
+model: gemma3:4b
 
 expectations:
   - Each senator must declare their initial position on the bill in the

@@ -1,0 +1,4 @@
+# file: /Users/jyotiska/Documents/chorus/chorus/core/state.py
+# hypothesis_version: 6.151.9
+
+[-1.0, 0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1.0, 'assertiveness', 'confidence', 'confidence_crisis', 'confidence_peak', 'cooperation', 'disengaged', 'energy', 'energy_depleted', 'energy_low', 'engaged', 'engagement', 'external_event', 'focus', 'frustrated', 'frustration', 'frustration_critical', 'frustration_high', 'initiative', 'interaction_failure', 'interaction_success', 'momentum', 'mood', 'motivated', 'neutral', 'openness', 'receptiveness', 'task_progress', 'task_setback', 'time_decay']
