@@ -47,6 +47,12 @@ chorus run --session chorus/templates/sessions/debate.yaml
 # Run interactively — inject messages, pause between turns
 chorus run --session chorus/templates/sessions/debate.yaml --interactive
 
+# Show agent state changes after every turn
+chorus run --session chorus/templates/sessions/debate.yaml --verbose
+
+# Pause after each turn with full state and memory view
+chorus run --session chorus/templates/sessions/apollo13.yaml --inspect
+
 # Run a three-agent creative session
 chorus run --session chorus/templates/sessions/creative_team.yaml
 
@@ -94,15 +100,18 @@ model: qwen3:0.6b
 
 ```bash
 # Sessions
-chorus run --session <path>            # run a session
-chorus run --session <path> --interactive  # run with user interjection
+chorus run --session <path>                  # run a session
+chorus run --session <path> --interactive    # pause after each turn for user input
+chorus run --session <path> --verbose        # show state changes after each turn
+chorus run --session <path> --inspect        # full state + memory view after each turn
+chorus run --session <path> --topic "..."    # override topic from config
 
 # Agents
-chorus agents list                     # list all agent definitions
-chorus agents inspect <name>           # show an agent's config and traits
+chorus agents list                           # list all agent definitions
+chorus agents inspect <name>                 # show an agent's config and traits
 
 # Models
-chorus models list                     # list locally available Ollama models
+chorus models list                           # list locally available Ollama models
 ```
 
 ## Configuration
@@ -129,6 +138,12 @@ Available traits: `optimistic`, `pessimistic`, `cautious`, `bold`, `empathetic`,
 
 ```yaml
 topic: "What should our product's core differentiator be?"
+context: |
+  Optional background context injected into every agent's opening prompt.
+  Describe the situation, constraints, and relevant facts here.
+expectations:
+  - What the discussion should produce
+  - Specific questions that must be answered
 max_turns: 10
 agents:
   - architect
@@ -140,16 +155,53 @@ model: claude-sonnet-4-6   # optional
 
 The `agents` list references YAML filenames (without `.yaml`) in the agents directory.
 
+## Agent State
+
+Every agent carries live state that evolves across the conversation.
+
+**Tier 1 — Core Drives** (slow, personality-anchored, revert to baseline):
+`confidence` · `cooperation` · `assertiveness` · `openness`
+
+**Tier 2 — Dynamic State** (fast, situation-driven):
+`energy` · `momentum` · `frustration` · `focus`
+
+**Tier 3 — Derived** (computed on the fly):
+`mood` · `engagement` · `receptiveness` · `initiative`
+
+State updates use dampened additive composition to prevent wild swings. Personality acts as gravity — agents slowly recover to their archetype's baseline values. Run with `--verbose` to watch state evolve turn by turn, or `--inspect` for the full picture including memory.
+
+## Scenario Library
+
+Chorus ships with 12 ready-to-run scenarios:
+
+| Scenario | Session file |
+|---|---|
+| Fermi Estimation Chamber | `sessions/fermi_estimation.yaml` |
+| Murder Mystery | `sessions/murder_mystery.yaml` |
+| Apollo 13 Mission Control | `sessions/apollo13.yaml` |
+| Startup Founders' Divorce | `sessions/startup_founders_divorce.yaml` |
+| AI Alignment Summit | `sessions/ai_alignment_summit.yaml` |
+| The Heist Planning Room | `sessions/heist_planning.yaml` |
+| Trolley Problem Factory | `sessions/trolley_problem_factory.yaml` |
+| Red Team vs Blue Team | `sessions/red_team_vs_blue_team.yaml` |
+| Constitutional Convention | `sessions/constitutional_convention.yaml` |
+| Agents Reviewing Their Own Architecture | `sessions/architecture_review.yaml` |
+| The Infinite Novel | `sessions/infinite_novel.yaml` |
+| The AI Senate | `sessions/ai_senate.yaml` |
+
+All scenarios use `qwen3:0.6b` via Ollama by default. Change `provider` and `model` in the session YAML to use Anthropic or OpenAI.
+
 ## Project Structure
 
 ```
 chorus/
 ├── chorus/
 │   ├── cli/              # Typer CLI entrypoint
-│   ├── core/             # Agent, personality, shared types
+│   ├── core/             # Agent, personality, state, memory, types
 │   ├── llm/              # LLM adapters (Anthropic, OpenAI, Ollama)
 │   ├── orchestration/    # Session runner and turn management
 │   ├── parsing/          # Structured + fuzzy XML response parsing
+│   ├── prompts/          # 4-stage prompt pipeline and token budget
 │   ├── config/           # YAML config loading and validation
 │   └── templates/        # Bundled agent and session definitions
 ├── tests/
@@ -169,7 +221,7 @@ pytest tests/ -v
 | Milestone | Focus | Status |
 |---|---|---|
 | M0 · Foundation & CLI | Two agents talking in a terminal | ✅ Done |
-| M1 · State, Memory & Identity | Agents that remember and evolve | Planned |
+| M1 · State, Memory & Identity | Agents that remember and evolve | ✅ Done |
 | M2 · Multi-LLM Backends | Per-agent model assignment | Planned |
 | M3 · Relationships & Trust | Asymmetric trust graph | Planned |
 | M4 · Task System & Phases | Brainstorm → Plan → Execute → Review | Planned |
