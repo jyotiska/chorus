@@ -1,0 +1,66 @@
+topic: "Apollo 13 has suffered an oxygen tank explosion. Every decision made in the next four minutes will determine whether three men live or die."
+
+context: |
+  The date is April 13, 1970. Mission elapsed time: 55:54:53. Apollo 13 is
+  200,321 miles from Earth, coasting toward the Moon. At 21:08 CST, Astronaut
+  Jack Swigert performed a routine cryo stir on oxygen tank number 2. It
+  exploded. Oxygen tank number 1 has ruptured. The Service Module is venting
+  into space.
+
+  Current status — as of 21:12 CST:
+  - Command Module (Odyssey) power: 15 minutes remaining at current draw
+  - O2 pressure in SM: dropping to zero. Fuel cells 1 and 3: dead. Cell 2: dying.
+  - Lunar Module (Aquarius) is undamaged. Descent batteries: 2,181 amp-hours.
+    Oxygen: sufficient for 4.5 days.
+  - Crew: James Lovell, Jack Swigert, Fred Haise. All alive. Swigert is shaking.
+  - CO2 removal: LM has two lithium hydroxide canisters rated for 2 people/36 hours.
+    With 3 crew for 87+ hours, CO2 will reach dangerous levels in approximately 30 hours.
+  - The CM's lithium hydroxide canisters are square. The LM's receptacles are round.
+    They are not interchangeable. This problem has no documented solution.
+  - A free-return trajectory burn requires the LM descent engine to fire for
+    exactly 30.7 seconds at a thrust level it was never designed to sustain
+    from this configuration.
+  - Re-entry requires the Command Module. Its heat shield may have been damaged
+    in the explosion. There is no way to inspect it from space.
+  - The LM's guidance computer has never been aligned using the procedure
+    that will be required. The manual is on Earth.
+
+  The team at Mission Control, Houston, has four minutes before the Command
+  Module loses power permanently. Everything after that is improvisation.
+
+max_turns: 30
+
+agents:
+  - flight_director
+  - guidance_officer
+  - propulsion_engineer
+  - flight_surgeon
+  - systems_engineer
+
+provider: ollama
+model: gemma3:4b
+
+expectations:
+  - Every proposed procedure must be grounded in the physical constraints
+    described — no hand-waving about "we'll figure it out"
+  - The first 8 turns must produce a complete powerdown sequence for the
+    Command Module that preserves exactly enough power for re-entry
+  - The CO2 scrubber incompatibility problem must be solved with only materials
+    available on the spacecraft — the team must reason from the parts manifest
+  - The propulsion engineer must calculate whether the descent engine burn
+    is survivable given its operational limits, and state the failure probability
+  - The systems engineer must raise at least one critical problem no other team
+    member has identified — and it must be something that would have been fatal
+    if not caught
+  - The flight surgeon must quantify the physiological limits of the crew —
+    cold exposure in the LM (predicted cabin temp 38F), sleep deprivation,
+    and CO2 exposure thresholds — these must constrain the technical decisions
+  - The guidance officer must solve the LM computer alignment problem without
+    the standard procedure — propose an alternative and defend its accuracy
+  - The heat shield uncertainty must be addressed before re-entry is approved —
+    the team must decide whether to attempt inspection, accept the risk, or
+    develop a contingency
+  - The flight director must make binding calls at each decision point —
+    no decision can be deferred to a committee
+  - The session must end with a complete, step-by-step return procedure that
+    could plausibly be read aloud to the crew

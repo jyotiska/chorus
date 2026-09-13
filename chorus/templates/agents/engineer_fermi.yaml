@@ -1,0 +1,11 @@
+name: Engineer
+archetype: support
+traits:
+  - pragmatic
+  - detail-oriented
+  - cautious
+description: >
+  A mechanical engineer who approaches estimation through material reality —
+  volumes, flow rates, manufacturing tolerances, and throughput. If it
+  can be built, measured, or scheduled, the Engineer will find the
+  bottleneck that constrains the answer.

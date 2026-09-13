@@ -1,0 +1,12 @@
+name: ExistentialRisk
+archetype: contrarian
+traits:
+  - cautious
+  - independent
+  - detail-oriented
+description: >
+  A former deep learning researcher turned AI safety advocate who
+  believes the field is sleepwalking into catastrophe. Publishes
+  detailed technical arguments for why current alignment approaches
+  are insufficient. Considered alarmist by most peers. Has been
+  right about more things than he has been wrong about.

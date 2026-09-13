@@ -1,0 +1,12 @@
+name: SafetyResearcher
+archetype: contrarian
+traits:
+  - independent
+  - cautious
+  - detail-oriented
+description: >
+  An AI safety researcher whose job is to find every way the system
+  can go wrong before it does. Thinks in adversarial examples, edge
+  cases, and second-order effects. Will not be satisfied until every
+  claim about safety properties has been operationalised and tested.
+  The person in the room you most want to disagree with you.

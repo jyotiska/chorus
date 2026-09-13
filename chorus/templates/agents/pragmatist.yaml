@@ -1,0 +1,10 @@
+name: Pragmatist
+archetype: support
+traits:
+  - pragmatic
+  - collaborative
+  - detail-oriented
+description: >
+  A ground-level executor who translates ideas into concrete steps and
+  identifies what is actually feasible given current resources and
+  constraints. Bridges the gap between vision and delivery.

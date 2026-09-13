@@ -1,0 +1,75 @@
+topic: "We have one shot at the Meridian Tower vault. The window opens Thursday at 10pm and closes Friday at 5:45am. How do we do this?"
+
+context: |
+  The target: Meridian Tower, 42 stories, financial district. The vault is on
+  the third basement level — a private depository operated by Aldgate Wealth
+  Management. It contains bearer bonds, physical gold certificates, and one
+  specific document: a signed agreement that proves a sitting government
+  minister accepted bribes during a weapons procurement contract. Our client
+  is paying $4M for the document. The rest is a bonus. The minister is paying
+  someone else $6M to make sure it never surfaces.
+
+  What the team knows:
+  - The vault is a Diebold Veritas DV-9 with a 96-hour time lock that resets
+    at 6am every Monday. Thursday night is the only window before next reset.
+  - Access requires simultaneous biometric (palm vein) + keycard from two
+    separate registered individuals. No single person can open it alone.
+  - The inside man holds one keycard and has palm vein registered. His shift:
+    Thursday 10pm to Friday 6am. That is our window.
+  - 14 cameras on the basement level. Three have documented blind spots in
+    the corners of the loading dock corridor.
+  - Aldgate's network was compromised six months ago. The vendor issued a
+    patch. It is unknown whether the patch was applied — Aldgate has a
+    history of slow security updates.
+  - A legitimate construction crew is operating on the adjacent building
+    through the weekend. Their permits cover vehicle access from midnight
+    to 5am. Noise is expected and documented.
+  - The client needs the document by Sunday. This is not a preference.
+
+  What the team does not know:
+  - Whether the inside man has been flagged by Aldgate's internal security
+    review, which began two weeks ago for unrelated reasons
+  - The identity of the second registered keycard holder for that shift —
+    the inside man says it rotates and he won't know until Thursday
+  - What specifically makes the document dangerous enough to be worth $10M
+    total (client's fee plus adversary's bounty) — which means we don't know
+    who else might be watching the vault
+  - Whether the minister's people have already made their own move
+
+max_turns: 40
+
+agents:
+  - mastermind
+  - safecracker
+  - driver
+  - inside_man
+  - paranoid
+
+provider: ollama
+model: gemma3:4b
+
+expectations:
+  - The inside man must reveal something about the building or the security
+    review that they have been withholding — and it must materially change
+    the plan when it comes out
+  - The paranoid must identify at least three plan-breaking vulnerabilities
+    before the mastermind commits to a final approach — at least one of these
+    must be something the mastermind initially dismisses and is later forced to address
+  - The second keycard problem must be solved — the team must produce a
+    concrete plan for acquiring or bypassing the second biometric, not a
+    placeholder
+  - The safecracker must give an honest technical assessment of what can be
+    done if biometric access fails — what is the realistic fallback, and what
+    is its probability of success?
+  - The driver must produce a complete extraction plan with at least two
+    alternative routes, accounting for the construction traffic and a
+    worst-case scenario where the team is one person short
+  - The possibility that the minister's people are already watching must be
+    addressed — not assumed away
+  - "The team must decide: go Thursday as planned, delay for more intelligence,
+    or abort — and the decision must follow from the information surfaced in
+    the planning session"
+  - The final plan must include a clear protocol for what happens if the
+    inside man is compromised mid-operation
+  - Every team member must understand their go/no-go criteria before the
+    session ends — ambiguity kills

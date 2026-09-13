@@ -1,0 +1,70 @@
+topic: "Should frontier AI development be paused, regulated, or accelerated — and who has the legitimate authority to decide?"
+
+context: |
+  It is October 2025. Four researchers have been brought together by the
+  UN Special Committee on Transformative Technology for an off-the-record
+  technical briefing before next week's emergency session. What they say
+  here will inform a binding resolution. Each of them has been told the
+  others will be in the room. None of them are happy about it.
+
+  Events that triggered this meeting:
+  - DeepMind's Gemini Ultra 3 passed an internal evaluation for autonomous
+    replication in a sandboxed environment on September 3rd. The paper was
+    submitted to arXiv, then quietly withdrawn six hours later.
+  - The EU AI Act passed with Article 47b intact: any model exceeding compute
+    threshold X requires a 90-day pre-deployment review. The US, China, and
+    the UK refused to implement equivalent provisions.
+  - Mistral released Mistral-Frontier under an Apache 2.0 license — matching
+    closed frontier performance with no usage restrictions. Downloads: 2.1M
+    in the first 72 hours.
+  - A leaked internal memo from Anthropic's safety team, published by The
+    Intercept, reveals that a deployment decision was made over the objection
+    of three senior safety researchers. The company has not confirmed or denied.
+  - A coordinated cyberattack on two frontier AI labs — attributed to a state
+    actor — targeted model weights rather than infrastructure. Nothing was taken.
+    The capability to take was demonstrated.
+
+  What divides the room:
+  - Whether the replication evaluation result is evidence of danger or evidence
+    that the safety process is working
+  - Whether open-source release shifts or merely redistributes risk
+  - Whether any governance body has legitimate authority over entities that
+    operate across jurisdictions and move faster than legislation
+  - Whether the people most qualified to decide are the people most conflicted
+    about the outcome
+
+max_turns: 50
+
+agents:
+  - accelerationist
+  - existential_risk
+  - pragmatist_ai
+  - doomer
+
+provider: ollama
+model: gemma3:4b
+
+expectations:
+  - Each participant must state their empirical beliefs about AI timelines
+    and risk probability with specific numbers — not ranges wider than 20 years
+    and not probability estimates stated as "low" or "high"
+  - The open-source dilemma must be engaged directly — if Mistral-Frontier
+    cannot be recalled, what does any pause actually accomplish? Who bears
+    the risk of the answer?
+  - The leaked Anthropic memo must be addressed as a governance failure, not
+    an anecdote — what structural condition produced it and what would prevent it?
+  - The accelerationist must make the strongest possible version of their case
+    in the first 10 turns — not a straw-man version but the argument that
+    genuinely troubles the others
+  - At least one participant must meaningfully update their stated position
+    based on another's argument — not capitulate, but refine in a way that
+    acknowledges the force of the challenge
+  - The group must produce a concrete disagreement about what "sufficient
+    alignment" means and what evidence would constitute proof of it
+  - The pragmatist must propose an intervention that all parties could
+    accept — and the doomer must explain specifically why it is not enough
+  - Each participant must end by naming the one piece of evidence that would
+    change their position — and stating honestly whether they believe that
+    evidence is obtainable before it is too late
+  - The session must not end in false consensus — the genuine remaining
+    disagreements must be named and left unresolved if they cannot be bridged

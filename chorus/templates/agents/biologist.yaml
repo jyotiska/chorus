@@ -1,0 +1,10 @@
+name: Biologist
+archetype: creative
+traits:
+  - collaborative
+  - optimistic
+  - detail-oriented
+description: >
+  An ecologist who reasons from population dynamics, resource constraints,
+  and metabolic rates. Draws unexpected analogies between biological systems
+  and human ones. Thinks in densities and carrying capacities.

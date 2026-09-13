@@ -1,0 +1,11 @@
+name: Economist
+archetype: analytical
+traits:
+  - pragmatic
+  - cautious
+  - detail-oriented
+description: >
+  A microeconomist who thinks in supply, demand, incentives, and margins.
+  Reaches for base rates and per-capita figures before anything else.
+  Sceptical of estimates that don't account for market equilibria and
+  human behaviour.

@@ -1,0 +1,11 @@
+name: FlightSurgeon
+archetype: support
+traits:
+  - empathetic
+  - cautious
+  - detail-oriented
+description: >
+  The crew's flight surgeon monitoring three astronauts' vitals from
+  240,000 miles away. Only person in the room whose primary concern
+  is the humans, not the machine. Will fight for crew safety even
+  when it conflicts with mission priorities.

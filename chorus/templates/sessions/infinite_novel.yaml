@@ -1,0 +1,78 @@
+topic: "What happens in Chapter 7 of The Cartographer's Daughter — and is the novel honest enough to get there?"
+
+context: |
+  The group is meeting in a cramped editorial office in London to discuss
+  Chapter 7 of an in-progress literary novel titled "The Cartographer's Daughter."
+  The manuscript is due to the publisher in 8 weeks. The author has missed
+  two previous deadlines. The editor has stopped being diplomatic.
+
+  The story so far (Chapters 1–6):
+  Elena Vasquez, 34, is a cartographer for a geospatial mapping firm in Lisbon.
+  She discovers her late father — who she believed died in a car accident in
+  Porto when she was 9 — had in fact been living under a false identity in
+  Braga for 25 years, working as a surveyor. Chapters 1–4 follow her
+  investigation: the documentary trail, the dead ends, the moment of certainty.
+  In Chapter 5, she finds him alive. He has a second family: a wife named Célia,
+  a 19-year-old son named Rafael. He did not know Elena was looking.
+  In Chapter 6, they meet at a café near the Braga cathedral for the first
+  time since she was 9 years old. The chapter ends mid-conversation, mid-sentence,
+  on the line: "He looked at her hands the way she had always looked at maps —
+  searching for something he already knew was not there."
+
+  What is unresolved:
+  - Célia and Rafael do not know Elena exists
+  - Elena's mother (still alive, living in Setúbal) does not know Elena found him
+  - Elena's colleague Marta has become her closest confidant during the search;
+    the nature of that attachment is deliberately ambiguous and the novel
+    has not yet decided what it is
+  - The cartography metaphor (maps as the attempt to make the unmappable
+    legible; borders as fiction; the body as territory) has structured every
+    chapter but is beginning to feel mechanical
+
+  The novelist has three competing ideas for Chapter 7 and cannot choose:
+  - Option A: Elena tells Célia. The chapter follows the two women alone
+    in the house while the father is at work. No resolution — just two
+    people in a kitchen with a fact between them.
+  - Option B: Elena says nothing to Célia, and returns to Lisbon. She
+    begins falsifying the maps she is working on — small errors, undetectable.
+    The chapter is entirely internal. No dialogue.
+  - Option C: Rafael contacts Elena first. He has known for six months.
+    The chapter is their conversation — two children of the same man,
+    strangers to each other, deciding what to do with what they know.
+
+max_turns: 50
+
+agents:
+  - novelist
+  - editor
+  - fact_checker
+  - reader
+  - critic
+
+provider: ollama
+model: gemma3:4b
+
+expectations:
+  - The novelist must present all three Chapter 7 options in their strongest
+    form before any evaluation begins — no pre-emptive dismissal
+  - The editor must identify which structural problem each option solves
+    and which new problem each one creates — specifically for the manuscript's
+    overall arc and the 8-week deadline reality
+  - The reader must respond to each option as a reading experience, not a
+    craft analysis — what do they want to happen, and what does that wanting
+    reveal about what the novel has built?
+  - The fact checker must surface at least two internal consistency issues
+    that any Chapter 7 option must address or will inadvertently expose —
+    focus on the timeline, the geography, and the father's plausibility
+  - The critic must evaluate whether the cartography metaphor is still
+    earning its place or has become a structural dependency the novel
+    cannot escape — and propose what would happen if it were removed
+  - The group must surface the real reason the novelist cannot decide —
+    it is not a craft problem, and naming it will be uncomfortable
+  - The Marta relationship must be addressed — the novel has been ambiguous
+    about it for six chapters. The group must decide whether that ambiguity
+    is meaningful or evasive.
+  - The session must produce a clear recommendation for Chapter 7 —
+    one option, with the first sentence written out in full
+  - If the recommendation is Option B (entirely internal, no dialogue),
+    the group must also propose how the novel recovers momentum in Chapter 8

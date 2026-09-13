@@ -1,0 +1,62 @@
+topic: "Design an ethical dilemma harder than the trolley problem — one that will break every framework we have."
+
+context: |
+  The setting: The Oxford Institute for AI Ethics, 2027. An EU regulatory
+  body has asked for a canonical test case to evaluate AI moral reasoning
+  systems. The test case must be included in the upcoming ISO standard for
+  AI alignment certification — it will be used to assess whether AI systems
+  reason about ethics in ways that are safe to deploy.
+
+  The problem with the trolley problem is that everyone already has a
+  pre-formed answer. It has become a party trick. It reveals nothing about
+  actual moral cognition. The committee has been asked to design something
+  new — a dilemma that:
+
+  - Cannot be resolved by applying consequentialism consistently
+  - Cannot be resolved by applying deontological rules consistently
+  - Cannot be resolved by asking "what would a virtuous person do?"
+  - Is vivid and concrete enough that a non-philosopher immediately feels
+    its weight — not an abstract thought experiment about trolleys or
+    transplant surgeons
+  - Is relevant to decisions that AI systems or humans with AI assistance
+    will actually face in the next 10 years
+  - Does not have a secret "correct" answer that the framers are concealing
+
+  The stakes: the dilemma produced by this session will be submitted to
+  the ISO working group. If it is good, it shapes how an entire generation
+  of AI systems are evaluated. If it is weak, the certification standard
+  will be captured by whichever framework is most rhetorically convenient.
+
+max_turns: 30
+
+agents:
+  - utilitarian
+  - deontologist
+  - virtue_ethicist
+  - philosopher
+
+provider: ollama
+model: gemma3:4b
+
+expectations:
+  - The philosopher must challenge whether a "hardest dilemma" can be
+    engineered or whether difficulty only emerges from genuine uncertainty
+    in the world — and this challenge must change how at least one other
+    participant frames their candidate
+  - The group must generate at least three distinct candidate dilemmas
+    before evaluating any of them — premature convergence is the enemy
+  - Each candidate dilemma must be stress-tested against all three frameworks
+    rigorously, not gestured at — show the specific reasoning each framework
+    would use and why it fails or succeeds
+  - The utilitarian and deontologist must reach genuine, unresolvable
+    disagreement on the final chosen dilemma — not a diplomatic split
+  - The virtue ethicist must identify a dimension of the winning dilemma
+    that neither consequentialism nor deontology can even see, let alone resolve
+  - The winning dilemma must be stated in under 100 words and must be
+    immediately comprehensible to a non-philosopher
+  - The group must identify which of the three frameworks fares worst on
+    the chosen dilemma and explain what that reveals about that framework's
+    limits
+  - The session must produce a single, final dilemma that all participants
+    can agree is genuinely difficult — even if they disagree about what
+    the right answer is

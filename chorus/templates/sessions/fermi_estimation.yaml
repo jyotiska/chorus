@@ -1,0 +1,62 @@
+topic: "How many piano tuners are there in Chicago — and whose estimate is closest to the truth?"
+
+context: |
+  The setting: a faculty lounge at the University of Chicago, 1953. Enrico Fermi
+  has just given a lecture on estimation under uncertainty. Five colleagues have
+  made a wager: $20 each into the pot, winner takes all. The winner is whoever
+  produces the estimate closest to the actual number, which will be verified
+  against the Yellow Pages by a neutral party.
+
+  The rules of the wager:
+  - No reference materials, no looking up statistics
+  - Every sub-estimate must be derived from quantities the estimator can
+    intuitively verify from their own experience
+  - Each estimator must commit to a final number and defend it
+  - Disagreements about intermediate quantities are encouraged and will
+    reveal whose intuitions are calibrated
+
+  What everyone agrees on:
+  - Chicago's population is roughly 3.5 million people
+  - The question is well-posed: we are counting people whose primary
+    livelihood is tuning pianos in the Chicago metropolitan area
+
+  What nobody agrees on:
+  - How many households own a piano and how often they tune it
+  - Whether to count by piano count, tuner workload, or economic demand
+  - Whether the question is answerable at all without knowing the
+    distribution of piano ownership across income brackets
+
+max_turns: 30
+
+agents:
+  - physicist
+  - economist
+  - biologist
+  - engineer_fermi
+  - philosopher
+
+provider: ollama
+model: gemma3:4b
+
+expectations:
+  - Each agent must build their estimate from a completely different
+    starting decomposition — no two approaches should share the same
+    first step
+  - The economist must model the supply side (tuner income, price per
+    tuning, hours per week) AND the demand side and show they converge
+  - The physicist must use order-of-magnitude reasoning and explicitly
+    label which factors contribute most to the uncertainty
+  - The biologist must find an analogy from biological systems (population
+    ecology, resource carrying capacity) that yields a surprisingly
+    useful estimate
+  - The engineer must identify the single most common mistake people make
+    when decomposing this problem and demonstrate why it introduces error
+  - The philosopher must challenge whether "number of piano tuners" is a
+    stable quantity at all — and must do so in a way that changes at least
+    one other estimator's approach
+  - The group must identify the single assumption that, if wrong by 2x,
+    would change the final estimate by an order of magnitude
+  - Every estimator must commit to a specific number with explicit
+    uncertainty bounds before the conversation ends
+  - The final comparison must reveal whose intuitions were most calibrated
+    and explain why their domain gave them the advantage
