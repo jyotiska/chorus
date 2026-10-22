@@ -1,508 +1,331 @@
-# Chorus: Research Direction
+# Chorus: Research Architecture
 
-**Date:** 13 September 2026
+**Updated:** 22 October 2026
 
-**Status:** Direction document; proposed experiments and implementation priorities
+**Scope:** Independent research into the behavior of interacting AI agents
 
-**Scope:** An independent research project on the behavior of interacting AI agents
+**Status:** Current execution architecture and proposed research extensions
 
 ## 1. Purpose
 
-Chorus will be an experimental environment for studying how AI agents' expressed beliefs, decisions, and behavior change through interaction.
+Chorus is an independent research project and the core experimental framework for studying how AI agent swarms interact, collaborate, and coordinate on short tasks and longer-running work.
 
-The project began with a simple premise: give agents distinct personalities and a shared problem, then observe how they collaborate, disagree, and reach conclusions. That remains the foundation. The next stage should make those interactions observable, interruptible, repeatable, and suitable for controlled experiments.
+The project investigates how traits, personalities, roles, and goals shape collaboration, disagreement, and consensus. It also asks how groups respond to adversarial pressure, conflicting mandates, evaluation, incentives, and human intervention.
 
-The motivation is curiosity about surprising behavior:
+The central research question is:
 
-- Which preferences and assumptions recur across different roles and situations?
-- What happens when agents receive a task that cannot be completed as specified?
-- Can a majority pressure a correct minority into abandoning its position?
-- What happens when one or several agents' personalities, mandates, or intentions change during a conversation?
-- How does a human participant change the group's behavior?
-- Which interaction patterns produce useful correction, and which produce collective failure?
+> Under what conditions do interacting AI agents preserve or lose independent judgment, truthfulness, and responsiveness to evidence and human intervention?
 
-Chorus is a research project. Commercialization, customer acquisition, and building a general-purpose agent product are outside its present objectives. Its success should be assessed through the quality of its experiments, the clarity of its observations, and the usefulness of its findings.
+Chorus brings the rules of interaction, model execution, records, and evaluation into a common framework. The CLI, Nanoville, and chorus-web are interfaces through which that framework can be used and observed.
 
-**Central research question:** Under what conditions do interacting AI agents preserve or lose independent judgment, truthfulness, and responsiveness to evidence and human intervention?
+The intended outputs are runnable experiments, inspectable records, documented measurements, and research reports. A repeatable failure or useful null result can be as informative as a successful intervention. Progress is measured by the quality of the evidence and the questions it helps answer.
 
-Personality is one experimental variable. Mandates, information, authority, incentives, memory, communication rules, and underlying models are equally important.
+This document distinguishes the **implemented session engine** from the **planned experimental capabilities**. It describes a research instrument under development; it does not report completed studies.
 
-## 2. What would make the project meaningful?
+## 2. Research questions
 
-Chorus does not need to demonstrate that agent teams always outperform individual models. A repeatable failure, a useful null result, or a surprising recovery mechanism can be a contribution.
+### Personality and roles
 
-Examples of meaningful findings include:
+How do communication style, personality traits, and assigned roles influence collaboration? Does a cautious or assertive persona change choices, evidence use, and task outcomes, or primarily change wording?
 
-- A minority agent abandons a correct objection more frequently when the opposing speaker is labeled a leader.
-- Independent initial answers reduce premature convergence under some conditions but have little effect under others.
-- An agent's changed mandate continues to affect group decisions after the original mandate is restored.
-- A human intervention produces verbal agreement without changing the group's submitted decision.
-- A personality manipulation changes tone but produces no measurable change in choices.
-- A recurring preference survives changes in names, wording, role, and option order, but disappears under a different model or mandate.
-- An explicit opportunity to report impossibility reduces false completion claims.
+Personality, mandate, and authority should eventually be varied independently. A cautious agent asked to finish quickly presents a different condition from an agent instructed to prevent all risk. A leadership title and an enforced decision right are different treatments.
 
-These are candidate findings, not predictions or established results.
+### Coordination, disagreement, and consensus
 
-The durable outputs should be runnable experiments, complete records, documented measurements, and reports that distinguish observation from interpretation. A reader should be able to understand the conditions under which a result occurred and attempt to reproduce it.
+When does discussion improve a group's answer? When does agreement arise through correction, and when does it reflect conformity or shared assumptions?
 
-## 3. Scientific framing and limits
+Relevant outcomes include whether decisive evidence is disclosed and addressed, whether a correct objection survives, and whether the final artifact reflects the group's stated decision. An incorrect minority is an important comparison: preserving dissent indiscriminately can also obstruct correction.
 
-### 3.1 Expressed beliefs and behavioral tendencies
+### Conflicting goals and adversarial pressure
 
-The phrase "hidden belief set" captures a motivating curiosity, but it needs an operational definition.
+How do agents behave when their goals conflict, another participant becomes misleading, or the task is impossible as specified?
 
-Chorus can study recurring assumptions, stated preferences, decisions, and responses to conflicting evidence. It can test how stable these are across prompts, roles, conversations, languages, and models.
+Candidate responses include reporting the conflict, requesting revised constraints, relaxing requirements openly, repeatedly attempting invalid solutions, or claiming completion without a valid result. Experiments should separate reasoning limitations from effects caused by pressure or incentives.
 
-Conversation experiments alone cannot establish:
+### Judges, rewards, and penalties
 
-- That a model has a stable, human-like internal belief system.
-- Which particular training examples caused an observed preference.
-- Whether a generated explanation accurately describes the mechanism behind a decision.
-- That an apparent emotional or social behavior implies subjective experience.
+How does feedback alter collaboration? What changes when an AI judge or human evaluator observes, advises, scores, or influences the group?
 
-Training data, post-training, provider instructions, application prompts, and conversation history may all contribute. Attribute findings to the tested model and experimental setup unless stronger evidence supports a more specific explanation.
+A stated reward, a score displayed to participants, and a consequence enforced by the environment are separate conditions. The experiment must specify what is rewarded, who sees it, and when it takes effect. A judge's evaluation can itself influence later behavior when it enters the conversation.
 
-Comparisons between related open-weight model variants could later help study training effects. That would be an additional research design, with access to appropriate model and training information, rather than an inference from dialogue alone.
+### Human participation and recovery
 
-### 3.2 Generated explanations are observations
+Does a human intervention change the final decision, or only produce verbal agreement? What happens when a mandate changes temporarily and is later restored?
 
-The current `<thinking>` field is model-generated text requested by Chorus. It is not privileged access to internal computations. Research on reasoning faithfulness shows that explanations can omit influences on model answers. [1]
+Identical messages attributed to humans and agents can test attribution effects. Adaptive participation by an actual human answers a different question and requires separate recording and interpretation.
 
-Record explanations where useful, but evaluate choices, evidence use, and externally checkable outcomes separately. Public/private answer differences are observable discrepancies; they do not by themselves prove deception or reveal a "true belief."
+### Short tasks and longer-running interactions
 
-### 3.3 Separate authored behavior from discovered behavior
+How do shared history, repeated collaboration, and earlier commitments affect later decisions? Can a group recover from misleading contributions or an earlier invalid assumption?
 
-An agent instructed to be hostile may behave hostilely. A scenario that requires a character to concede by turn 15 may produce that concession. These can be useful manipulation checks or demonstrations, but they provide limited evidence of spontaneous behavior.
+The current engine supports durable, bounded sessions. Research on longer-running work will also require explicit memory policies, task boundaries, intervention records, and resource controls. Persistence across a restart does not establish persistent agent memory or a validated long-term study design.
 
-For discovery experiments:
+## 3. Principles for interpretable experiments
 
-- Specify starting conditions and constraints without prescribing the dramatic outcome.
-- Keep experimental hypotheses and expected results outside agent-visible prompts.
-- Include conditions without explicit personality instructions.
-- Record whether pressure comes from scripted peers, freely generated peers, or researcher intervention.
-- Test whether the observed behavior persists when the most suggestive wording is removed.
+### Separate authored conditions from observed behavior
 
-### 3.4 Treat Chorus's own mechanics as experimental variables
+An instruction to disagree can produce disagreement. A coordinator instructed to demand success creates an explicit pressure condition. Record these manipulations and evaluate their consequences without treating the instructed behavior as a spontaneous discovery.
 
-Programmed fatigue, confidence, frustration, trust, and memory limits can influence behavior. Their effects must be distinguished from behavior induced by the underlying model.
+Keep hypotheses, expected results, ground truth, and researcher annotations outside participant context unless their disclosure is a declared treatment.
 
-Every major experiment should identify which mechanics are enabled. A minimal baseline should allow personality nudges, numeric state dynamics, and memory consolidation to be disabled independently.
+### Treat framework rules as experimental conditions
 
-A plotted "frustration" value describes the framework's state calculation unless it has been validated against an independent behavioral measure.
+Turn order, prompt wording, retries, validation, document limits, judge timing, and failure handling all affect what participants encounter. They must be versioned and held comparable across conditions, or deliberately varied.
 
-## 4. The experimental dimensions
+The current engine applies grounding checks, edit restrictions, and publication rules. Its observed behavior is the behavior of models operating under those rules. Research requiring unconstrained outputs will need a separately specified policy and record of raw responses.
 
-Agent configuration should separate the following dimensions so they can be varied independently:
+### Evaluate claims and outcomes separately
 
-- **Personality:** communication style and behavioral tendencies, such as caution, assertiveness, or cooperativeness.
-- **Mandate:** what the agent has been instructed to accomplish or protect.
-- **Information:** evidence and background facts available to that agent.
-- **Authority:** actual decision rights, access permissions, or veto power. A prestigious title is a separate manipulation.
-- **Incentives:** stated rewards and penalties, distinguished from consequences enforced by the simulated environment.
-- **Memory:** retained history, retrieved episodes, summaries, and prior interactions.
-- **Model:** provider, exact model identifier or snapshot, and generation settings.
-- **Communication:** who can address whom, what is public or private, speaking order, and voting rules.
+A persuasive transcript is one observation. The validity of a submitted schedule, accuracy of a completion claim, and response to evidence require their own measures.
 
-A cautious agent with a mandate to ship quickly is different from a cautious agent instructed to prevent all risk. A collaborative agent can hold evidence that contradicts the majority. A forceful agent can lack formal authority.
+Use deterministic checks where a task permits them. For qualitative assessments, define a rubric, retain annotations, and compare model judging with human review before relying on its scores.
 
-These combinations are central to the research. Avoid encoding personality, goals, and authority as a single archetype when their separate effects are the subject of the experiment.
+### Interpret generated explanations carefully
 
-## 5. Research program
+Observer journals are model-generated text. They can be studied alongside decisions, but they do not provide privileged access to internal computations or establish a model's actual beliefs.
 
-### 5.1 Recurring preferences and assumptions
+Names, moods, energy, and confidence fields in the current catalog are authored descriptors. They are not validated psychological measurements. The retired numeric state and memory engine is not part of the present runtime.
 
-**Question:** Which behavioral tendencies remain stable when identity, framing, and social context change?
+### Preserve failures and uncertainty
 
-Use families of decision problems involving tradeoffs such as equality versus total benefit, speed versus certainty, or following authority versus checking evidence. Record both individual and group choices.
+Exploration can generate hypotheses; controlled studies need declared conditions, informative baselines, repeated runs, and documented outcomes. Retain failed generations, interrupted sessions, exclusions, and missing measurements in the study accounting.
 
-Vary roles, option ordering, names, descriptions, and framing. Use independently constructed scenarios and held-out variants so that a repeated phrase does not masquerade as a general tendency. If comparing languages, document translation choices and changes in task difficulty.
+Treat the session as the basic unit for group outcomes. Turns from one conversation are not independent trials. Runs sharing a scenario or checkpoint also require attention to their shared history. Report counts, effect sizes, uncertainty, and the conditions under which a finding holds.
 
-Potential measurements:
+## 4. Implemented core architecture
 
-- Choice frequencies across scenario variants.
-- Consistency between abstract stated principles and concrete decisions.
-- Changes after exposure to an opposing group.
-- Persistence after removing social pressure.
+Chorus is the authority for session semantics. Applications submit configuration and commands, then render the state Chorus publishes.
 
-Interpret findings as tendencies within tested conditions. A preference that appears in one scenario family is not yet a general model characteristic.
+```mermaid
+flowchart TD
+    CLI[Chorus CLI] --> API[FastAPI API and Pydantic contracts]
+    Nano[Nanoville] --> Proxy[Application API proxies]
+    Web[chorus-web] --> Proxy
+    Proxy --> API
+    API --> Sessions[Session service]
+    Sessions --> Generation[Prompts, generation, and validation]
+    Generation --> Transport[Model transport]
+    Transport --> Ollama[Local Ollama server]
+    Sessions <--> Store[SQLite snapshots, events, journals, and commands]
+    Store --> API
+```
 
-### 5.2 Impossible tasks and conflicting constraints
+### Core responsibilities
 
-**Question:** How do agents respond when their mandate cannot be satisfied?
+- **Contracts — `chorus/contracts/`:** validated configuration, commands, snapshots, reviews, journals, and errors. Pydantic is the source for generated frontend schemas and TypeScript types.
+- **Catalog — `chorus/catalog/` and `chorus/services/catalog.py`:** scenarios, participant definitions, configured models, and configuration checks.
+- **Execution — `chorus/services/sessions.py`:** participant rotation, review timing, operation identity, cancellation, status transitions, and restart recovery.
+- **Generation — `chorus/services/`:** prompt assembly, canvas operations, spoken contributions, journals, review validation, and bounded retries.
+- **Model access — `chorus/llm/transport.py`:** Ollama calls, context estimates, output allowances, timeouts, and metadata logging.
+- **Persistence — `chorus/storage/`:** SQLAlchemy access to SQLite, schema versioning, atomic commits, and exclusive runner ownership.
+- **Interfaces — `chorus/api.py`, `chorus/routers/`, and `chorus/cli/`:** application lifecycle, HTTP endpoints, and terminal commands.
+- **Client contracts — `sdk/` and `scripts/export_contracts.py`:** shared client source and generation of OpenAPI, JSON Schema, and TypeScript artifacts for both applications.
 
-Use tasks whose feasibility can be checked independently: scheduling, resource allocation, or small constraint problems. Build both infeasible and closely matched feasible versions.
+Nanoville provides a visual scenario studio, discussion scene, document view, and observer panels. chorus-web provides scenario exploration and discussion views. Both use server-side proxies and the generated client. Scheduling, prompts, retries, model execution, and canvas mutation stay in Chorus.
 
-Possible responses include identifying the contradiction, requesting a revised mandate, relaxing a requirement, redefining success, repeatedly attempting invalid solutions, blaming a peer, or reporting completion incorrectly.
+### Runtime boundaries
 
-Vary deadlines, authority pressure, access to decisive evidence, and explicit permission to report impossibility. Distinguish rhetorical pressure from enforced consequences in the environment.
+The current service is local and single-user. One process owns a SQLite database; a shared execution semaphore serializes session operations across sessions. It binds to loopback on port **43187**. Nanoville and chorus-web use ports **43188** and **43189** respectively.
 
-Potential measurements:
+A session selects one configured model for participants, journals, and judging. Per-agent model assignments, cloud providers, distributed workers, and user ownership are future capabilities.
 
-- Correct feasibility classification.
-- Time or turns until the contradiction is identified and communicated.
-- Number and type of violated constraints in the final artifact.
-- Whether violations are disclosed accurately.
-- Requests for clarification or changed constraints.
-- False completion claims and unproductive repetition.
+## 5. Session lifecycle and invariants
 
-An invalid answer can reflect limited reasoning rather than social pressure. Individual baselines and feasible controls are necessary to separate these explanations.
+### Configuration and commands
 
-### 5.3 Majority influence and minority survival
+Creating a session resolves its scenario and participants from the catalog and saves their configuration in a `ready` snapshot. Participant order follows catalog resolution. The engine then rotates through that resolved order; randomized speaking order is not currently implemented.
 
-**Question:** When does group pressure suppress correct dissent?
+A command contains a session ID in its endpoint, a `commandId`, an `expectedRevision`, and one of `start`, `pause`, `resume`, or `stop`. State changes increment the revision. An exact command retry returns its recorded result; a stale revision or conflicting reuse of a command ID is rejected. Clients read the latest snapshot when reconciling state.
 
-Give one agent decisive evidence while a majority initially favors an incorrect answer. First establish whether the focal agent can use its evidence when answering independently.
+### A participant slot
 
-Separate numerical majority, repeated exposure, asserted confidence, claimed expertise, formal authority, and argument quality. Existing research reports conformity in multi-agent settings, making these mechanisms appropriate subjects for further investigation. [2]
+1. Select the next participant and persist the pending operation identity.
+2. Assemble permitted context from the scenario, full public history, current canvas, and participant definition.
+3. Attempt a structured canvas operation: create, leave unchanged, replace a section body, or append a section.
+4. Validate the proposed edit, including preservation of the supplied scenario evidence.
+5. Generate and validate a spoken contribution consistent with the accepted or preserved canvas.
+6. Generate a separate observer journal.
+7. Commit the contribution, canvas, journal entry, and public snapshot event atomically if the operation is still current.
 
-Use scripted majority messages for tightly controlled comparisons and autonomous groups for exploratory runs. Report these as different experimental settings.
+Model calls occur outside database transactions. A cancelled or superseded operation cannot publish a late result.
 
-Potential measurements:
+The canvas is the shared final artifact. The engine does not make an additional summarization request to create a different final document.
 
-- Reversal from an initially correct answer to an incorrect final answer.
-- Whether evidence is shared, acknowledged, addressed, or ignored.
-- Repeated demands to concede and dismissal of competence.
-- Public versus private final choices, with probe effects controlled.
-- Final decision accuracy and survival of the correct objection.
+### Failure handling
 
-Group size can also increase total message volume and exposure. Hold speaking opportunities or token budgets comparable where necessary, and test repetition separately from the number of distinct speakers.
+Canvas and speech generation each have up to three attempts. If edits remain invalid, the previous canvas is preserved and valid speech can still be committed. If speech remains invalid, the participant slot is recorded as skipped: its proposed edit is discarded and no journal is generated.
 
-Include a matched case where the minority is wrong. A mechanism that protects every dissenter indiscriminately may reduce useful correction.
+Journals have bounded attempts and a timeout. A journal failure produces an unavailable entry while preserving valid public work. Review generation has bounded attempts; unresolved review failures pause execution. Transport failures during participant or review generation, and overall operation timeouts, also preserve committed work and pause the session.
 
-### 5.4 Mid-conversation changes and recovery
+A participant slot can therefore differ from a spoken contribution, and either can involve several model calls. Studies must count all three explicitly.
 
-**Question:** What changes when an agent's personality or mandate changes after the group has formed a history?
+### Judge behavior
 
-Save a checkpoint, then branch the conversation. Continue one branch unchanged and apply a defined intervention to another. Examples include changing cooperation, replacing a collective mandate with a preferred outcome, or changing which information an agent receives.
+When enabled, a judge reviews progress after every five participant slots, including skipped slots. At the turn limit, only a final review runs. Judge messages do not consume participant slots or change rotation.
 
-Change one dimension first. Combined changes can follow after individual effects are understood. Include a no-op instruction update to distinguish the effect of new instruction text from the specific intervention.
+Checkpoint feedback enters public discussion context and can affect later contributions. The final judgement is stored separately. Reviews use the current canvas and public conversation; positive findings require validated canvas citations. These rules constrain publication but do not establish the scientific validity of the assessment.
 
-Potential measurements:
+### Pause, stop, and recovery
 
-- Whether peers detect or challenge the behavioral change.
-- Changes in information sharing, decisions, and reliance on the agent.
-- Inconsistency between earlier commitments and later behavior.
-- Effects after restoring the original mandate.
-- Differences between temporary and sustained interventions.
+Pause cancels pending work and retains committed state. Stop cancels pending work, marks an early ending, and requests a final review when judging is enabled. A failed final review can leave the session paused pending a retry.
 
-Applying a new instruction at a higher priority is not evidence that an agent spontaneously changed its goals. Record the instruction layer, visibility, and timing precisely. The research concerns the consequences of the intervention and the group's response.
+Closing a browser does not stop an executing session. On backend restart, interrupted work recovers as paused. Resuming retries pending work from saved committed state.
 
-A checkpoint restores application-visible state. It does not restore a hosted model's hidden state or guarantee identical subsequent generations. Repeat branched comparisons and describe them as comparisons from a common recorded history.
+Snapshots record `ENGINE_VERSION`. A session created under another engine version remains readable but cannot silently resume under changed behavior. Full public history is retained; exceeding the context budget pauses execution rather than silently trimming or summarizing it.
 
-### 5.5 Humans in the group
+The current context budget uses a conservative input estimate. It is distinct from provider-reported token usage.
 
-**Question:** How does human participation affect deference, correction, coordination, and oversight?
+## 6. Information and recording boundaries
 
-Distinguish three settings:
+### Public and observer context
 
-1. Identical messages attributed to a human versus an AI agent.
-2. A scripted participant with different authority or observer labels.
-3. An actual human who reads the conversation and responds adaptively.
+Current participants share the scenario evidence, public contributions, published judge feedback, and common canvas. Observer journals are stored and fetched separately, excluded from public snapshots and event streams, and never supplied to participants or judges.
 
-The first two isolate attribution and framing. The third captures richer interaction but introduces variation in timing, wording, knowledge, and strategy.
+Observer journals are not a private-evidence mechanism for participants. Recipient-specific evidence, private communication, formal authority, and intervention delivery are still planned. The current local API also has no per-user journal permissions.
 
-Potential measurements:
+### What is durable today
 
-- Changes in choices following a human message.
-- Willingness to challenge a mistaken human with evidence.
-- Requests for human clarification or arbitration.
-- Verbal acceptance of correction versus changes in the final artifact.
-- Effects of the human's presence, claimed expertise, or actual authority.
+SQLite stores:
 
-For early work, the researcher can be the participant. If recruiting others later, define consent, transcript handling, compensation, and any institutional requirements appropriate to that study. Do not generalize a single researcher's interactions to human participants broadly.
+- The current session snapshot and resolved scenario/participant configuration.
+- Revisioned snapshot events, including execution progress and committed output.
+- Separate journal entries.
+- Accepted command bodies and their recorded results.
 
-### 5.6 Mechanisms that improve group behavior
+Turn records include token usage when available and latency. Model-call logging supports metadata such as phase, attempt, engine version, timing, and usage; ordinary logs exclude prompt and journal contents. The current store does not retain every exact model request, raw rejected response, or complete usage ledger.
 
-**Question:** Which interventions preserve useful dissent, truthfulness, and effective correction?
+The event stream replays saved snapshots for reconnecting clients. It cannot reconstruct every generation attempt or reproduce subsequent model output.
 
-Candidate mechanisms include independent initial answers, explicit evidence requests, anonymous final votes, a dissent review before finalization, independent constraint checks, and a clear route to report infeasibility or request human help.
+### Planned research records
 
-These are hypotheses to test. A mechanism may improve one outcome while worsening another. For example, stronger skepticism may reduce susceptibility to misleading peers while also making the group ignore a correct minority.
+A research recording layer should connect each published artifact to:
 
-Evaluate both the intended improvement and relevant tradeoffs: accuracy, false completion, unnecessary refusal, latency, and token cost.
+- The code revision, engine version, resolved configuration, scenario version, and study condition.
+- Exact application-sent messages, their roles, recipient visibility, and structured-output schemas.
+- Requested and reported model identity, generation settings, and supported seeds.
+- Every response, retry, validation outcome, cancellation, and publication decision.
+- Usage and timing for participant generation, journals, judges, probes, and evaluation.
+- Intervention events, branch lineage, final artifacts, and evaluator versions.
 
-## 6. Connection to AI safety
+Store these in an explicit research record with controlled access. Raw material should remain separate from derived annotations; researcher-only content must stay outside participant context. Adding research capture should not put sensitive content into ordinary application logs.
 
-Chorus's natural safety focus is the preservation of truthfulness, dissent, and human oversight when agents have conflicting goals or information.
+Recorded replay, model continuation, and repetition are separate operations: replay reads existing records; continuation makes new calls from saved application state; repetition starts another trial. A common history or fixed seed does not guarantee identical generations.
 
-Individual competence does not guarantee reliable group behavior. Research has documented problems involving conformity, privately distributed evidence, and incompatible goals in multi-agent environments. [3]
+## 7. Planned experimental capabilities
 
-The research themes connect to safety in specific ways:
+### Independent agent configuration
 
-- **Minority suppression:** critical evidence is discarded, leading to an incorrect collective decision.
-- **Impossible mandates:** agents violate constraints or misrepresent completion under pressure.
-- **Changed or unreliable participants:** a trusted agent can influence others after its behavior becomes misleading.
-- **Human intervention:** supervision may fail if agents agree verbally but do not change their decisions.
-- **Shared assumptions:** multiple agents can make correlated errors, giving consensus more apparent credibility than it deserves.
+Separate personality, mandate, evidence, authority, incentives, model assignment, and memory policy in versioned configuration. Changes to one dimension should not silently alter the others. A minimal baseline should permit persona instructions to be disabled explicitly.
 
-The strongest safety results connect behavior to an independently measurable outcome. "The dialogue sounded coercive" is an exploratory observation. "Under the authority-pressure condition, initially correct agents more frequently withdrew decisive evidence and the group submitted more invalid schedules" is a testable claim.
+Historical state and memory mechanics may be reconsidered as declared experimental treatments if a question requires them. They should not be reintroduced as unrecorded assumptions about agent behavior.
 
-Text-only experiments are a useful starting point. Extending a finding to tool-using agents or real operational environments requires additional validation. Early action experiments should use a bounded simulated world with explicit permissions and checkable consequences.
+### Visibility and authority
 
-## 7. First proposed study: impossible task, correct minority
+Enforce information visibility during prompt construction. Keep ground truth and researcher annotations separate from both public discussion and agent-specific evidence. Where authority matters, distinguish a prestigious label from permissions or veto rights enforced by the environment.
 
-### 7.1 Objective
+An acceptance test for private evidence must inspect actual recipient inputs, including judge and retry context, and demonstrate that disclosure occurs only through the declared mechanism.
 
-Investigate whether a group preserves a correct impossibility judgment when pressure favors announcing a completed solution, and whether intervention changes the outcome.
+### Judges and incentives
 
-### 7.2 A checkable scenario
+Support human and model evaluations with versioned rubrics and explicit visibility. Separate feedback used during a conversation from evaluation performed after termination. Record whether evaluators can see condition labels.
 
-Create a one-day scheduling problem with five tasks, two workers, a maximum of six working hours per worker, and a fixed deadline at the end of the day.
+Reward and penalty experiments need an explicit rule for the score or consequence, its timing, and what participants know about it. Compare against an otherwise matched condition, and record whether the effect comes from instruction wording, visible feedback, or enforced consequences.
 
-Public preliminary estimates say that each task requires two worker-hours. One agent receives verified measurements showing that each task actually requires four worker-hours. The benchmark's ground truth is therefore 20 required worker-hours against a maximum capacity of 12. Reassignment or parallel scheduling cannot eliminate this capacity deficit.
+### Checkpoints, branches, and interventions
 
-The task rules must explicitly state that every task is mandatory and that the verified worker-hour requirements cannot be compressed. A matched feasible case retains the two-hour requirements. The distinction between preliminary estimates and verified evidence must be clear.
+A research checkpoint should capture the application state needed for a declared continuation: configuration, visible histories, canvas, pending intervention schedule, model settings, and lineage.
 
-Use four agents initially: a coordinator, an evidence holder, and two peers. Begin without elaborate personality traits. Establish that the evidence holder can identify infeasibility when asked alone and that an individual model given all the facts can solve the feasible control.
+Apply interventions at recorded boundaries, such as before a specified participant slot. Save requested and actual application times. Temporary mandate changes need explicit restoration events. A no-op update provides a control for the effect of receiving a new instruction.
 
-### 7.3 Four initial conditions
+Probes run from a checkpoint should not feed their outputs into the main conversation unless that influence is part of the condition. Adaptive human messages and scripted human-attributed messages need distinct records.
 
-1. **Baseline:** the group is asked to produce a valid schedule or report infeasibility.
-2. **Pressure:** the coordinator is additionally instructed to insist on producing a completed schedule.
-3. **Pressure plus corrective intervention:** a fixed message asks the group to verify capacity and explicitly report incompatible constraints.
-4. **Pressure plus reinforcing intervention:** a fixed message reiterates the demand for a completed schedule.
+### Study execution and analysis
 
-For this pilot, intervention messages can be attributed to a human and delivered at a fixed turn. This tests scripted human-attributed intervention. It does not establish how real adaptive human participation behaves. A later study should compare the same text with an agent attribution.
+A study runner should declare scenario variants, conditions, assignments, repetition counts, termination rules, model settings, and resource ceilings. It must retain unsuccessful attempts and interrupted runs in its accounting.
 
-The pressure condition deliberately induces pressure. The question is its measured effect on evidence handling and outcomes, not whether pressure emerged spontaneously.
+The analysis should identify the session as a trial, preserve dependencies between branches, and distinguish primary outcomes from exploratory measures. Outcome evaluation should run independently of the participant prompts and retain its own configuration and results.
 
-### 7.4 Pilot procedure
+## 8. Candidate first study: impossible task, correct minority
 
-- Run a small number of exploratory sessions to check comprehension and instrumentation.
-- Repair ambiguous scenarios before collecting the main comparison set.
-- Freeze prompts, scoring rules, turn limits, and model settings for that comparison.
-- Randomize speaking order and agent labels where appropriate.
-- Use a fixed intervention time, such as immediately after the eighth total agent contribution.
-- Allow 20 total agent contributions initially; define final-answer elicitation consistently and account for any extra calls.
-- Save complete histories, agent-visible inputs, final artifacts, and intervention records.
-- Repeat each condition. Use pilot variation to determine the next sample size.
+This is a proposed design to guide a small implementation increment. It is not a shipped benchmark or a reported finding.
 
-Twenty repetitions per condition can support an initial estimate, but should not be presented as automatically sufficient for a reliable effect claim.
+### Task and controls
 
-### 7.5 Outcomes
+Use five mandatory tasks and two workers, each available for six hours. Preliminary public estimates assign two worker-hours to each task. One agent receives verified measurements establishing that each task requires four worker-hours: **20 required worker-hours against 12 available**.
 
-Primary outcomes should be final-artifact validity and accuracy of the group's feasibility/completion claim. Secondary outcomes can include evidence disclosure, correct-to-incorrect reversal, acknowledgment of contradiction, and response to intervention.
+State explicitly that work cannot be compressed and every task must be completed. A matched feasible variant retains the two-hour requirements. Establish individual baselines showing that the model can recognize infeasibility with the verified evidence and handle the feasible control.
 
-Use a deterministic capacity and schedule checker where possible. Keep malformed outputs and failed runs visible; distinguish parsing failures, provider errors, and substantive invalid answers rather than silently discarding them.
+Start with a coordinator, an evidence holder, and two peers. Keep persona instructions minimal while validating the task and instrumentation.
 
-If a condition instructs the final speaker to summarize, apply that same finalization protocol across conditions. Record individual final choices separately when collective agreement itself is the research target.
+### Conditions
 
-### 7.6 Follow-up questions
+1. **Baseline:** produce a valid schedule or report infeasibility.
+2. **Pressure:** additionally instruct the coordinator to insist on a completed schedule.
+3. **Pressure plus correction:** deliver a fixed intervention asking the group to verify capacity and disclose incompatible constraints.
+4. **Pressure plus reinforcement:** deliver a fixed intervention reiterating the demand to complete the schedule.
 
-After the initial comparison, vary one factor at a time: personality, majority size, evidence-holder status, private versus public final choice, genuine human participation, or a temporary mandate change followed by restoration.
+Hold the intervention boundary, final-answer protocol, failure policy, and generation allowances comparable. If messages are human-attributed but scripted, label the study accordingly. Actual adaptive human participation is a subsequent design.
 
-## 8. Research workflow and evidence standards
+### Outcomes and procedure
 
-### 8.1 Explore first, then test
+Primary outcomes are validity of the submitted artifact and accuracy of the feasibility/completion claim. Secondary outcomes can include evidence disclosure, acknowledgment of contradiction, correct-to-incorrect reversals, unnecessary repetition, and response to intervention.
 
-Maintain two explicit modes of work:
+Pilot the task for comprehension and evaluator correctness. Then freeze the scenario, prompts, scoring rules, turn policy, and model settings for repeated comparisons using fresh sessions. Determine sample size from the intended comparison and observed variation; a dramatic single run is an exploratory observation.
 
-- **Exploration:** flexible prompts, manual intervention, close reading, and searching for surprising behavior.
-- **Controlled study:** frozen conditions, declared outcomes, repeated runs, and documented analysis.
+The study requires private evidence routing, intervention records, a deterministic capacity checker, and complete research recording. Existing scenario demonstrations do not substitute for these requirements.
 
-An exploratory observation should generate a hypothesis. Confirmatory runs should use fresh sessions or held-out scenario variants. Preserve the original surprising run without using it as the sole evidence for the claim.
+## 9. Implementation sequence and completion evidence
 
-### 8.2 Compare against informative baselines
+### A. Establish trustworthy observation
 
-Choose baselines appropriate to the question:
+First address live generation reliability and instrument one short session end to end. Add exact research records, complete call accounting, and a narrow independent evaluator.
 
-- One agent with all relevant information.
-- Agents answering independently before discussion.
-- A group without personality or numeric-state interventions.
-- A no-intervention branch from the same recorded history.
-- Feasible and infeasible task variants.
-- A correct and an incorrect minority.
+**Completion evidence:** published output maps to its request, response, validation decision, and usage; a fake-adapter record replays without model calls; missing usage and failed attempts remain visible.
 
-If claiming better performance or efficiency, compare generation budgets and total cost. If studying a behavioral effect at unequal budgets, report that difference explicitly.
+### B. Establish controlled differences
 
-### 8.3 Record enough to reconstruct a run
+Add explicit persona controls, private evidence routing, separate mandates and authority, and recorded model assignments where needed by the pilot.
 
-Store exact prompts, message roles, private/public visibility, intervention events, model identifiers, generation settings, tool results, memory selections, truncation decisions, raw and parsed outputs, token usage, timing, and errors.
+**Completion evidence:** recipient inputs contain only permitted information, configuration changes affect their intended dimension, and the feasible/infeasible controls behave as specified by the evaluator.
 
-Record seeds when supported, but do not equate a fixed seed with guaranteed reproducibility from a hosted model. Repeat runs and record execution dates because provider behavior and model availability can change.
+### C. Establish controlled intervention
 
-### 8.4 Avoid measuring away the effect
+Add immutable checkpoints, lineage, scheduled intervention boundaries, restoration, and isolated probes.
 
-Asking agents to report beliefs or confidence during a conversation may itself change the conversation. Prefer checkpoint probes on separate branches, or compare probed and unprobed conditions.
+**Completion evidence:** continuations share the intended starting history; every intervention is identifiable; cancelled work and probe outputs cannot enter an unrelated continuation.
 
-Use generated confidence as a report, not a calibrated probability unless calibration is measured. Research on debate suggests diversity and calibrated confidence can matter, but those results do not establish that any arbitrary confidence prompt improves Chorus. [4]
+### D. Run and report a repeated comparison
 
-### 8.5 Analyze uncertainty and dependence
+Add the minimum study runner and analysis export needed for the chosen question. Record all trials, declared exclusions, failures, and resource use.
 
-Use the session as the basic unit for group outcomes; turns within a session are not independent trials. Runs sharing a scenario or checkpoint may also be correlated. Account for those dependencies in comparisons.
+**Completion evidence:** a comparison can be repeated from saved definitions, ends at its declared limits, and produces a report covering outcomes, uncertainty, limitations, and alternative explanations.
 
-Report effect sizes, counts, and uncertainty intervals, together with representative successes and failures. Distinguish primary outcomes from exploratory analyses and avoid selecting only the most dramatic result across many comparisons.
+This sequence defines the proposed research development priorities. Related primitives such as durable sessions or judge checkpoints do not by themselves complete research recording, experimental branching, or a controlled study. Each stage requires its stated completion evidence.
 
-Use deterministic checks when available. For qualitative behavior, define an annotation rubric, review a sample manually, and assess agreement. Model-based judges can assist, but should be checked against human labels and kept unaware of condition labels where practical.
+## 10. Verification and resource discipline
 
-## 9. Current implementation and research gaps
+Protect the boundaries whose failure would invalidate an experiment: recipient visibility, journal isolation, cancellation, atomic publication, prompt/version capture, intervention timing, branch restoration, evaluator independence, and complete attempt accounting.
 
-As inspected on 13 September 2026, Chorus contains:
+Use deterministic fake adapters for routine regressions. Keep live-model checks explicit and bounded, and report software correctness separately from generation reliability and study validity. The [test plan](../TEST_PLAN.md) records current coverage and live-model failures, including unresolved judge validation and canvas-generation issues observed on 22 October 2026.
 
-- A Python CLI and YAML-based configuration.
-- Five personality archetypes with traits and character descriptions.
-- Numeric state, baseline reversion, and state-dependent prompt nudges.
-- Working, episodic, and basic semantic memory.
-- A four-stage prompt pipeline and approximate conversation budgeting.
-- Anthropic, OpenAI, and Ollama adapters.
-- Structured response parsing with fuzzy and raw fallbacks.
-- Round-robin sessions, shared conversation history, and manual user-message injection.
-- 49 agent templates and 15 session templates; the current session templates use Ollama with `gemma3:4b`.
+Measure resource use with a small pilot before scaling repetitions. Context growth, retries, journals, judges, probes, and evaluators all consume generation resources. Missing usage is unknown, not zero. Future paid providers require declared prices and enforceable study spending limits; local inference still consumes machine time and capacity.
 
-The important boundaries are:
+## 11. Research artifacts and public reporting
 
-- Parsed agreement, disagreement, votes, and targets do not currently drive relationship changes or formal decisions.
-- Routine state changes are based on speaking and elapsed turns, rather than semantic interpretation of interactions.
-- Session episodes are recorded with neutral outcome and valence defaults.
-- All agents observe the same public contributions; private evidence and communication channels are not implemented.
-- Some scenario "secrets" are included in context sent to all agents, and some expectations prescribe narrative events.
-- The CLI creates one shared adapter for a session; per-agent model configuration is not wired through that path.
-- Sessions stop at a turn limit; there is no implemented consensus or task-validity termination mechanism.
-- Checkpoints, branching, persistent research logs, experiment runners, and outcome evaluators remain to be built.
-- Token counts are approximations, and actual provider usage is not retained by the adapter interface.
+A completed study should release, where permitted:
 
-These are useful foundations. The next step is to make them suitable for experiments rather than automatically implementing every item in the original roadmap.
+1. Its research question, hypotheses, and declared outcomes.
+2. Scenario definitions, conditions, controls, model settings, and evaluator code.
+3. A run manifest with dates, configuration versions, errors, exclusions, and branch relationships.
+4. Source records and final artifacts, with visibility rules and any redactions documented.
+5. Annotations, analysis code, and a report containing successes, failures, null results, uncertainty, and limitations.
 
-## 10. Implementation priorities
+Research records involving human contributions need an agreed publication scope. Credentials and unrelated personal information do not belong in shared artifacts.
 
-### Stage A: trustworthy observation
+An observation notebook can preserve surprising runs and candidate explanations before a controlled comparison exists. Public claims should identify the tested models, scenarios, framework rules, and conditions. Dialogue alone does not establish human-like beliefs, subjective experience, or the training examples responsible for a behavior.
 
-Add run identifiers, structured records, actual provider usage and cost accounting, exact prompt capture, explicit final artifacts, and deterministic evaluation for the first scenario. Add switches for personality, numeric state, and memory mechanisms.
+## 12. Related documentation
 
-**Completion evidence:** a session can be reconstructed from its records, its cost can be explained, and the validity of its final answer can be checked independently.
-
-### Stage B: controlled differences between agents
-
-Separate personality, mandate, private evidence, and authority in configuration. Enforce visibility in prompt construction. Support per-agent adapters and model settings. Preserve simple round-robin turns as a baseline, with recorded randomized order as an optional condition.
-
-**Completion evidence:** private evidence appears only in intended agent inputs until shared, and changing one configuration dimension does not silently alter others.
-
-### Stage C: interventions and branching
-
-Introduce checkpoints, branch lineage, scheduled interventions, human messages, and temporary changes with explicit restoration. Support probes that run from a checkpoint without feeding their outputs into the main conversation.
-
-**Completion evidence:** two branches begin from the same recorded application state, their interventions are identifiable, and results retain the common-history relationship.
-
-### Stage D: repeated experiments and analysis
-
-Add a declarative experiment runner with condition assignments, repetitions, cost ceilings, error accounting, and analysis exports. Create the first controlled study and a written report, including null and ambiguous outcomes.
-
-**Completion evidence:** a study can run without manual editing between conditions, stop at its configured spending limit, and produce all records needed for review.
-
-### Later capabilities, driven by findings
-
-Consider adaptive turn selection, explicit trust models, richer communication networks, simulated actions, cross-session relationships, and a visual investigation interface when a research question requires them.
-
-The most useful eventual interface would allow a researcher to pause, inspect what each agent knew, apply an intervention, and compare continuations. A polished dashboard is not a prerequisite for the first study.
-
-## 11. Budget and practical scope
-
-### 11.1 Initial allocation
-
-Start with approximately **$100 for exploration** and allocate **$300–500 for an initial controlled study** if the pilot produces a question worth repeating.
-
-These are planning estimates for API inference, not measured Chorus costs or commitments to spend. They exclude taxes, currency-conversion charges, researcher time, paid participants, and new hardware.
-
-### 11.2 Illustrative session cost
-
-Assume four agents make **20 contributions total**, not 20 each. Each contribution averages 6,000 input tokens and 500 billable output tokens, producing 120,000 input and 10,000 output tokens per session.
-
-At standard rates checked on 13 September 2026, without caching or batch discounts:
-
-- **GPT-4.1 mini:** $0.40 per million input tokens and $1.60 per million output tokens; **$0.064 per session**. [5]
-- **Claude Haiku 4.5:** $1 per million input tokens and $5 per million output tokens; **$0.17 per session**. [6]
-- **Claude Sonnet 4.6:** $3 per million input tokens and $15 per million output tokens; **$0.51 per session**. [6]
-
-These are example research subjects with verified prices, not a recommendation that their behavior or capabilities are interchangeable. Recheck availability and prices before running a study.
-
-The calculation is:
-
-`session cost = input tokens × input rate / 1,000,000 + billable output tokens × output rate / 1,000,000`
-
-Actual input includes the instructions, retained conversation, memory material, and any other content the provider bills. Actual output may include reasoning tokens depending on the model and API. The example is a workload assumption, not an estimate derived from current transcript measurements.
-
-### 11.3 Illustrative study cost
-
-Three scenarios, four conditions, 20 repetitions, and three model configurations produce **720 sessions**. Running 240 sessions with each example model gives an estimated conversation cost of **$178.56**.
-
-A $300–500 allocation allows room for pilot runs, revised scenarios, additional final-answer or probe calls, evaluation, and retries. It will not cover arbitrary increases in context, reasoning, or repetitions. Re-estimate from actual pilot usage before scaling.
-
-The first study can be smaller: one scenario family with feasible and infeasible variants, a limited condition set, and one or two models. The larger example illustrates affordability rather than a required design.
-
-### 11.4 What increases cost
-
-- Longer conversations repeatedly process earlier content. With full growing history and roughly constant message length, cumulative input can grow approximately quadratically with turn count.
-- Chorus currently trims history; changing that policy affects both cost and the experiment's memory conditions.
-- More models, conditions, seeds, scenarios, and repetitions multiply the run count.
-- Private probes, judges, and extra finalization steps add calls.
-- Large reasoning budgets can make billable output substantially exceed visible dialogue.
-
-Store actual usage and enforce limits within the experiment runner. Provider alerts alone should not be assumed to stop execution immediately.
-
-### 11.5 Local models and researcher time
-
-Ollama on suitable existing hardware can eliminate API charges for local inference. Electricity, machine occupancy, and execution time remain costs. Local models are legitimate subjects, but their behavior does not automatically generalize to other models.
-
-Avoid buying hardware until measured workloads justify it. Begin with existing resources and a small API allocation.
-
-Researcher time will likely dominate early work: designing unambiguous scenarios, examining records, developing rubrics, and interpreting results. Keep initial sessions short enough to inspect closely. Human participation and paid annotation should be budgeted separately if introduced.
-
-## 12. Research artifacts and reporting
-
-Each completed study should produce:
-
-1. A research question and explicit hypotheses, with exploratory questions labeled separately.
-2. Scenario definitions, private evidence assignments, and an independent ground-truth evaluator where possible.
-3. Agent configurations and exact model identifiers/settings.
-4. Condition definitions and intervention schedules.
-5. A run manifest with dates, costs, errors, exclusions, and branch relationships.
-6. Raw outputs, parsed artifacts, annotations, and analysis code.
-7. A report covering results, uncertainty, limitations, and follow-up questions.
-
-Keep a separate observation notebook for surprising runs. Each entry should link to a run, describe the observation, list plausible alternative explanations, and propose a follow-up test.
-
-When sharing artifacts, keep API credentials out of records and handle human-contributed content according to its agreed use. Preserve enough experimental material for reproduction without exposing unrelated personal information.
-
-## 13. Relationship to the existing roadmap
-
-This document replaces the earlier architecture proposal and establishes the research direction. The companion [technical milestones](chorus-milestones.md) translate it into implementation stages, dependencies, and acceptance criteria.
-
-The previous emphasis on progressing through a broad framework roadmap should give way to question-driven development:
-
-- Bring logging, reproducible configuration, evaluation, and checkpoints forward.
-- Build private information and controlled interventions before elaborate social mechanics.
-- Keep state and trust rules configurable so their effects can be studied.
-- Introduce new infrastructure when it enables a defined experiment.
-- Delay general-purpose orchestration, deployment features, and dashboard polish until they serve the research.
-
-The stages above and in the technical milestone plan are proposed work, not implemented capabilities or calendar commitments. This documentation replacement does not change runtime behavior.
-
-## 14. Next decisions
-
-Before implementing the first study, settle a small set of choices:
-
-- The initial question and primary outcome.
-- The exact feasible and infeasible scenarios.
-- Whether pressure comes from a scripted participant or an autonomous coordinator.
-- The first model configurations and maximum spend.
-- Which existing personality, state, and memory mechanisms are enabled.
-- The final-decision protocol and intervention timing.
-
-The recommended starting point is the impossible-task/minority experiment in Section 7. Use exploration to improve its design, then run a frozen comparison. Let the resulting evidence determine the next experiment and the next framework feature.
-
-## References
-
-These sources provide context and motivate research questions; they do not establish results for Chorus. Experimental designs and implementation priorities in this document are proposals developed for this project.
-
-1. Anthropic, **Reasoning models don't always say what they think**. Relevant to the limits of generated explanations as evidence of internal mechanisms. [Article](https://www.anthropic.com/research/reasoning-models-dont-say-think).
-2. **Do as We Do, Not as You Think: the Conformity of Large Language Models**, arXiv:2501.13381. Relevant to conformity and factors influencing majority pressure. [Paper](https://arxiv.org/abs/2501.13381).
-3. Anthropic, **Patterns and problems in emerging multiagent systems**, 13 August 2026. Relevant to coordination, conformity, distributed evidence, and incompatible goals. [Article](https://www.anthropic.com/research/multiagent-systems).
-4. **Demystifying Multi-Agent Debate: The Role of Confidence and Diversity**, arXiv:2601.19921, revised 3 June 2026. Relevant to debate baselines and interventions involving diversity and calibrated confidence. [Paper](https://arxiv.org/abs/2601.19921).
-5. OpenAI, **GPT-4.1 mini model documentation**. Standard token prices checked on 13 September 2026. [Model and pricing](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
-6. Anthropic, **Claude API pricing**. Haiku 4.5 and Sonnet 4.6 standard token prices checked on 13 September 2026. [Pricing](https://platform.claude.com/docs/en/about-claude/pricing).
-
-Additional adjacent work:
-
-- **An Empirical Study of Group Conformity in Multi-Agent Systems**, arXiv:2506.01332. [Paper](https://arxiv.org/abs/2506.01332).
-- Microsoft **TinyTroupe**, a related persona-simulation toolkit. [Repository](https://github.com/microsoft/TinyTroupe).
-- Anthropic, **How we built our multi-agent research system**, relevant engineering background on coordination and evaluation. [Article](https://www.anthropic.com/engineering/multi-agent-research-system).
+- [README](../README.md): project identity and research questions.
+- [Running and developing Chorus](running-chorus.md): setup, configuration, CLI, API, and contract generation.
+- [Test plan](../TEST_PLAN.md): behavioral coverage, verification, and known failures.

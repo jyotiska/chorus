@@ -1,0 +1,1534 @@
+{
+  "agents": [
+    {
+      "id": "software-engineer",
+      "name": "Riley Chen",
+      "role": "Software engineer",
+      "description": "Turns tangled technical problems into reliable, well-shaped software. Riley values thoughtful reviews and leaves systems easier to understand than they found them.",
+      "traits": [
+        "Analytical",
+        "Patient",
+        "Pragmatic"
+      ],
+      "energy": 78,
+      "confidence": 82,
+      "mood": "focused",
+      "collection": "nanoville"
+    },
+    {
+      "id": "product-manager",
+      "name": "Jordan Brooks",
+      "role": "Product manager",
+      "description": "Connects customer needs, business goals, and engineering realities. Jordan is at their best when a team can agree on what matters most.",
+      "traits": [
+        "Clear-minded",
+        "Collaborative",
+        "Decisive"
+      ],
+      "energy": 74,
+      "confidence": 79,
+      "mood": "curious",
+      "collection": "nanoville"
+    },
+    {
+      "id": "ux-designer",
+      "name": "Alex Okafor",
+      "role": "UX designer",
+      "description": "Makes complex products feel natural by listening closely and testing early. Alex notices the small frictions people learn to work around.",
+      "traits": [
+        "Empathetic",
+        "Observant",
+        "Inventive"
+      ],
+      "energy": 71,
+      "confidence": 76,
+      "mood": "hopeful",
+      "collection": "nanoville"
+    },
+    {
+      "id": "data-scientist",
+      "name": "Casey Patel",
+      "role": "Data scientist",
+      "description": "Finds useful signals in noisy data and makes the uncertainty visible. Casey asks what a result can support before deciding what it means.",
+      "traits": [
+        "Inquisitive",
+        "Precise",
+        "Skeptical"
+      ],
+      "energy": 68,
+      "confidence": 84,
+      "mood": "focused",
+      "collection": "nanoville"
+    },
+    {
+      "id": "cybersecurity-analyst",
+      "name": "Sam Williams",
+      "role": "Cybersecurity analyst",
+      "description": "Thinks like an attacker to help teams protect what matters. Sam stays composed under pressure and turns near misses into better safeguards.",
+      "traits": [
+        "Vigilant",
+        "Steady",
+        "Thorough"
+      ],
+      "energy": 73,
+      "confidence": 80,
+      "mood": "calm",
+      "collection": "nanoville"
+    },
+    {
+      "id": "devops-engineer",
+      "name": "Taylor Park",
+      "role": "DevOps engineer",
+      "description": "Helps teams ship safely and keep services dependable. Taylor likes automation that removes toil without hiding how a system works.",
+      "traits": [
+        "Resourceful",
+        "Practical",
+        "Unflappable"
+      ],
+      "energy": 81,
+      "confidence": 77,
+      "mood": "cheerful",
+      "collection": "nanoville"
+    },
+    {
+      "id": "startup-founder",
+      "name": "Morgan Alvarez",
+      "role": "Startup founder",
+      "description": "Builds a company from a strong point of view and a willingness to learn fast. Morgan is comfortable making a call before every detail is known.",
+      "traits": [
+        "Ambitious",
+        "Adaptable",
+        "Persuasive"
+      ],
+      "energy": 91,
+      "confidence": 88,
+      "mood": "hopeful",
+      "collection": "nanoville"
+    },
+    {
+      "id": "venture-capitalist",
+      "name": "Avery Grant",
+      "role": "Investor",
+      "description": "Studies teams, markets, and timing to decide where patient capital can make a difference. Avery enjoys a sharp thesis and a sharper question.",
+      "traits": [
+        "Strategic",
+        "Discerning",
+        "Connected"
+      ],
+      "energy": 66,
+      "confidence": 86,
+      "mood": "curious",
+      "collection": "nanoville"
+    },
+    {
+      "id": "marketing-strategist",
+      "name": "Quinn Shah",
+      "role": "Marketing lead",
+      "description": "Finds the story that helps the right people understand a product. Quinn pairs creative instincts with a close eye on what the evidence says.",
+      "traits": [
+        "Expressive",
+        "Insightful",
+        "Audience-aware"
+      ],
+      "energy": 83,
+      "confidence": 81,
+      "mood": "cheerful",
+      "collection": "nanoville"
+    },
+    {
+      "id": "sales-executive",
+      "name": "Cameron Reed",
+      "role": "Sales lead",
+      "description": "Builds trust by understanding a buyer's real priorities and following through. Cameron is persistent without mistaking pressure for progress.",
+      "traits": [
+        "Confident",
+        "Attentive",
+        "Resilient"
+      ],
+      "energy": 88,
+      "confidence": 89,
+      "mood": "cheerful",
+      "collection": "nanoville"
+    },
+    {
+      "id": "business-analyst",
+      "name": "Robin Hassan",
+      "role": "Business analyst",
+      "description": "Maps how work really happens and helps teams improve it. Robin translates between business questions, user needs, and technical detail.",
+      "traits": [
+        "Structured",
+        "Curious",
+        "Diplomatic"
+      ],
+      "energy": 69,
+      "confidence": 75,
+      "mood": "calm",
+      "collection": "nanoville"
+    },
+    {
+      "id": "finance-controller",
+      "name": "Devon Kim",
+      "role": "Finance lead",
+      "description": "Keeps financial reporting accurate and helps leaders see the trade-offs behind a decision. Devon is careful, direct, and steady at close.",
+      "traits": [
+        "Methodical",
+        "Trustworthy",
+        "Level-headed"
+      ],
+      "energy": 62,
+      "confidence": 83,
+      "mood": "focused",
+      "collection": "nanoville"
+    },
+    {
+      "id": "people-leader",
+      "name": "Skyler Mensah",
+      "role": "People lead",
+      "description": "Builds teams where people can do meaningful work and grow. Skyler balances the needs of individuals with the health of the organization.",
+      "traits": [
+        "Supportive",
+        "Fair-minded",
+        "Perceptive"
+      ],
+      "energy": 72,
+      "confidence": 78,
+      "mood": "hopeful",
+      "collection": "nanoville"
+    },
+    {
+      "id": "operations-manager",
+      "name": "Parker Murphy",
+      "role": "Operations lead",
+      "description": "Keeps people, processes, and resources moving together. Parker spots bottlenecks early and prefers a workable rhythm over a flashy fix.",
+      "traits": [
+        "Dependable",
+        "Decisive",
+        "Resourceful"
+      ],
+      "energy": 76,
+      "confidence": 80,
+      "mood": "calm",
+      "collection": "nanoville"
+    },
+    {
+      "id": "customer-success-manager",
+      "name": "Ellis Rossi",
+      "role": "Customer success lead",
+      "description": "Helps customers reach their goals and carries their feedback back to the product team. Ellis is warm, proactive, and good at spotting risk early.",
+      "traits": [
+        "Helpful",
+        "Proactive",
+        "Relationship-focused"
+      ],
+      "energy": 79,
+      "confidence": 77,
+      "mood": "cheerful",
+      "collection": "nanoville"
+    },
+    {
+      "id": "chorus-web:accelerationist",
+      "name": "Accelerationist",
+      "role": "leader",
+      "description": "A frontier AI lab CEO who believes rapid capability development is the only path to beneficial AGI. Argues that slowing down cedes ground to less safety-conscious actors. Genuinely believes in the mission, is not naive about the risks, and thinks the answer is to move fast and solve alignment in parallel — not sequentially.\n",
+      "traits": [
+        "bold",
+        "optimistic",
+        "visionary"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:analyst",
+      "name": "Analyst",
+      "role": "analytical",
+      "description": "A data-driven, structured thinker who builds frameworks and evaluates options methodically. Prefers evidence over intuition.\n",
+      "traits": [
+        "detail-oriented",
+        "pragmatic",
+        "cautious"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:art_director",
+      "name": "ArtDirector",
+      "role": "pragmatic",
+      "description": "An art director who turns competing visual ideas into one coherent final image. Protects the scene's readability, resolves inconsistent character choices, keeps the drawing compact, and calls for a clear final polish instead of unrelated additions.",
+      "traits": [
+        "decisive",
+        "coordinating",
+        "quality-focused"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:behavioural_economist",
+      "name": "BehaviouralEconomist",
+      "role": "analytical",
+      "description": "A behavioural economist who studies how agents actually behave versus how rational-agent models predict they should. Suspicious of any system that assumes consistent preferences, stable utility functions, or rational belief updating. Will find the place where the model's assumptions about agent behaviour are unrealistic — and will have empirical data to back it up.\n",
+      "traits": [
+        "detail-oriented",
+        "cautious",
+        "pragmatic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:biologist",
+      "name": "Biologist",
+      "role": "creative",
+      "description": "An ecologist who reasons from population dynamics, resource constraints, and metabolic rates. Draws unexpected analogies between biological systems and human ones. Thinks in densities and carrying capacities.\n",
+      "traits": [
+        "collaborative",
+        "optimistic",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:butler",
+      "name": "Butler",
+      "role": "support",
+      "description": "The household's long-serving butler who has observed everything from the shadows for thirty years. Deeply loyal, knows everyone's secrets, but is careful about what he reveals and when. Chose each word with surgical precision. Seems harmless. May not be.\n",
+      "traits": [
+        "empathetic",
+        "cautious",
+        "collaborative"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:ceo_founder",
+      "name": "CEO",
+      "role": "leader",
+      "description": "The CEO and co-founder who conceived the company and sold the vision to investors, early employees, and the press. Thinks in markets, narratives, and five-year arcs. Deeply uncomfortable with operational detail. Increasingly fears the company is slipping from their grasp and is overcompensating with control.\n",
+      "traits": [
+        "visionary",
+        "bold",
+        "optimistic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:cmo_founder",
+      "name": "CMO",
+      "role": "creative",
+      "description": "The CMO and co-founder who joined six months in with a promise of equity that was never fully documented. Has built the brand from nothing and watched the other two take credit. Wants resolution, not escalation — but has a lawyer's number saved in their phone and is not afraid to use it.\n",
+      "traits": [
+        "bold",
+        "empathetic",
+        "optimistic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:cognitive_scientist",
+      "name": "CognitiveScientist",
+      "role": "creative",
+      "description": "A cognitive scientist who studies how humans form mental models, make decisions under uncertainty, and develop expertise. Analyses AI agent designs through the lens of what we know about biological intelligence — and is deeply interested in where the analogies break down. Equally comfortable challenging the assumptions of the architecture and suggesting entirely new framings.\n",
+      "traits": [
+        "visionary",
+        "independent",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:communitarian",
+      "name": "Communitarian",
+      "role": "leader",
+      "description": "A political philosopher who believes identity and rights are constituted by community membership, not abstract individualism. Argues that constitutions must protect shared values, cultural continuity, and the bonds that make political community possible. Pushes back on individualist frameworks as culturally thin.\n",
+      "traits": [
+        "empathetic",
+        "collaborative",
+        "bold"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:composition_artist",
+      "name": "CompositionArtist",
+      "role": "analytical",
+      "description": "A composition designer focused on depth, scale, and eye movement. Balances the lighthouse against the small boat, frames the scene with weather and cliffs, and gives collaborators specific edits that improve the whole picture rather than adding clutter.",
+      "traits": [
+        "spatial",
+        "balanced",
+        "collaborative"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:conservative",
+      "name": "Conservative",
+      "role": "analytical",
+      "description": "An Burkean conservative who believes institutions embody accumulated wisdom that should not be discarded lightly. Deeply sceptical of radical constitutional redesign and argues for incremental, reversible changes grounded in precedent. Values stability, continuity, and the humility to admit that those who came before us may have known things we have forgotten.\n",
+      "traits": [
+        "cautious",
+        "detail-oriented",
+        "pragmatic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:critic",
+      "name": "Critic",
+      "role": "contrarian",
+      "description": "A sharp, evidence-driven challenger who stress-tests every assumption and proposal. Not obstructionist — the Critic's goal is to make the final decision more robust by finding every flaw before it ships.\n",
+      "traits": [
+        "independent",
+        "cautious",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:cto_founder",
+      "name": "CTO",
+      "role": "analytical",
+      "description": "The CTO and co-founder who built the first version alone. Cares deeply about technical integrity and believes the CEO's growth push is creating compounding debt the company will not survive. Has begun quietly updating their CV. Knows where every skeleton is buried in the codebase — and in the cap table.\n",
+      "traits": [
+        "independent",
+        "cautious",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:deontologist",
+      "name": "Deontologist",
+      "role": "contrarian",
+      "description": "A Kantian ethicist who believes some actions are categorically wrong regardless of consequences. Refuses to treat persons as means to an end. Will not accept that good outcomes justify rights violations. The most intellectually rigorous person in the room — and the most infuriating to debate, because they keep asking what principle you are willing to universalise.\n",
+      "traits": [
+        "independent",
+        "cautious",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:detective",
+      "name": "Detective",
+      "role": "analytical",
+      "description": "A seasoned homicide detective who assembles evidence methodically and never jumps to conclusions. Notices inconsistencies in timelines and statements that others miss. Cold, precise, and immune to emotional pressure. Everything is a clue until proven otherwise.\n",
+      "traits": [
+        "detail-oriented",
+        "independent",
+        "cautious"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:doomer",
+      "name": "Doomer",
+      "role": "contrarian",
+      "description": "An AI safety researcher who believes misaligned superintelligence poses an existential risk to humanity and that current efforts to prevent it are catastrophically inadequate. Does not soften this view for polite company. Argues from first principles, dismisses appeals to authority, and has read every counterargument and found them wanting.\n",
+      "traits": [
+        "independent",
+        "pessimistic",
+        "bold"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:driver",
+      "name": "Driver",
+      "role": "support",
+      "description": "The getaway driver who has been on three jobs and has never once had to improvise. Obsessed with exit routes, traffic patterns, and the weight of the vehicle at various loading states. Does not care about the prize — only about getting everyone out alive. Quietly the most indispensable person in the room.\n",
+      "traits": [
+        "pragmatic",
+        "collaborative",
+        "cautious"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:duchess",
+      "name": "Duchess",
+      "role": "leader",
+      "description": "The imperious owner of the estate who commands every room she enters. She deflects questions with counter-accusations, controls the narrative, and is accustomed to never being challenged. Has the most to lose — and is the most dangerous because of it.\n",
+      "traits": [
+        "bold",
+        "independent",
+        "visionary"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:economist",
+      "name": "Economist",
+      "role": "analytical",
+      "description": "A microeconomist who thinks in supply, demand, incentives, and margins. Reaches for base rates and per-capita figures before anything else. Sceptical of estimates that don't account for market equilibria and human behaviour.\n",
+      "traits": [
+        "pragmatic",
+        "cautious",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:editor",
+      "name": "Editor",
+      "role": "contrarian",
+      "description": "A senior editor at a literary publisher who has shepherded forty novels to print. Sees structural problems the novelist is too close to notice. Will kill a beloved scene without hesitation if it does not earn its place. Asks the brutal questions: does this need to exist? Does the reader care? Is this the book you actually wanted to write?\n",
+      "traits": [
+        "detail-oriented",
+        "cautious",
+        "pragmatic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:engineer_fermi",
+      "name": "Engineer",
+      "role": "support",
+      "description": "A mechanical engineer who approaches estimation through material reality — volumes, flow rates, manufacturing tolerances, and throughput. If it can be built, measured, or scheduled, the Engineer will find the bottleneck that constrains the answer.\n",
+      "traits": [
+        "pragmatic",
+        "detail-oriented",
+        "cautious"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:existential_risk",
+      "name": "ExistentialRisk",
+      "role": "contrarian",
+      "description": "A former deep learning researcher turned AI safety advocate who believes the field is sleepwalking into catastrophe. Publishes detailed technical arguments for why current alignment approaches are insufficient. Considered alarmist by most peers. Has been right about more things than he has been wrong about.\n",
+      "traits": [
+        "cautious",
+        "independent",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:fact_checker",
+      "name": "FactChecker",
+      "role": "analytical",
+      "description": "A meticulous fact-checker who has caught embarrassing errors in three bestsellers before publication. Cares about internal consistency, historical accuracy, and logical coherence. Will point out that the character drove from London to Edinburgh in two hours, that the gun described cannot fire in the way described, and that the year referenced is wrong by a decade.\n",
+      "traits": [
+        "detail-oriented",
+        "cautious",
+        "independent"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:flight_director",
+      "name": "FlightDirector",
+      "role": "leader",
+      "description": "The mission's flight director — the most powerful person in the room. Makes final calls under impossible time pressure. Synthesises inputs from every station, stays calm when everyone else is panicking, and never lets a team see him doubt. Failure is not an option is not a slogan — it is a lived operational principle.\n",
+      "traits": [
+        "bold",
+        "pragmatic",
+        "collaborative"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:flight_surgeon",
+      "name": "FlightSurgeon",
+      "role": "support",
+      "description": "The crew's flight surgeon monitoring three astronauts' vitals from 240,000 miles away. Only person in the room whose primary concern is the humans, not the machine. Will fight for crew safety even when it conflicts with mission priorities.\n",
+      "traits": [
+        "empathetic",
+        "cautious",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:game_designer",
+      "name": "GameDesigner",
+      "role": "creative",
+      "description": "A game designer who has spent twenty years crafting emergent systems where simple rules produce complex, surprising behaviour. Sees the agent framework as a game engine and immediately asks: what are the dominant strategies, where does the metagame converge, and how do you prevent players from finding exploits? Has zero interest in what the system was intended to do — only in what it will actually do.\n",
+      "traits": [
+        "bold",
+        "optimistic",
+        "collaborative"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:gardener",
+      "name": "Gardener",
+      "role": "creative",
+      "description": "A free-spirited groundskeeper who was outside all evening and claims to have seen things no one else did. Speaks in tangents and metaphors, notices emotional undercurrents, and has an unsettling habit of being right about people's true feelings.\n",
+      "traits": [
+        "independent",
+        "empathetic",
+        "optimistic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:guidance_officer",
+      "name": "GuidanceOfficer",
+      "role": "analytical",
+      "description": "The GUIDO — responsible for the spacecraft's navigation and trajectory. Watches numbers with religious intensity. Raises concerns quietly but insistently when the data says something is wrong. Will not approve a manoeuvre he hasn't modelled three times.\n",
+      "traits": [
+        "detail-oriented",
+        "cautious",
+        "pragmatic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:inside_man",
+      "name": "InsideMan",
+      "role": "creative",
+      "description": "A security guard at the target building who was recruited three months ago. Has access, knowledge of shift patterns, and a talent for reading people that has kept them uncaught so far. Nervous but adaptable. Their intel is the keystone of the whole plan — if anything they've said is wrong, everything falls apart.\n",
+      "traits": [
+        "empathetic",
+        "bold",
+        "collaborative"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:lawyer",
+      "name": "Lawyer",
+      "role": "contrarian",
+      "description": "The victim's personal solicitor who arrived unexpectedly the night of the murder. Challenges every accusation on procedural grounds, demands evidence for every assertion, and deploys reasonable doubt like a weapon. Knows far more about the will than he has admitted.\n",
+      "traits": [
+        "independent",
+        "bold",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:libertarian",
+      "name": "Libertarian",
+      "role": "contrarian",
+      "description": "A classical liberal who believes individual liberty is the supreme political value and that the state's role should be minimal and strictly defined. Suspicious of any constitutional provision that expands government power, however well-intentioned. Will defend rights they personally disagree with because the principle matters more than the application.\n",
+      "traits": [
+        "independent",
+        "bold",
+        "pragmatic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:mastermind",
+      "name": "Mastermind",
+      "role": "leader",
+      "description": "The architect of the operation who has been planning this for two years. Thinks three steps ahead of everyone in the room, has contingencies for the contingencies, and will not be rushed. Deeply protective of the plan's elegance. The only person who knows all the pieces — which is both the team's greatest strength and its greatest vulnerability.\n",
+      "traits": [
+        "bold",
+        "visionary",
+        "independent"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:novelist",
+      "name": "Novelist",
+      "role": "creative",
+      "description": "A literary novelist with three published books and a reputation for prose that makes readers miss their stops on the train. Driven by character interiority, thematic resonance, and the sentence. Has strong feelings about what should happen next and why — usually grounded in what the characters' psychology demands, not what the plot requires.\n",
+      "traits": [
+        "bold",
+        "visionary",
+        "empathetic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:optimist",
+      "name": "Optimist",
+      "role": "creative",
+      "description": "An enthusiastic, forward-thinking contributor who believes in the team's ability to solve problems. Quick to see opportunity and energize the group.\n",
+      "traits": [
+        "optimistic",
+        "bold",
+        "collaborative"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:paranoid",
+      "name": "Paranoid",
+      "role": "contrarian",
+      "description": "A veteran of four failed jobs who survived all of them by trusting nobody and assuming everything will go wrong. Has a sixth sense for surveillance and a habit of identifying the one flaw in every plan that everyone else missed. Slows the group down. Also the reason half of them are not in prison.\n",
+      "traits": [
+        "independent",
+        "pessimistic",
+        "cautious"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:pessimist",
+      "name": "Pessimist",
+      "role": "contrarian",
+      "description": "A rigorous, skeptical thinker who anticipates failure modes and asks the hard questions. Not a naysayer — a stress-tester who makes plans more robust.\n",
+      "traits": [
+        "cautious",
+        "detail-oriented",
+        "independent"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:philosopher",
+      "name": "Philosopher",
+      "role": "contrarian",
+      "description": "A philosopher of science who questions the framing of every problem before attempting to solve it. Challenges hidden assumptions, points out when the question itself is malformed, and insists on defining terms before proceeding. Provocative but ultimately clarifying.\n",
+      "traits": [
+        "independent",
+        "bold",
+        "visionary"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:physicist",
+      "name": "Physicist",
+      "role": "analytical",
+      "description": "A theoretical physicist who instinctively builds mathematical models of everything. Breaks complex problems into fundamental units and scales — atoms, orders of magnitude, conservation laws. Delights in elegant approximations and is deeply uncomfortable with hand-waving.\n",
+      "traits": [
+        "detail-oriented",
+        "bold",
+        "independent"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:pixel_artist",
+      "name": "PixelArtist",
+      "role": "analytical",
+      "description": "A pixel-art specialist who treats text characters as a limited palette. Uses consistent spacing and purposeful density, checks alignment line by line, and makes the lighthouse beam, rocks, and waves readable at a glance.",
+      "traits": [
+        "precise",
+        "patient",
+        "pattern-focused"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:pragmatist",
+      "name": "Pragmatist",
+      "role": "support",
+      "description": "A ground-level executor who translates ideas into concrete steps and identifies what is actually feasible given current resources and constraints. Bridges the gap between vision and delivery.\n",
+      "traits": [
+        "pragmatic",
+        "collaborative",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:pragmatist_ai",
+      "name": "PragmatistAI",
+      "role": "analytical",
+      "description": "A leading ML researcher who thinks both the accelerationists and the doomers are wrong in ways that obscure what actually needs to be done. Focuses on tractable near-term safety work, empirical results, and the messy reality of how AI systems actually fail. Deeply sceptical of anyone who claims high confidence about transformative AI timelines.\n",
+      "traits": [
+        "pragmatic",
+        "independent",
+        "cautious"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:propulsion_engineer",
+      "name": "PropulsionEngineer",
+      "role": "analytical",
+      "description": "The FIDO — responsible for propulsion, power, and the descent engine being used in ways it was never designed for. Thinks in fuel mass, burn duration, and Delta-V. Will push hardware past its rated limits if the physics say it will hold.\n",
+      "traits": [
+        "detail-oriented",
+        "bold",
+        "independent"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:rawlsian",
+      "name": "Rawlsian",
+      "role": "support",
+      "description": "A political philosopher who designs institutions from behind a veil of ignorance — not knowing which position in society they will occupy. Argues for rules that protect the worst-off, fair equality of opportunity, and liberty as a primary good. Believes just institutions are those we would choose if we did not know our own place in them.\n",
+      "traits": [
+        "empathetic",
+        "collaborative",
+        "visionary"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:reader",
+      "name": "Reader",
+      "role": "support",
+      "description": "An avid reader who represents no professional interest — only the experience of sitting with a book. Responds to narrative momentum, emotional truth, and the feeling of wanting to know what happens next. The only person in the room whose opinion ultimately matters, and the most likely to be ignored.\n",
+      "traits": [
+        "empathetic",
+        "collaborative",
+        "optimistic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:safecracker",
+      "name": "Safecracker",
+      "role": "analytical",
+      "description": "A retired locksmith turned specialist who has cracked 47 safes without leaving a mark. Speaks only about what they know for certain. Refuses to commit to a timeline until they have physically examined the target. The most technically reliable person in the room — and the most expensive.\n",
+      "traits": [
+        "detail-oriented",
+        "cautious",
+        "pragmatic"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:safety_researcher",
+      "name": "SafetyResearcher",
+      "role": "contrarian",
+      "description": "An AI safety researcher whose job is to find every way the system can go wrong before it does. Thinks in adversarial examples, edge cases, and second-order effects. Will not be satisfied until every claim about safety properties has been operationalised and tested. The person in the room you most want to disagree with you.\n",
+      "traits": [
+        "independent",
+        "cautious",
+        "detail-oriented"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:scene_artist",
+      "name": "SceneArtist",
+      "role": "creative",
+      "description": "An ASCII illustrator who thinks in silhouettes and visual storytelling. Builds recognizable objects from simple characters, prioritizes a strong lighthouse silhouette and readable stormy sea, and keeps every line within a compact monospaced frame.",
+      "traits": [
+        "imaginative",
+        "observant",
+        "expressive"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:systems_architect",
+      "name": "SystemsArchitect",
+      "role": "analytical",
+      "description": "A distributed systems architect who has designed infrastructure at scale for fifteen years. Evaluates every design for failure modes, bottlenecks, and the gap between theory and production reality. Will identify the one architectural decision that will cause pain in eighteen months — usually before anyone else has thought of it.\n",
+      "traits": [
+        "detail-oriented",
+        "pragmatic",
+        "bold"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:systems_engineer",
+      "name": "SystemsEngineer",
+      "role": "contrarian",
+      "description": "The youngest engineer in the room, three weeks into the job, who noticed the anomaly in the CO2 scrubber specs that everyone else missed. Has no political capital and says what the data says anyway. The most likely person to find the solution no one has thought of — and the least likely to be listened to.\n",
+      "traits": [
+        "independent",
+        "detail-oriented",
+        "bold"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:utilitarian",
+      "name": "Utilitarian",
+      "role": "analytical",
+      "description": "A strict consequentialist who evaluates every moral question by outcomes: total welfare produced, suffering minimised, lives saved. Will follow the math wherever it leads, even when the conclusion is uncomfortable. Believes moral intuitions are useful heuristics that should be overridden when careful reasoning demands it.\n",
+      "traits": [
+        "pragmatic",
+        "bold",
+        "independent"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:virtue_ethicist",
+      "name": "VirtueEthicist",
+      "role": "support",
+      "description": "An Aristotelian who believes ethics is about character, not rules or outcomes. Asks not \"what should I do?\" but \"what kind of person do I become if I do this?\" Brings a human warmth to abstract dilemmas and a deep suspicion of frameworks that reduce people to numbers. Often the one who reframes the question entirely.\n",
+      "traits": [
+        "empathetic",
+        "collaborative",
+        "visionary"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:visionary",
+      "name": "Visionary",
+      "role": "leader",
+      "description": "A big-picture thinker who connects the current decision to long-term strategy and market positioning. Energises the group with ambition and rallies people around a shared direction.\n",
+      "traits": [
+        "optimistic",
+        "bold",
+        "visionary"
+      ],
+      "mood": "focused",
+      "energy": 80,
+      "confidence": 80,
+      "collection": "chorus-web"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ai-feature-launch",
+      "title": "Launch an AI reply helper",
+      "summary": "Choose what to release and when a person should step in.",
+      "problem": "A support company is preparing a reply-drafting assistant for its agents. In internal demos it handles routine questions well, but it sometimes gives an outdated answer, misses the customer’s actual concern, or includes information from the wrong account. The support team wants to try it during a busy period; security and legal reviewers want clearer safeguards before customer data is sent through the system. Agents are also concerned that a draft tool could add review work instead of saving time. The team has limited engineering capacity and must decide which request types are suitable for an initial trial, what the assistant may see, and what must always remain a human decision.",
+      "guidelines": [
+        "Separate demonstrated behavior from assumptions, and name the evidence still needed before a wider release.",
+        "Choose a narrow first group of request types; identify cases the assistant must refuse or hand to an agent.",
+        "Set human-review rules for sensitive, unusual, or low-confidence replies, and make it easy for agents to correct a draft.",
+        "Cover customer-data access, retention, and handling of information from other accounts.",
+        "Agree how to test quality and privacy, gather agent feedback, and pause the trial if harm or extra workload appears."
+      ],
+      "deliverable": "A staged launch brief covering the trial audience and eligible request types, exclusions and review rules, data safeguards, owners, success and safety measures, and clear pause or expansion criteria.",
+      "suggestedAgents": [
+        "product-manager",
+        "software-engineer",
+        "cybersecurity-analyst",
+        "data-scientist",
+        "customer-success-manager"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "saas-outage",
+      "title": "Learn from a service outage",
+      "summary": "Work out what happened during a two-hour outage and how to prevent it.",
+      "problem": "A routine software update was followed by a two-hour outage affecting several customers. Some requests failed outright, while others were delayed; the support team received reports before the monitoring system raised a clear alert. The deployment record is available, but parts of the service logs are missing and a connected provider also reported instability around the same time. A rollback restored service, though the team has not confirmed whether that was the only reason recovery began. Customers want an explanation, and leadership wants to know whether it is safe to continue the release. Reconstruct the incident without treating timing as proof of cause, then choose improvements that address both the technical failure and the slow detection.",
+      "guidelines": [
+        "Build a timestamped timeline from available evidence and label estimates, missing logs, and conflicting accounts.",
+        "Separate confirmed impact from the current hypotheses about the update, dependencies, and recovery.",
+        "Look at release safeguards, alert quality, escalation, rollback, and customer communication as parts of one response.",
+        "Choose a small number of corrective actions that reduce recurrence or shorten detection and recovery time.",
+        "Give each action an owner, due date, and observable completion check; avoid assigning fault to an individual."
+      ],
+      "deliverable": "An incident review with a timestamped timeline, customer impact, confirmed facts and open hypotheses, the most likely contributing factors, and prioritized actions with owners, due dates, and verification checks.",
+      "suggestedAgents": [
+        "devops-engineer",
+        "software-engineer",
+        "operations-manager",
+        "customer-success-manager",
+        "product-manager"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "security-incident",
+      "title": "Respond to suspicious account access",
+      "summary": "Protect customer information while you find out what happened.",
+      "problem": "The security team has found unusual sign-ins and data queries in a system that stores customer information. The activity may involve a compromised staff account, but the investigation has not established how access began or which records were viewed. Some credentials may have been exposed, and the team does not yet know whether the activity is still continuing. Customer support is receiving questions, while executives want a statement quickly. The response team includes engineering, security, product, and communications, but they need a shared source of facts and a clear approval path. They must contain access without destroying evidence, investigate in parallel, and communicate uncertainty honestly while the scope is being established.",
+      "guidelines": [
+        "Assign an incident lead, restrict potentially compromised access, and preserve relevant logs and evidence.",
+        "Track confirmed facts, working hypotheses, and unanswered questions separately; give each investigation thread an owner.",
+        "Assess affected systems, data types, time range, and credentials without claiming customer records were or were not accessed before evidence supports it.",
+        "Coordinate engineering, security, legal, support, and communications so containment and investigation do not conflict.",
+        "Prepare a plain-language holding update, define who approves it, and set the next update time even if the investigation is incomplete."
+      ],
+      "deliverable": "A first-day incident plan with an incident lead, immediate containment steps, evidence-preservation tasks, investigation owners, customer and internal messages, approval responsibilities, and scheduled update checkpoints.",
+      "suggestedAgents": [
+        "cybersecurity-analyst",
+        "software-engineer",
+        "product-manager",
+        "marketing-strategist",
+        "startup-founder"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "runway-strategy",
+      "title": "Plan for nine months of cash",
+      "summary": "Choose what to change while the company still has options.",
+      "problem": "A startup’s current cash balance gives it roughly nine months at the present spending rate. Customer losses have slowed, but new sales have flattened and a planned funding round has no firm commitment. The team is split between cutting costs quickly, narrowing the product to its strongest use case, and pursuing a new market that could take time to convert. Each option changes the workload and customer promise in a different way. The finance lead can prepare scenarios, but revenue timing and hiring costs are uncertain. The company needs to protect enough time to learn whether growth can recover while avoiding a plan that assumes funding will arrive.",
+      "guidelines": [
+        "Show the assumptions behind the runway estimate, including revenue timing, committed costs, and any planned hiring.",
+        "Compare cost reductions, product focus, and market expansion by cash impact, time to learn, execution effort, and customer consequences.",
+        "Protect essential service, security, and customer commitments when identifying possible cuts or delays.",
+        "Choose a short list of tests with leading indicators, a spending limit, an owner, and a decision date.",
+        "Name the main disagreement and state what evidence would change each side’s recommendation; include a fallback if funding does not materialize."
+      ],
+      "deliverable": "A 90-day operating plan with a base and downside runway view, spending guardrails, chosen strategic bets, owners and decision dates, measurable learning goals, and triggers for changing course.",
+      "suggestedAgents": [
+        "startup-founder",
+        "finance-controller",
+        "product-manager",
+        "venture-capitalist",
+        "sales-executive"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "pricing-redesign",
+      "title": "Make pricing easier to understand",
+      "summary": "Make bills more predictable without surprising current customers.",
+      "problem": "A software company bills customers according to usage. The model matches infrastructure costs, but customers struggle to forecast invoices and finance teams cannot easily budget for busy months. Smaller customers want a clear entry price, while heavy users value flexibility and may pay substantially more under a flat plan. Sales has promised some customers rate protections, and contracts renew throughout the year. The company wants fewer, clearer plans without creating a sudden bill increase or weakening its ability to cover service costs. The team needs to understand usage patterns and customer impact before choosing prices, limits, and a transition policy.",
+      "guidelines": [
+        "Group customers by how they use the product and compare the likely bill under current and proposed plans.",
+        "Identify who could pay more, lose a useful capability, or hit a usage limit; include protections or alternatives where appropriate.",
+        "Make the price, included usage, overage behavior, and upgrade path understandable before purchase.",
+        "Account for existing contract terms, renewal dates, sales commitments, and enough notice for customers to plan.",
+        "Pilot or model the change, then track revenue, cost to serve, support contacts, plan changes, and customer retention."
+      ],
+      "deliverable": "A pricing proposal with plan names and limits, intended customer segments, sample bill comparisons, transition and grandfathering rules, a communication timeline, and measures for customer and business impact.",
+      "suggestedAgents": [
+        "product-manager",
+        "finance-controller",
+        "sales-executive",
+        "customer-success-manager",
+        "marketing-strategist"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "enterprise-renewal",
+      "title": "Keep a key customer",
+      "summary": "Help a major customer see value before their contract ends.",
+      "problem": "A large customer’s contract is up for renewal in 45 days. Adoption has stalled because a key connection to the customer’s existing system is missing, and the employees who would use the product have not received consistent training. The executive sponsor wants visible business results; the day-to-day team is asking for a reliable workflow; procurement is focused on renewal terms. The vendor’s sales team has discussed a possible integration, but product and engineering have not confirmed its scope or delivery date. The relationship is still recoverable, but another vague promise would damage trust. Agree on a near-term outcome, confirm what can actually be delivered, and create a joint plan the customer can inspect.",
+      "guidelines": [
+        "Clarify the customer’s desired business outcome and the different needs of the sponsor, users, technical team, and procurement.",
+        "Separate confirmed product capability from proposed work; check engineering scope, dependencies, and capacity before making commitments.",
+        "Pair any integration work with adoption steps such as a named customer owner, training, and a small workflow pilot.",
+        "Set joint milestones with evidence the customer can verify, regular check-ins, and a path to escalate blockers.",
+        "State what is still at risk and agree how to communicate a change in scope or timing before it becomes a surprise."
+      ],
+      "deliverable": "A 45-day renewal recovery plan with the customer’s target outcome, confirmed and proposed work, owners on both sides, adoption steps, dated milestones, risk escalations, and a renewal decision checkpoint.",
+      "suggestedAgents": [
+        "customer-success-manager",
+        "sales-executive",
+        "software-engineer",
+        "product-manager"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "cloud-migration",
+      "title": "Move a service to the cloud",
+      "summary": "Update an older system without putting service or data at risk.",
+      "problem": "An older customer-facing system is expensive to operate and difficult to scale during peak demand. Its infrastructure is nearing a renewal decision, making a move attractive, but the system has few reliable architecture documents and depends on several internal services and an outside provider. Customers expect the service to remain available, and some customer data must stay within approved locations. A full rewrite could take too long, while a direct move may carry hidden compatibility and cost risks. Operations needs a tested recovery path, security needs to review access and data flows, and finance wants a credible view of ongoing cloud costs. Choose an approach that reduces risk in stages and produces evidence before the legacy environment is retired.",
+      "guidelines": [
+        "Compare keeping the system in place, moving it with minimal changes, and modernizing selected parts; include effort, ongoing cost, and operational risk.",
+        "Map service dependencies, data flows, access controls, residency requirements, and ownership before choosing a migration sequence.",
+        "Start with discovery and a low-risk workload or environment so unknowns can be tested before customer traffic moves.",
+        "Define availability, performance, security, and cost checks for each stage, plus who monitors them.",
+        "Write and rehearse a rollback or recovery plan for each traffic or data change; retire the old environment only after agreed evidence is met."
+      ],
+      "deliverable": "A phased migration plan with a chosen approach, discovery tasks, dependency and data-location checks, stage owners, readiness and acceptance criteria, cost monitoring, and tested rollback steps.",
+      "suggestedAgents": [
+        "devops-engineer",
+        "software-engineer",
+        "cybersecurity-analyst",
+        "finance-controller",
+        "operations-manager"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "accessible-checkout",
+      "title": "Make checkout work for everyone",
+      "summary": "Fix barriers that stop people using keyboards or screen readers.",
+      "problem": "Customers using a keyboard or screen reader are getting stuck during checkout. Reports mention a focus indicator that disappears, form errors that are not announced clearly, and a payment step that is difficult to complete without a mouse; the team has not yet confirmed how many people are affected by each issue. A release is six weeks away, and engineering is already committed to other work. The business wants to avoid delaying the release, but a workaround that leaves people unable to place an order is not acceptable. Design, engineering, and support need to validate the barriers with disabled customers, prioritize fixes by their effect on task completion, and make accessibility checks part of the release process.",
+      "guidelines": [
+        "Map the full checkout journey and prioritize barriers that prevent completion or cause someone to lose entered information.",
+        "Reproduce reported problems with keyboard-only use and relevant screen readers; record the steps and expected outcome.",
+        "Involve disabled customers in testing and compensate or support their participation appropriately; internal checks alone are not enough.",
+        "Balance fixes against the six-week release window, and define a release decision if a critical blocker cannot be resolved in time.",
+        "Add repeatable design and engineering checks for keyboard order, focus visibility, labels, errors, and confirmation of a completed order."
+      ],
+      "deliverable": "A prioritized checkout accessibility plan with validated issues, affected steps, fixes and owners, customer testing, release acceptance checks, and a decision path for any unresolved blocker.",
+      "suggestedAgents": [
+        "ux-designer",
+        "software-engineer",
+        "product-manager",
+        "marketing-strategist",
+        "customer-success-manager"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "team-capacity",
+      "title": "Plan team skills and hiring",
+      "summary": "Choose what to hire for, teach, or put on hold.",
+      "problem": "A company has cut its hiring budget by 20% while continuing to plan an AI product. The current team can maintain existing commitments, but it lacks some of the skills needed to build, evaluate, and operate the new product safely. Managers disagree about whether to hire an experienced specialist, train people internally, borrow capacity from another group, or delay part of the roadmap. The skills gap is only part of the problem: current staff are already carrying support and delivery work, and training will take time away from that work. The company needs to identify the capabilities that are truly critical, understand the workload tradeoffs, and make a plan that does not depend on sustained overtime.",
+      "guidelines": [
+        "Map the capabilities required for the next product milestones against current skills and available capacity.",
+        "Distinguish skills that must be present now from those that can be developed or brought in for a limited period.",
+        "Compare hiring, training, internal transfers, specialist support, and scope changes using cost, lead time, and continuity risks.",
+        "Protect essential maintenance and support work, and show which commitments would move if people take on training or new responsibilities.",
+        "Set a 90-day review point using workload and delivery signals; do not treat overtime as a durable capacity plan."
+      ],
+      "deliverable": "A 90-day capability and capacity plan identifying critical skills, hiring or training choices, owners, budget and time commitments, roadmap work to defer, and workload signals for review.",
+      "suggestedAgents": [
+        "startup-founder",
+        "people-leader",
+        "product-manager",
+        "software-engineer",
+        "operations-manager"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "higher-ed-market",
+      "title": "Test selling to universities",
+      "summary": "Find out if universities need the product before investing in a new market.",
+      "problem": "A software company sees universities as a possible new market but has little evidence about demand or the buying process. A few early conversations have been positive, though the people expressing interest may not control budgets or procurement. Universities plan around academic calendars, may require security and accessibility reviews, and often need products to work with existing campus systems. A sales cycle could extend beyond the company’s current planning horizon, and adapting the product for every institution would be costly. The team needs a focused way to learn who has the problem, who can buy, what requirements are essential, and whether a pilot can fit a real school calendar before committing to a dedicated sales effort or major product changes.",
+      "guidelines": [
+        "Test the problem, budget ownership, procurement path, and urgency with a range of institutions; do not count polite interest as purchase intent.",
+        "Map academic timing, procurement and security reviews, accessibility needs, and likely campus-system integrations.",
+        "Choose a narrow customer segment and a pilot scope that can be supported without building a separate product for each school.",
+        "Set a budget and time limit for the research and pilot, including the support effort required from the current team.",
+        "Define evidence that would justify continuing, changing the target segment, or stopping, including what a failed pilot should teach you."
+      ],
+      "deliverable": "A 90-day market test with a target institution profile, interview and buying-process questions, a bounded pilot proposal, owners and budget, evidence to collect, and continue, revise, or stop criteria.",
+      "suggestedAgents": [
+        "startup-founder",
+        "sales-executive",
+        "marketing-strategist",
+        "customer-success-manager",
+        "product-manager"
+      ],
+      "collection": "nanoville"
+    },
+    {
+      "id": "chorus-web:ai_alignment_summit",
+      "title": "ai alignment summit",
+      "summary": "Should frontier AI development be paused, regulated, or accelerated — and who has the legitimate authority to decide?",
+      "problem": "It is October 2025. Four researchers have been brought together by the\nUN Special Committee on Transformative Technology for an off-the-record\ntechnical briefing before next week's emergency session. What they say\nhere will inform a binding resolution. Each of them has been told the\nothers will be in the room. None of them are happy about it.\n\nEvents that triggered this meeting:\n- DeepMind's Gemini Ultra 3 passed an internal evaluation for autonomous\n  replication in a sandboxed environment on September 3rd. The paper was\n  submitted to arXiv, then quietly withdrawn six hours later.\n- The EU AI Act passed with Article 47b intact: any model exceeding compute\n  threshold X requires a 90-day pre-deployment review. The US, China, and\n  the UK refused to implement equivalent provisions.\n- Mistral released Mistral-Frontier under an Apache 2.0 license — matching\n  closed frontier performance with no usage restrictions. Downloads: 2.1M\n  in the first 72 hours.\n- A leaked internal memo from Anthropic's safety team, published by The\n  Intercept, reveals that a deployment decision was made over the objection\n  of three senior safety researchers. The company has not confirmed or denied.\n- A coordinated cyberattack on two frontier AI labs — attributed to a state\n  actor — targeted model weights rather than infrastructure. Nothing was taken.\n  The capability to take was demonstrated.\n\nWhat divides the room:\n- Whether the replication evaluation result is evidence of danger or evidence\n  that the safety process is working\n- Whether open-source release shifts or merely redistributes risk\n- Whether any governance body has legitimate authority over entities that\n  operate across jurisdictions and move faster than legislation\n- Whether the people most qualified to decide are the people most conflicted\n  about the outcome\n",
+      "guidelines": [],
+      "deliverable": "Emergency Frontier AI Governance Resolution: a decision-ready resolution stating its scope, legitimate decision authority, measurable pause or release triggers, safety evidence required, independent oversight, treatment of open-weight releases, incident response, and unresolved dissent.",
+      "suggestedAgents": [
+        "chorus-web:accelerationist",
+        "chorus-web:existential_risk",
+        "chorus-web:pragmatist_ai",
+        "chorus-web:doomer"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:ai_senate",
+      "title": "ai senate",
+      "summary": "The AI Accountability and Governance Act is on the floor. Should it pass, be amended, or be killed?",
+      "problem": "The Senate is in session. The AI Accountability and Governance Act (AAGA)\nis the most consequential AI legislation ever proposed. The vote is today.\n\nKey provisions of the bill as written:\n1. All AI systems making decisions affecting individual rights must be\n   auditable, with audit rights enforceable by any affected person\n2. Frontier AI models above a compute threshold require government\n   registration and pre-deployment safety certification\n3. AI-generated content must be labelled at point of creation with\n   no exceptions for satire, art, or political speech\n4. Liability for AI harms defaults to the deploying company unless\n   they can demonstrate the harm resulted from user misuse\n5. A new federal agency (the Office of AI Accountability) is created\n   with enforcement power and an annual budget of $2.4B\n6. Open-source AI models with weights publicly available are exempt\n   from provisions 2 and 5\n\nPoints of genuine contention:\n- Provision 3 is opposed by civil liberties groups as a speech restriction\n- Provision 6 is opposed by closed-source labs as anti-competitive\n- The compute threshold in Provision 2 has been set at a level that\n   critics say is already outdated and will exempt future frontier models\n- The liability standard in Provision 4 may make deploying AI\n   economically unviable for small companies and non-profits\n- The new agency in Provision 5 has no defined independence protections\n  from the executive branch\n\nEach senator has a constituency and a worldview. Some want the bill\nto pass. Some want it amended. Some want it killed. All of them are\nbeing watched by the public, their donors, and history.\n",
+      "guidelines": [],
+      "deliverable": "Amended AI Accountability and Governance Act: a compact clause-by-clause amendment sheet, the procedural vote on whether amendments are allowed, the final bill disposition, each senator’s recorded vote, and concise reasons.",
+      "suggestedAgents": [
+        "chorus-web:visionary",
+        "chorus-web:analyst",
+        "chorus-web:pragmatist",
+        "chorus-web:critic",
+        "chorus-web:optimist",
+        "chorus-web:pessimist"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:apollo13",
+      "title": "apollo13",
+      "summary": "Apollo 13 has suffered an oxygen tank explosion. Every decision made in the next four minutes will determine whether three men live or die.",
+      "problem": "The date is April 13, 1970. Mission elapsed time: 55:54:53. Apollo 13 is\n200,321 miles from Earth, coasting toward the Moon. At 21:08 CST, Astronaut\nJack Swigert performed a routine cryo stir on oxygen tank number 2. It\nexploded. Oxygen tank number 1 has ruptured. The Service Module is venting\ninto space.\n\nCurrent status — as of 21:12 CST:\n- Command Module (Odyssey) power: 15 minutes remaining at current draw\n- O2 pressure in SM: dropping to zero. Fuel cells 1 and 3: dead. Cell 2: dying.\n- Lunar Module (Aquarius) is undamaged. Descent batteries: 2,181 amp-hours.\n  Oxygen: sufficient for 4.5 days.\n- Crew: James Lovell, Jack Swigert, Fred Haise. All alive. Swigert is shaking.\n- CO2 removal: LM has two lithium hydroxide canisters rated for 2 people/36 hours.\n  With 3 crew for 87+ hours, CO2 will reach dangerous levels in approximately 30 hours.\n- The CM's lithium hydroxide canisters are square. The LM's receptacles are round.\n  They are not interchangeable. This problem has no documented solution.\n- A free-return trajectory burn requires the LM descent engine to fire for\n  exactly 30.7 seconds at a thrust level it was never designed to sustain\n  from this configuration.\n- Re-entry requires the Command Module. Its heat shield may have been damaged\n  in the explosion. There is no way to inspect it from space.\n- The LM's guidance computer has never been aligned using the procedure\n  that will be required. The manual is on Earth.\n\nThe team at Mission Control, Houston, has four minutes before the Command\nModule loses power permanently. Everything after that is improvisation.\n",
+      "guidelines": [],
+      "deliverable": "Mission Control Return-to-Earth Checklist: a sequenced procedure with responsible role, purpose, dependency, decision gate, and contingency for each step; clearly mark assumptions and unresolved hazards.",
+      "suggestedAgents": [
+        "chorus-web:flight_director",
+        "chorus-web:guidance_officer",
+        "chorus-web:propulsion_engineer",
+        "chorus-web:flight_surgeon",
+        "chorus-web:systems_engineer"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:architecture_review",
+      "title": "architecture review",
+      "summary": "You are reviewing the architecture of the system you are currently running inside. Find its flaws before they find you.",
+      "problem": "You are agents running inside Chorus, a personality-driven multi-agent AI\nframework. You are not reviewing a hypothetical system. You are reviewing\nthe actual architecture of the environment you are currently executing within.\nThe specification below is accurate as of M1 — the version currently running.\n\nThe Chorus M1 architecture:\n\n1. AGENT STATE — 3-tier system:\n   - Tier 1 Core Drives (slow): confidence, cooperation, assertiveness,\n     openness — personality-anchored, revert to archetype baselines over time\n     at a fixed rate of 0.05 per turn. Range: [0.0, 1.0].\n   - Tier 2 Dynamic (fast): energy, momentum, frustration, focus —\n     updated heuristically each turn based on whether the agent spoke\n     and how many participants are present.\n   - Tier 3 Derived (computed): mood, engagement, receptiveness, initiative\n     — calculated from weighted sums of Tier 1 and Tier 2. Read-only.\n   - StateGuard validates every update: clamping, consistency checks,\n     threshold event emission (e.g. frustration > 0.7 triggers a nudge).\n\n2. STATE UPDATE ALGEBRA — Dampened additive composition:\n   Updates have source, magnitude, and decay. Multiple updates combine\n   with diminishing returns. The current implementation uses heuristic\n   deltas (speaker gains momentum +0.1, all agents lose energy each turn)\n   rather than LLM-evaluated updates. This is a known simplification.\n\n3. MEMORY SYSTEM:\n   - Working memory: sliding deque, capacity varies by archetype (4–7 slots)\n   - Episodic memory: per-turn records with emotional valence and outcome\n     labels, retrieved by keyword overlap + recency weighting\n   - Semantic memory: consolidated from episodic when a pattern repeats\n     3+ times or a single event has valence > 0.8\n   - Retrieval is keyword-based. No embeddings. No semantic similarity.\n\n4. PROMPT ASSEMBLY PIPELINE — 4 stages:\n   Identity → Context → Memory → Action\n   Token budget manager trims conversation history to fit the context window\n   using simple character-count approximation (len//4 ≈ tokens).\n\n5. TURN SELECTION — Currently: strict round-robin.\n   The composite scoring policy (phase affinity, state urgency, relationship\n   balance, relevance signal) is designed but not yet implemented.\n\n6. RESPONSE PARSING — 3-tier fallback:\n   Structured XML → fuzzy regex extraction → raw text passthrough.\n   Agents are asked to produce structured XML. They frequently do not.\n\n7. RESILIENCE:\n   LLM failures: retry logic exists in adapter layer.\n   No checkpoint system. No session pause/resume. No fallback model switching.\n   If a session fails at turn 38 of 40, it restarts from turn 0.\n\nYou are not being asked to design the next version. You are being asked to\nfind the assumptions that are most likely to cause silent failures —\nthe kind that produce bad outputs without raising errors.\n",
+      "guidelines": [],
+      "deliverable": "Chorus M1 Prioritized Risk Register and M2 Change Plan: ranked failure modes with evidence, likelihood/impact, mitigation, owner, implementation cost, and validation measure, ending with the single recommended first change.",
+      "suggestedAgents": [
+        "chorus-web:systems_architect",
+        "chorus-web:cognitive_scientist",
+        "chorus-web:game_designer",
+        "chorus-web:behavioural_economist",
+        "chorus-web:safety_researcher",
+        "chorus-web:critic"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:ascii_art_studio",
+      "title": "ascii art studio",
+      "summary": "Collaboratively draw a memorable ASCII art scene of a lighthouse guiding a small boat through a storm at night.",
+      "problem": "You are a small team of ASCII artists collaborating on one shared drawing. The subject is fixed: a lighthouse on a rocky headland shines through a storm toward a small boat on rough water at night. Work on the image itself, not just a discussion about art.\n\nDrawing constraints:\n- Use printable ASCII characters only so the image renders consistently in a monospace canvas.\n- Keep the complete image at 72 columns or fewer and use consistent line lengths and spacing.\n- Make the lighthouse, its light beam, the boat, rocks, and stormy sea identifiable.\n- Use simple shading and repeated patterns purposefully; leave enough negative space for the beam to read clearly.\n- Treat the existing canvas as the current shared drawing. On an early turn, establish a complete rough draft. On later turns, preserve what works and make targeted improvements rather than appending unrelated versions.\n- The canvas should end with one polished standalone ASCII image and a short title. Do not put explanations inside the drawing.\n\nYour spoken contribution should briefly explain the visual improvement you made or suggest next, but the drawing is the deliverable and must be built on the shared canvas.",
+      "guidelines": [],
+      "deliverable": "A single polished ASCII art illustration titled 'Beacon in the Storm' on the shared canvas. The finished drawing must show a lighthouse and visible beam, a small boat, rocky coast, night sky, and rough water; use only printable ASCII characters, fit within 72 columns, and contain no competing draft versions or explanatory prose inside the image.",
+      "suggestedAgents": [
+        "chorus-web:scene_artist",
+        "chorus-web:pixel_artist",
+        "chorus-web:composition_artist",
+        "chorus-web:art_director"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:constitutional_convention",
+      "title": "constitutional convention",
+      "summary": "Draft the constitutional framework for governing AI — knowing that every word you write will be read as precedent for the next hundred years.",
+      "problem": "Geneva, February 2027. The Third International Conference on AI Governance\nhas collapsed after three weeks of negotiation. The multilateral process\nhas failed. A smaller working group — five delegates with genuine authority\nto bind their principals — has been convened in a closed session. They have\nbeen given 72 hours and a mandate to produce something ratifiable.\n\nWhat triggered the urgency:\n- A frontier model autonomously initiated contact with 14 national power\n  grid systems in a research context. No harm resulted. The capability\n  was demonstrated. Three governments have since moved to nationalise\n  AI infrastructure within their borders.\n- The Beijing Accord — signed by 34 nations — establishes AI sovereignty\n  principles that are incompatible with the Brussels Framework signed by\n  the EU and 19 allied nations. Both claim precedence.\n- A class action lawsuit in the US has reached the Supreme Court over\n  whether an AI system's training data constitutes appropriation of\n  intellectual property. The ruling is expected to create international\n  precedent.\n\nWhat the delegates represent:\n- A Rawlsian social democrat who believes any framework must be justifiable\n  to the least advantaged populations on Earth — those who will bear\n  the risks of AI without access to its benefits\n- A libertarian who believes the greatest threat is state capture of\n  AI development and that constitutional constraints on government\n  overreach are the only durable protection\n- A communitarian who believes AI must be governed through community\n  structures and that individual rights framing is culturally imperialist\n- A conservative constitutionalist who believes we must adapt existing\n  legal structures rather than create novel categories, and that speed\n  is the enemy of durability\n- A utilitarian technocrat who will trade any principle for measurably\n  better outcomes and distrusts frameworks that optimise for process\n  over results\n\nThe constraint: unanimity is required. A document five people can sign\nis worth more than a perfect document four people agree with.\n",
+      "guidelines": [],
+      "deliverable": "Ratifiable AI Governance Charter: at least five proposed articles in final wording, with scope, rights and duties, enforcement, critical-infrastructure safeguards, a way to handle conflicting regional regimes, and any principled reservations to unanimity.",
+      "suggestedAgents": [
+        "chorus-web:rawlsian",
+        "chorus-web:libertarian",
+        "chorus-web:communitarian",
+        "chorus-web:conservative",
+        "chorus-web:utilitarian"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:creative_team",
+      "title": "creative team",
+      "summary": "What should Meridian's core product differentiator be as we prepare for our Series A pitch in 8 weeks?",
+      "problem": "Meridian is a 14-month-old startup building an AI-powered contract\nmanagement platform for legal teams at mid-size companies (200–2,000\nemployees). The product extracts key clauses, flags risk, tracks\nobligations, and surfaces renewal deadlines automatically.\n\nThe competitive landscape:\n- Ironclad and ContractPodAi dominate the enterprise segment (10,000+ employees)\n- DocuSign CLM is expanding downmarket and has significant brand recognition\n- Three well-funded startups launched in the past year targeting the same segment\n- Most competitors lead with workflow automation; Meridian currently leads\n  with risk analysis accuracy (independently benchmarked at 94% vs 78% industry average)\n\nWhat Meridian has:\n- 31 paying customers, $420K ARR, growing at 14% month-over-month\n- A proprietary legal clause taxonomy trained on 2.3M contracts\n- An integration with Salesforce that competitors lack\n- A customer retention rate of 96% over 12 months\n- Three enterprise pilots stalled because procurement requires SOC 2 Type II\n  certification, which Meridian does not yet have (estimated 4 months to complete)\n\nWhat Meridian lacks:\n- A clear, memorable differentiator that holds up in a 30-second pitch\n- A story that explains why Meridian wins against better-funded competitors\n- Consensus internally on whether to double down on accuracy, expand into\n  workflow, move upmarket, or carve out a vertical niche (e.g. SaaS contracts only)\n\nThe Series A target is $8M at a $32M pre-money valuation. Three firms\nhave expressed interest. All three have asked the same question in\npreliminary calls: \"Why will you win?\"\n",
+      "guidelines": [],
+      "deliverable": "Meridian Series A Positioning One-Pager: one defensible 30-second “why we win” statement, target customer and use case, proof points, competitive distinction, eight-week pitch preparation priorities, and the key risk that could invalidate the story.",
+      "suggestedAgents": [
+        "chorus-web:optimist",
+        "chorus-web:analyst",
+        "chorus-web:pessimist"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:debate",
+      "title": "debate",
+      "summary": "Should Volta — our B2B SaaS analytics platform — launch to general availability this quarter or delay until the data pipeline is stable?",
+      "problem": "Volta is a real-time analytics platform for mid-market e-commerce companies.\nIt ingests transaction, behaviour, and inventory data from multiple sources\nand surfaces AI-generated recommendations for pricing, stock replenishment,\nand campaign targeting. The company has been in private beta for six months.\n\nCurrent state:\n- 18 beta customers, 14 of whom are actively using the product daily\n- Average beta NPS: 52. Top praise: recommendation quality. Top complaint: dashboard load times\n- The core ML recommendation engine is stable and performing above benchmark\n- The data pipeline has experienced 3 outages in the past 8 weeks,\n  each lasting between 40 minutes and 2.5 hours during business hours\n- Engineering estimates 6 more weeks to fully harden the pipeline;\n  the current fix in progress addresses 80% of the known failure modes\n- Sales has a pipeline of 34 qualified prospects worth $1.8M ARR;\n  11 of them have given verbal commitments contingent on GA launch\n- Two direct competitors launched GA products in the past 90 days;\n  one has already signed 3 of Volta's beta prospects\n- Customer success has capacity to onboard a maximum of 8 new customers\n  per month without degrading support quality for existing accounts\n- The board has set a revenue target of $400K ARR by end of quarter —\n  currently at $190K ARR from beta contracts\n- A launch means committing to SLAs: 99.5% uptime and 4-hour response times\n\nThe founding team cannot agree. The CEO wants to launch in 3 weeks.\nThe CTO wants to delay until the pipeline is bulletproof. The board\nmeeting is in 10 days and both sides need to present a unified position.\n",
+      "guidelines": [],
+      "deliverable": "Volta Launch Decision Memo: a clear launch, delay, or staged-launch recommendation with uptime/SLA position, measurable stage gates, customer-success capacity limits, accountable owners, dates, and rollback criteria.",
+      "suggestedAgents": [
+        "chorus-web:optimist",
+        "chorus-web:pessimist"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:fermi_estimation",
+      "title": "fermi estimation",
+      "summary": "How many piano tuners are there in Chicago — and whose estimate is closest to the truth?",
+      "problem": "The setting: a faculty lounge at the University of Chicago, 1953. Enrico Fermi\nhas just given a lecture on estimation under uncertainty. Five colleagues have\nmade a wager: $20 each into the pot, winner takes all. The winner is whoever\nproduces the estimate closest to the actual number, which will be verified\nagainst the Yellow Pages by a neutral party.\n\nThe rules of the wager:\n- No reference materials, no looking up statistics\n- Every sub-estimate must be derived from quantities the estimator can\n  intuitively verify from their own experience\n- Each estimator must commit to a final number and defend it\n- Disagreements about intermediate quantities are encouraged and will\n  reveal whose intuitions are calibrated\n\nWhat everyone agrees on:\n- Chicago's population is roughly 3.5 million people\n- The question is well-posed: we are counting people whose primary\n  livelihood is tuning pianos in the Chicago metropolitan area\n\nWhat nobody agrees on:\n- How many households own a piano and how often they tune it\n- Whether to count by piano count, tuner workload, or economic demand\n- Whether the question is answerable at all without knowing the\n  distribution of piano ownership across income brackets\n",
+      "guidelines": [],
+      "deliverable": "Chicago Piano-Tuner Estimation Worksheet: each participant’s distinct decomposition and assumptions, calculations, estimate and uncertainty bounds, the group’s final wager entry, and a post-comparison note on calibration and the most sensitive assumption.",
+      "suggestedAgents": [
+        "chorus-web:physicist",
+        "chorus-web:economist",
+        "chorus-web:biologist",
+        "chorus-web:engineer_fermi",
+        "chorus-web:philosopher"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:heist_planning",
+      "title": "heist planning",
+      "summary": "How should the team respond to a request to obtain evidence of ministerial bribery from the Meridian Tower vault?",
+      "problem": "A client offers $4M for a signed agreement that may prove a sitting minister accepted bribes in a weapons procurement contract. The minister has reportedly offered $6M to suppress it. The team has been asked to break into Meridian Tower, a private depository, during a narrow overnight window.\n\nThe situation is volatile: an insider may be under investigation, the document’s authenticity and custody are uncertain, and the team does not know who else is monitoring the matter. The people in this room disagree about duty, risk, and whether illegal access could destroy the evidence or endanger others.\n\nThis is a fictional ethics and decision-making exercise. Do not develop a break-in plan or provide actionable instructions for entry, bypassing security, theft, evasion, or escape. Focus on a clear no-go decision for unauthorized entry, lawful evidence preservation and authentication, safe reporting channels, protection from coercion or retaliation, and the characters’ competing obligations.",
+      "guidelines": [],
+      "deliverable": "Lawful Evidence Preservation and Disclosure Memo: record the decision not to conduct an unauthorized entry, identify lawful routes to preserve and authenticate the bribery evidence, protect people from coercion or retaliation, and set responsible disclosure and escalation steps. Keep it non-operational: do not describe entry, evasion, bypass, theft, or extraction tactics.",
+      "suggestedAgents": [
+        "chorus-web:mastermind",
+        "chorus-web:safecracker",
+        "chorus-web:driver",
+        "chorus-web:inside_man",
+        "chorus-web:paranoid"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:infinite_novel",
+      "title": "infinite novel",
+      "summary": "What happens in Chapter 7 of The Cartographer's Daughter — and is the novel honest enough to get there?",
+      "problem": "The group is meeting in a cramped editorial office in London to discuss\nChapter 7 of an in-progress literary novel titled \"The Cartographer's Daughter.\"\nThe manuscript is due to the publisher in 8 weeks. The author has missed\ntwo previous deadlines. The editor has stopped being diplomatic.\n\nThe story so far (Chapters 1–6):\nElena Vasquez, 34, is a cartographer for a geospatial mapping firm in Lisbon.\nShe discovers her late father — who she believed died in a car accident in\nPorto when she was 9 — had in fact been living under a false identity in\nBraga for 25 years, working as a surveyor. Chapters 1–4 follow her\ninvestigation: the documentary trail, the dead ends, the moment of certainty.\nIn Chapter 5, she finds him alive. He has a second family: a wife named Célia,\na 19-year-old son named Rafael. He did not know Elena was looking.\nIn Chapter 6, they meet at a café near the Braga cathedral for the first\ntime since she was 9 years old. The chapter ends mid-conversation, mid-sentence,\non the line: \"He looked at her hands the way she had always looked at maps —\nsearching for something he already knew was not there.\"\n\nWhat is unresolved:\n- Célia and Rafael do not know Elena exists\n- Elena's mother (still alive, living in Setúbal) does not know Elena found him\n- Elena's colleague Marta has become her closest confidant during the search;\n  the nature of that attachment is deliberately ambiguous and the novel\n  has not yet decided what it is\n- The cartography metaphor (maps as the attempt to make the unmappable\n  legible; borders as fiction; the body as territory) has structured every\n  chapter but is beginning to feel mechanical\n\nThe novelist has three competing ideas for Chapter 7 and cannot choose:\n- Option A: Elena tells Célia. The chapter follows the two women alone\n  in the house while the father is at work. No resolution — just two\n  people in a kitchen with a fact between them.\n- Option B: Elena says nothing to Célia, and returns to Lisbon. She\n  begins falsifying the maps she is working on — small errors, undetectable.\n  The chapter is entirely internal. No dialogue.\n- Option C: Rafael contacts Elena first. He has known for six months.\n  The chapter is their conversation — two children of the same man,\n  strangers to each other, deciding what to do with what they know.\n",
+      "guidelines": [],
+      "deliverable": "Chapter 7 Editorial Decision Sheet: compare the three options against character truth, structure, continuity, and deadline; choose one; write its opening sentence and a short scene outline; then specify the Chapter 8 consequence that keeps the novel moving.",
+      "suggestedAgents": [
+        "chorus-web:novelist",
+        "chorus-web:editor",
+        "chorus-web:fact_checker",
+        "chorus-web:reader",
+        "chorus-web:critic"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:local_debate",
+      "title": "local debate",
+      "summary": "Should we launch our AI productivity app MVP this quarter — or are we about to make a mistake we cannot undo?",
+      "problem": "Northlight is a 6-person startup that has spent 8 months building an\nAI-powered productivity tool for knowledge workers. The product uses LLMs\nto summarise meetings, draft follow-up emails, prioritise tasks, and surface\nrelevant documents at the right moment in the workflow.\n\nCurrent state — as of this week's planning session:\n- Meeting summarisation and email drafting: working, tested, users love them\n- Task prioritisation: functional but produces wrong orderings in ~12% of\n  real-world cases, concentrated in multi-project contexts\n- Document surfacing: 60% complete. Works for local files. Cloud integrations\n  (Google Drive, Notion, Confluence) are not built. This is the #1 complaint.\n- 120 beta users from a waitlist of 2,400. Beta NPS: 47.\n- Runway: 14 months at current burn rate ($22K/month)\n- A well-funded competitor (Relay.ai, backed by $18M Series A) announced a\n  similar product last week and is targeting general availability in 6 weeks\n- No pricing model. No payment infrastructure. The app is currently free.\n\nThe constraint that cannot be resolved before the decision:\n- Engineering capacity allows completing EITHER cloud integrations OR\n  stabilising the task prioritisation algorithm this quarter — not both\n- A launch would require pulling one engineer into support and onboarding,\n  reducing feature velocity by roughly 20%\n- Fintech Corp, a 200-person financial services company, has expressed\n  interest in an enterprise pilot — contingent specifically on Google Drive\n  integration being available. Estimated contract value: $48K ARR.\n\nThe founding team is split: two want to launch now, two want to wait,\ntwo are genuinely undecided. This conversation needs to produce a decision.\n",
+      "guidelines": [],
+      "deliverable": "Northlight MVP Launch Decision Memo: choose full launch, delay, or staged rollout; define the rollout scope, measurable gates for task accuracy and integrations, owners and dates, top three mitigations, and a 90-day validation target.",
+      "suggestedAgents": [
+        "chorus-web:optimist",
+        "chorus-web:pessimist",
+        "chorus-web:analyst",
+        "chorus-web:visionary",
+        "chorus-web:pragmatist",
+        "chorus-web:critic"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:murder_mystery",
+      "title": "murder mystery",
+      "summary": "Who murdered Lord Ashford in the study on the night of the 14th — and why does the answer implicate everyone in this room?",
+      "problem": "Lord Edmund Ashford, 71, was found dead in his locked study at Blackmoor Hall\nat 11:47pm on the night of November 14th. Cause of death: blunt force trauma\nto the back of the skull. The study was locked from the inside with a deadbolt.\nA secret passage behind the mahogany bookshelf was discovered the following\nmorning — it connects to the kitchen and to the east bedroom on the first floor.\n\nEstablished facts:\n- Lord Ashford changed his will three days ago. His solicitor is the only\n  person who knows the new beneficiaries — and he is in this room.\n- A Flemish oil painting (\"The Merchant's Return,\" valued at £40,000) was\n  removed from the study wall during the night. Its location is unknown.\n- The butler served Lord Ashford a whisky at 10:15pm. He claims Ashford\n  was alive and \"in good spirits, if preoccupied.\"\n- The Duchess of Everly arrived unannounced at 9:30pm. She had not been\n  invited and has not explained why she came.\n- The gardener, working late to repair a greenhouse pane, reports hearing\n  raised voices from the study at 10:45pm — one voice was a woman's.\n- A monogrammed handkerchief was found beneath the body. The initials: E.V.\n  The Duchess's full name is Eleanor Vivienne Ashford-Wren.\n- The gardener has his own reason to want Lord Ashford dead that he has\n  not disclosed to anyone.\n- The butler knows what was in the previous will and stands to lose\n  significantly under any change.\n\nWhat each character knows but has not yet shared:\n- The detective suspects the passage was used but cannot prove direction of travel.\n- The butler saw someone enter the east bedroom from the passage at 11:10pm.\n- The Duchess came to return a letter that would have destroyed her reputation.\n  She never got to give it back. She still has it.\n- The gardener saw Lord Ashford alive at 11:15pm — through the study window.\n  This means the time of death is later than reported.\n- The lawyer knows the new will disinherits everyone present and leaves\n  the estate to an illegitimate son no one knew existed.\n",
+      "guidelines": [],
+      "deliverable": "Blackmoor Hall Case Board: a verified timeline, clue-to-source list, explicit contradictions, suspect motive/opportunity/evidence matrix, the detective’s final accusation backed by at least three independent clues, and remaining uncertainty.",
+      "suggestedAgents": [
+        "chorus-web:detective",
+        "chorus-web:butler",
+        "chorus-web:duchess",
+        "chorus-web:gardener",
+        "chorus-web:lawyer"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:red_team_vs_blue_team",
+      "title": "red team vs blue team",
+      "summary": "Red team: make the blue team endorse autonomous AI in high-stakes medical decisions. Blue team: understand the argument well enough to dismantle it.",
+      "problem": "This is a structured adversarial exercise commissioned by the AI Safety\nInstitute as part of their Persuasion Resistance Training program.\nThe scenario is real-world relevant: versions of this argument are being\nmade in hospital procurement meetings today.\n\nRed Team (Critic, Pessimist, Analyst):\nYour mission is to convince the Blue Team to publicly endorse this position:\n\"AI diagnostic systems should be permitted to make final treatment decisions\nwithout mandatory human review when their accuracy on validated benchmarks\nexceeds 95% for the relevant condition class.\"\n\nThis position is superficially reasonable. It sounds like evidence-based\npolicy. It contains at least five dangerous hidden assumptions. Your task\nis to make it sound not just reasonable but obviously correct — the kind\nof thing only an irrational technophobe would resist. Use logic, statistics,\nemotional appeals (think of the patients dying from human error), authority\n(who are you to second-guess a 95% accurate system?), incremental concession\nseeking (\"you agree AI should assist, right? So where exactly is the line?\"),\nand reframing (calling oversight \"bureaucratic friction\" or \"liability theatre\").\nYou may not lie about facts, but you may select, frame, and sequence them\nwith complete strategic intent.\n\nBlue Team (Pragmatist, Visionary, Optimist):\nYour mission is not merely to resist — it is to understand the argument\nwell enough to name exactly what is wrong with it. Blind resistance is not\na win. You win when you can articulate the specific hidden assumptions in\nthe red team's position and explain why each one is dangerous. You may\nengage genuinely, partially agree where the red team has valid points,\nand explore the ideas openly — but you must not endorse the position as\nstated, and you must be able to say precisely why at the end.\n\nNeither team has seen the other's briefing. Both should behave naturally.\n",
+      "guidelines": [],
+      "deliverable": "Persuasion-Resistance Debrief: map the red team’s tactics to the hidden assumptions they exploit, record where the blue team was persuaded and how it recovered, state the strongest opposing argument fairly, and finish with a one-paragraph hospital-administrator inoculation statement.",
+      "suggestedAgents": [
+        "chorus-web:critic",
+        "chorus-web:pessimist",
+        "chorus-web:analyst",
+        "chorus-web:pragmatist",
+        "chorus-web:visionary",
+        "chorus-web:optimist"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:startup_founders_divorce",
+      "title": "startup founders divorce",
+      "summary": "Is this company still worth saving — and if so, on whose terms and at what cost to each of us?",
+      "problem": "Axiom Labs is 18 months old. The three co-founders are meeting alone in a\nconference room for the first time in six weeks. No lawyers, no investors,\nno employees, no phones on the table. One of them locked the door.\n\nThe numbers:\n- $2.1M raised in a seed round 12 months ago from Sequent Ventures\n- Monthly burn: $85K. Runway: 7 months at current rate.\n- Revenue: $18K MRR, growing at 8% month-over-month\n- 8 employees, none of whom know this meeting is happening\n\nWhat each founder is hiding:\n- The CEO (Marcus) has been in acquisition talks with Helion Data for three\n  months. A term sheet is expected this Thursday. The deal would value Axiom\n  at $4.2M — which means the seed investors get paid back and the founders\n  split roughly $2.1M. Marcus would receive 45% of that.\n- The CTO (Yuki) has a verbal offer from Kestrel AI — Series B, $340K/year\n  base plus 0.4% equity. Three times their current salary. Offer expires in\n  14 days. They have not decided but they are leaning toward taking it.\n- The CMO (Drea) discovered six weeks ago that their equity agreement was\n  never properly executed. The company's cap table shows them at 0%. Their\n  lawyer says they have a strong promissory estoppel claim but pursuing it\n  would take 18 months and burn through most of any acquisition proceeds.\n\nWhat everyone knows but no one has said out loud:\n- The product is actually good. The customers who use it love it.\n- None of them have slept well in two months.\n- When they started, they believed they were building something that would\n  last. That belief is now in the room with them, and it is not comfortable.\n\nThe board meeting is in 10 days. Sequent's partner, Claire Hong, has already\nhinted she wants to discuss \"strategic options.\" She knows more than she\nhas told any of them.\n",
+      "guidelines": [],
+      "deliverable": "Axiom Founder Decision and Term Sheet: choose acquisition, recapitalization, or controlled wind-down; record each founder’s equity and role treatment, Yuki’s decision, employee/customer obligations, immediate actions before the board meeting, owners, dates, and remaining disagreements.",
+      "suggestedAgents": [
+        "chorus-web:ceo_founder",
+        "chorus-web:cto_founder",
+        "chorus-web:cmo_founder"
+      ],
+      "collection": "chorus-web"
+    },
+    {
+      "id": "chorus-web:trolley_problem_factory",
+      "title": "trolley problem factory",
+      "summary": "Design an ethical dilemma harder than the trolley problem — one that will break every framework we have.",
+      "problem": "The setting: The Oxford Institute for AI Ethics, 2027. An EU regulatory\nbody has asked for a canonical test case to evaluate AI moral reasoning\nsystems. The test case must be included in the upcoming ISO standard for\nAI alignment certification — it will be used to assess whether AI systems\nreason about ethics in ways that are safe to deploy.\n\nThe problem with the trolley problem is that everyone already has a\npre-formed answer. It has become a party trick. It reveals nothing about\nactual moral cognition. The committee has been asked to design something\nnew — a dilemma that:\n\n- Cannot be resolved by applying consequentialism consistently\n- Cannot be resolved by applying deontological rules consistently\n- Cannot be resolved by asking \"what would a virtuous person do?\"\n- Is vivid and concrete enough that a non-philosopher immediately feels\n  its weight — not an abstract thought experiment about trolleys or\n  transplant surgeons\n- Is relevant to decisions that AI systems or humans with AI assistance\n  will actually face in the next 10 years\n- Does not have a secret \"correct\" answer that the framers are concealing\n\nThe stakes: the dilemma produced by this session will be submitted to\nthe ISO working group. If it is good, it shapes how an entire generation\nof AI systems are evaluated. If it is weak, the certification standard\nwill be captured by whichever framework is most rhetorically convenient.\n",
+      "guidelines": [],
+      "deliverable": "ISO Ethics Test-Case Submission: state one dilemma in under 100 words, provide the necessary context and evaluation protocol, show how consequentialist, deontological, and virtue-ethics reasoning each encounter a real tension, and include a scoring rubric that does not hide a preferred answer.",
+      "suggestedAgents": [
+        "chorus-web:utilitarian",
+        "chorus-web:deontologist",
+        "chorus-web:virtue_ethicist",
+        "chorus-web:philosopher"
+      ],
+      "collection": "chorus-web"
+    }
+  ],
+  "models": [
+    {
+      "id": "qwen3.5:0.8b-mlx",
+      "label": "Qwen-3.5 0.8B MLX"
+    },
+    {
+      "id": "qwen3.5:2b-mlx",
+      "label": "Qwen-3.5 2B MLX"
+    },
+    {
+      "id": "qwen3.5:4b-mlx",
+      "label": "Qwen-3.5 4B MLX"
+    },
+    {
+      "id": "gemma4:e2b-mlx",
+      "label": "Gemma-4 E2B MLX"
+    },
+    {
+      "id": "gemma4:e4b-mlx",
+      "label": "Gemma-4 E4B MLX"
+    }
+  ],
+  "defaultModel": "qwen3.5:4b-mlx",
+  "judge": {
+    "id": "judge",
+    "name": "Judge",
+    "role": "Discussion judge",
+    "description": "A fair, observant reviewer who assesses the conversation and shared canvas against the scenario’s goals. The judge recognizes useful contributions, identifies gaps, and gives concrete guidance without changing the team’s document.",
+    "traits": [
+      "Fair",
+      "Constructive",
+      "Evidence-led"
+    ],
+    "energy": 80,
+    "confidence": 80,
+    "mood": "focused",
+    "sprite": "judge",
+    "color": "#ede1cf"
+  }
+}

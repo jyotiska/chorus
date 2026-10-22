@@ -1,0 +1,771 @@
+{
+  "$defs": {
+    "APIError": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "title": "Error",
+          "type": "string"
+        },
+        "code": {
+          "enum": [
+            "INVALID_REQUEST",
+            "INVALID_MODEL_RESPONSE",
+            "GENERATION_FAILED",
+            "MODEL_UNAVAILABLE",
+            "MODEL_NOT_FOUND",
+            "MODEL_REQUEST_FAILED",
+            "TIMEOUT",
+            "CANCELLED",
+            "CONTEXT_LIMIT",
+            "NOT_FOUND",
+            "CONFLICT",
+            "INVALID_STATE",
+            "CAPACITY",
+            "RECOVERED",
+            "VERSION_MISMATCH",
+            "FORBIDDEN",
+            "BACKEND_UNAVAILABLE"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "requestId": {
+          "title": "Requestid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "error",
+        "code",
+        "requestId"
+      ],
+      "title": "APIError",
+      "type": "object"
+    },
+    "Agent": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "traits": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Traits",
+          "type": "array"
+        },
+        "mood": {
+          "default": "focused",
+          "title": "Mood",
+          "type": "string"
+        },
+        "energy": {
+          "default": 80,
+          "title": "Energy",
+          "type": "integer"
+        },
+        "confidence": {
+          "default": 80,
+          "title": "Confidence",
+          "type": "integer"
+        },
+        "collection": {
+          "default": "nanoville",
+          "title": "Collection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "description",
+        "traits",
+        "mood",
+        "energy",
+        "confidence",
+        "collection"
+      ],
+      "title": "Agent",
+      "type": "object"
+    },
+    "Catalog": {
+      "additionalProperties": false,
+      "properties": {
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Agent"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "scenarios": {
+          "items": {
+            "$ref": "#/$defs/Scenario"
+          },
+          "title": "Scenarios",
+          "type": "array"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/ModelInfo"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "defaultModel": {
+          "title": "Defaultmodel",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agents",
+        "scenarios",
+        "models",
+        "defaultModel"
+      ],
+      "title": "Catalog",
+      "type": "object"
+    },
+    "Command": {
+      "additionalProperties": false,
+      "properties": {
+        "commandId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Commandid",
+          "type": "string"
+        },
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        },
+        "action": {
+          "enum": [
+            "start",
+            "pause",
+            "resume",
+            "stop"
+          ],
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "commandId",
+        "expectedRevision",
+        "action"
+      ],
+      "title": "Command",
+      "type": "object"
+    },
+    "FinalJudgement": {
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "maxLength": 600,
+          "minLength": 8,
+          "title": "Summary",
+          "type": "string"
+        },
+        "strengths": {
+          "items": {
+            "maxLength": 300,
+            "minLength": 8,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Strengths",
+          "type": "array"
+        },
+        "improvements": {
+          "items": {
+            "maxLength": 300,
+            "minLength": 8,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Improvements",
+          "type": "array"
+        },
+        "nextPriorities": {
+          "items": {
+            "maxLength": 300,
+            "minLength": 8,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Nextpriorities",
+          "type": "array"
+        },
+        "verdict": {
+          "enum": [
+            "Meets requirements",
+            "Partially meets requirements",
+            "Needs more work"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "feedbackResponse": {
+          "maxLength": 600,
+          "minLength": 8,
+          "title": "Feedbackresponse",
+          "type": "string"
+        },
+        "requirements": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "minItems": 1,
+          "title": "Requirements",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "strengths",
+        "improvements",
+        "nextPriorities",
+        "verdict",
+        "feedbackResponse",
+        "requirements"
+      ],
+      "title": "FinalJudgement",
+      "type": "object"
+    },
+    "Journal": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "turnNumber": {
+          "title": "Turnnumber",
+          "type": "integer"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Text"
+        }
+      },
+      "required": [
+        "agentId",
+        "turnNumber",
+        "createdAt",
+        "text"
+      ],
+      "title": "Journal",
+      "type": "object"
+    },
+    "ModelInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "installed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Installed"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "installed"
+      ],
+      "title": "ModelInfo",
+      "type": "object"
+    },
+    "Requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Criterion",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "Met",
+            "Partially met",
+            "Missing"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence": {
+          "maxLength": 600,
+          "minLength": 8,
+          "title": "Evidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "criterion",
+        "status",
+        "evidence"
+      ],
+      "title": "Requirement",
+      "type": "object"
+    },
+    "Scenario": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "problem": {
+          "title": "Problem",
+          "type": "string"
+        },
+        "guidelines": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Guidelines",
+          "type": "array"
+        },
+        "deliverable": {
+          "title": "Deliverable",
+          "type": "string"
+        },
+        "suggestedAgents": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Suggestedagents",
+          "type": "array"
+        },
+        "collection": {
+          "default": "nanoville",
+          "title": "Collection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "summary",
+        "problem",
+        "guidelines",
+        "deliverable",
+        "suggestedAgents",
+        "collection"
+      ],
+      "title": "Scenario",
+      "type": "object"
+    },
+    "SessionConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "scenarioId": {
+          "title": "Scenarioid",
+          "type": "string"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 2,
+          "title": "Participantids",
+          "type": "array"
+        },
+        "model": {
+          "default": "qwen3.5:4b-mlx",
+          "title": "Model",
+          "type": "string"
+        },
+        "maxTurns": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Maxturns",
+          "type": "integer"
+        },
+        "judgeEnabled": {
+          "default": false,
+          "title": "Judgeenabled",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scenarioId",
+        "participantIds",
+        "model",
+        "maxTurns",
+        "judgeEnabled"
+      ],
+      "title": "SessionConfig",
+      "type": "object"
+    },
+    "Snapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "engineVersion": {
+          "default": "discussion-v23-python2",
+          "title": "Engineversion",
+          "type": "string"
+        },
+        "config": {
+          "$ref": "#/$defs/SessionConfig"
+        },
+        "scenario": {
+          "$ref": "#/$defs/Scenario"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Agent"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "status": {
+          "default": "ready",
+          "enum": [
+            "ready",
+            "running",
+            "reviewing",
+            "paused",
+            "stopped",
+            "completed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "turns": {
+          "items": {
+            "$ref": "#/$defs/Turn"
+          },
+          "title": "Turns",
+          "type": "array"
+        },
+        "canvas": {
+          "default": "",
+          "maxLength": 20000,
+          "title": "Canvas",
+          "type": "string"
+        },
+        "endedEarly": {
+          "default": false,
+          "title": "Endedearly",
+          "type": "boolean"
+        },
+        "finalJudgement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FinalJudgement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pending": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Work"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "error": {
+          "default": "",
+          "title": "Error",
+          "type": "string"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "enum": [
+                "INVALID_REQUEST",
+                "INVALID_MODEL_RESPONSE",
+                "GENERATION_FAILED",
+                "MODEL_UNAVAILABLE",
+                "MODEL_NOT_FOUND",
+                "MODEL_REQUEST_FAILED",
+                "TIMEOUT",
+                "CANCELLED",
+                "CONTEXT_LIMIT",
+                "NOT_FOUND",
+                "CONFLICT",
+                "INVALID_STATE",
+                "CAPACITY",
+                "RECOVERED",
+                "VERSION_MISMATCH",
+                "FORBIDDEN",
+                "BACKEND_UNAVAILABLE"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errorcode"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "engineVersion",
+        "config",
+        "scenario",
+        "agents",
+        "status",
+        "turns",
+        "canvas",
+        "endedEarly",
+        "finalJudgement",
+        "pending",
+        "error",
+        "errorCode",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "Snapshot",
+      "type": "object"
+    },
+    "TokenUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "title": "TokenUsage",
+      "type": "object"
+    },
+    "Turn": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "agent",
+            "judge",
+            "skipped"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "turnNumber": {
+          "title": "Turnnumber",
+          "type": "integer"
+        },
+        "speakerId": {
+          "title": "Speakerid",
+          "type": "string"
+        },
+        "speakerName": {
+          "title": "Speakername",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 1800,
+          "title": "Text",
+          "type": "string"
+        },
+        "actions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Actions",
+          "type": "array"
+        },
+        "tokenUsage": {
+          "$ref": "#/$defs/TokenUsage"
+        },
+        "latencySeconds": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Latencyseconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "kind",
+        "turnNumber",
+        "speakerId",
+        "speakerName",
+        "text",
+        "actions",
+        "tokenUsage",
+        "latencySeconds"
+      ],
+      "title": "Turn",
+      "type": "object"
+    },
+    "Work": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "turn",
+            "checkpoint",
+            "final"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "speakerId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speakerid"
+        }
+      },
+      "required": [
+        "kind",
+        "speakerId"
+      ],
+      "title": "Work",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Root for generating TypeScript declarations and runtime validators.",
+  "properties": {
+    "snapshot": {
+      "$ref": "#/$defs/Snapshot"
+    },
+    "config": {
+      "$ref": "#/$defs/SessionConfig"
+    },
+    "command": {
+      "$ref": "#/$defs/Command"
+    },
+    "catalog": {
+      "$ref": "#/$defs/Catalog"
+    },
+    "journals": {
+      "items": {
+        "$ref": "#/$defs/Journal"
+      },
+      "title": "Journals",
+      "type": "array"
+    },
+    "error": {
+      "$ref": "#/$defs/APIError"
+    }
+  },
+  "required": [
+    "snapshot",
+    "config",
+    "command",
+    "catalog",
+    "journals",
+    "error"
+  ],
+  "title": "Contracts",
+  "type": "object"
+}

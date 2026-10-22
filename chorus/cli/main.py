@@ -1,280 +1,103 @@
-import asyncio
+from __future__ import annotations
+import json
+import os
 from pathlib import Path
-from typing import Optional
-
+import time
+from uuid import uuid4
+import httpx
 import typer
-from dotenv import load_dotenv
 from rich.console import Console
-from rich.panel import Panel
-from rich.prompt import Prompt
-from rich.table import Table
-from rich.text import Text
+from chorus.contracts import SessionConfig
 
-from chorus.config.loader import load_agent_config, load_agents_for_session, load_session_config
-from chorus.core.agent import PersonalityAgent
-from chorus.llm.anthropic_adapter import AnthropicAdapter
-from chorus.orchestration.session import TurnResult
-from chorus.llm.base import LLMAdapter
-from chorus.llm.ollama_adapter import OllamaAdapter, list_available_models
-from chorus.llm.openai_adapter import OpenAIAdapter
-from chorus.orchestration.session import Session, TurnResult
-
-load_dotenv()
-
-app = typer.Typer(help="Chorus — personality-driven multi-agent AI conversations")
-agents_app = typer.Typer(help="Manage agent definitions")
-models_app = typer.Typer(help="Manage and inspect LLM models")
-app.add_typer(agents_app, name="agents")
-app.add_typer(models_app, name="models")
-
+app = typer.Typer(help="Chorus simulation platform. Start the service with chorus serve.")
 console = Console()
 
-TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
-AGENT_COLORS = ["cyan", "magenta", "yellow", "green", "blue", "red"]
+
+def client() -> httpx.Client:
+    return httpx.Client(base_url=os.getenv("CHORUS_API_URL", "http://127.0.0.1:43187"), timeout=15)
 
 
-OLLAMA_BASE_URL = "http://localhost:11434"
-
-
-def _get_adapter(provider: str, model: Optional[str]) -> LLMAdapter:
-    if provider == "anthropic":
-        return AnthropicAdapter(model=model) if model else AnthropicAdapter()
-    if provider == "openai":
-        return OpenAIAdapter(model=model) if model else OpenAIAdapter()
-    if provider == "ollama":
-        if not model:
-            raise ValueError("Ollama requires a model name. Set 'model' in your session config.")
-        return OllamaAdapter(model=model, base_url=OLLAMA_BASE_URL)
-    raise ValueError(f"Unknown provider '{provider}'. Choose 'anthropic', 'openai', or 'ollama'.")
-
-
-def _agent_color(index: int) -> str:
-    return AGENT_COLORS[index % len(AGENT_COLORS)]
-
-
-def _render_turn(result: TurnResult, color: str) -> None:
-    header = Text(f"Turn {result.turn} · {result.agent_name}", style=f"bold {color}")
-    console.print(Panel(result.response.message, title=header, border_style=color))
-
-
-def _build_agents(session_config, agents_dir: Path, provider: str, model: Optional[str]) -> list[PersonalityAgent]:
-    agent_configs = load_agents_for_session(session_config, agents_dir)
-    adapter = _get_adapter(provider, model)
-    return [PersonalityAgent(config=cfg, adapter=adapter) for cfg in agent_configs]
+def request(method: str, path: str, body: object = None) -> object:
+    try:
+        with client() as http:
+            response = http.request(method, "/api/v1" + path, **({"json": body} if body is not None else {}))
+        if response.is_error:
+            console.print(response.json().get("error", response.text), style="red")
+            raise typer.Exit(1)
+        return response.json()
+    except httpx.HTTPError as error:
+        console.print(f"Cannot reach Chorus: {error}. Start chorus serve first.", style="red")
+        raise typer.Exit(1) from None
 
 
 @app.command()
-def run(
-    session: Path = typer.Option(..., "--session", "-s", help="Path to session YAML config"),
-    agents_dir: Path = typer.Option(TEMPLATES_DIR / "agents", "--agents-dir", help="Directory containing agent YAML files"),
-    interactive: bool = typer.Option(False, "--interactive", "-i", help="Pause after each turn to inject messages"),
-    verbose: bool = typer.Option(False, "--verbose", "-v", help="Show state changes after each turn"),
-    inspect: bool = typer.Option(False, "--inspect", help="Pause after each turn with full state and memory view"),
-    topic: Optional[str] = typer.Option(None, "--topic", "-t", help="Override the topic from the session config"),
-) -> None:
-    """Start a multi-agent conversation."""
-    session_config = load_session_config(session)
-
-    if topic:
-        session_config.topic = topic
-
-    agent_list = _build_agents(
-        session_config, agents_dir, session_config.provider, session_config.model
-    )
-
-    color_map = {agent.name: _agent_color(i) for i, agent in enumerate(agent_list)}
-
-    console.print(Panel(
-        f"[bold]Topic:[/bold] {session_config.topic}\n"
-        f"[bold]Agents:[/bold] {', '.join(a.name for a in agent_list)}\n"
-        f"[bold]Max turns:[/bold] {session_config.max_turns}",
-        title="[bold]Chorus Session[/bold]",
-        border_style="white",
-    ))
-
-    chorus_session = Session(
-        topic=session_config.topic,
-        agents=agent_list,
-        max_turns=session_config.max_turns,
-        context=session_config.context,
-        expectations=session_config.expectations,
-    )
-
-    asyncio.run(_run_session(chorus_session, color_map, interactive, verbose, inspect))
+def serve(port: int = 43187) -> None:
+    """Run the local API; one process owns the SQLite runner."""
+    import uvicorn
+    uvicorn.run("chorus.api:app", host="127.0.0.1", port=port, workers=1)
 
 
-async def _run_session(
-    session: Session,
-    color_map: dict[str, str],
-    interactive: bool,
-    verbose: bool = False,
-    inspect: bool = False,
-) -> None:
-    while not session.is_finished():
-        with console.status("Thinking...", spinner="dots"):
-            result = await session.run_turn()
-
-        _render_turn(result, color_map[result.agent_name])
-
-        if verbose or inspect:
-            _render_state(result, color_map[result.agent_name])
-
-        if result.state_events:
-            for event in result.state_events:
-                console.print(f"  [yellow]⚡ {event.name}[/yellow] ({event.variable}: {event.value:.2f})")
-
-        if inspect:
-            agent = next(a for a in session.agents if a.name == result.agent_name)
-            _render_inspect(agent)
-            Prompt.ask("[dim]Press Enter to continue[/dim]", default="")
-
-        if interactive and not session.is_finished():
-            user_input = Prompt.ask(
-                "[dim]Press Enter to continue, type a message to interject, or 'q' to quit[/dim]",
-                default="",
-            )
-            if user_input.lower() == "q":
-                console.print("[dim]Session ended by user.[/dim]")
-                break
-            if user_input.strip():
-                session.inject_message("You", user_input.strip())
-                console.print(Panel(user_input.strip(), title="[bold white]You[/bold white]", border_style="white"))
-
-    console.print("[dim]Session complete.[/dim]")
+@app.command()
+def catalog(kind: str = "scenarios") -> None:
+    """List scenarios, agents, or configured/installed models."""
+    if kind not in {"scenarios", "agents", "models"}:
+        raise typer.BadParameter("Choose scenarios, agents, or models")
+    console.print_json(data=request("GET", "/" + kind))
 
 
-def _render_state(result: TurnResult, color: str) -> None:
-    snap = result.state_snapshot
-    if not snap:
-        return
-    table = Table(border_style="dim", show_header=True, header_style=f"bold {color}")
-    table.add_column("Variable")
-    table.add_column("Value", justify="right")
-    table.add_column("Bar", no_wrap=True)
-
-    for key in ("confidence", "energy", "frustration", "momentum", "focus", "mood"):
-        value = snap.get(key)
-        if value is None:
-            continue
-        if isinstance(value, str):
-            table.add_row(key, value, "")
-        else:
-            bar_len = int(value * 20) if value >= 0 else int((value + 1) * 10)
-            bar = "█" * bar_len + "░" * (20 - bar_len)
-            table.add_row(key, f"{value:.2f}", f"[{color}]{bar}[/{color}]")
-
-    console.print(table)
+@app.command()
+def sessions() -> None:
+    console.print_json(data=request("GET", "/sessions"))
 
 
-def _render_inspect(agent: "PersonalityAgent") -> None:
-    state = agent.state
-    episodes = agent.memory.episodic.all()[-5:]
-    semantic = agent.memory.semantic.all()
-
-    lines = [
-        f"[bold]State:[/bold]",
-        f"  confidence={state.confidence:.2f}  cooperation={state.cooperation:.2f}  "
-        f"assertiveness={state.assertiveness:.2f}  openness={state.openness:.2f}",
-        f"  energy={state.energy:.2f}  momentum={state.momentum:.2f}  "
-        f"frustration={state.frustration:.2f}  focus={state.focus:.2f}",
-        f"  mood={state.mood}  engagement={state.engagement:.2f}  "
-        f"receptiveness={state.receptiveness:.2f}  initiative={state.initiative:.2f}",
-    ]
-
-    if episodes:
-        lines.append("\n[bold]Recent episodic memories:[/bold]")
-        for ep in episodes:
-            lines.append(f"  [Turn {ep.turn}] {ep.agent_name}: {ep.content[:80]}...")
-
-    if semantic:
-        lines.append("\n[bold]Semantic memory:[/bold]")
-        for fact in semantic:
-            lines.append(f"  - {fact.content}")
-
-    console.print(Panel("\n".join(lines), title=f"[bold]Inspect: {agent.name}[/bold]", border_style="dim"))
+@app.command()
+def inspect(session_id: str, journals: bool = False) -> None:
+    console.print_json(data=request("GET", f"/sessions/{session_id}" + ("/journals" if journals else "")))
 
 
-@agents_app.command("list")
-def agents_list(
-    agents_dir: Path = typer.Option(TEMPLATES_DIR / "agents", "--agents-dir", help="Directory containing agent YAML files"),
-) -> None:
-    """List all available agent definitions."""
-    yaml_files = list(agents_dir.glob("*.yaml"))
-    if not yaml_files:
-        console.print(f"[yellow]No agent definitions found in {agents_dir}[/yellow]")
-        raise typer.Exit()
-
-    table = Table(title="Available Agents", border_style="dim")
-    table.add_column("Name", style="cyan bold")
-    table.add_column("Archetype", style="magenta")
-    table.add_column("Traits")
-    table.add_column("File", style="dim")
-
-    for path in sorted(yaml_files):
-        try:
-            config = load_agent_config(path)
-            table.add_row(
-                config.name,
-                config.archetype.value,
-                ", ".join(config.traits),
-                path.name,
-            )
-        except Exception as e:
-            table.add_row(path.stem, "[red]error[/red]", str(e), path.name)
-
-    console.print(table)
+def send_command(session_id: str, action: str) -> object:
+    snapshot = request("GET", f"/sessions/{session_id}")
+    return request("POST", f"/sessions/{session_id}/commands", {"commandId": str(uuid4()), "expectedRevision": snapshot["revision"], "action": action})
 
 
-@agents_app.command("inspect")
-def agents_inspect(
-    name: str = typer.Argument(..., help="Agent name or filename (without .yaml)"),
-    agents_dir: Path = typer.Option(TEMPLATES_DIR / "agents", "--agents-dir", help="Directory containing agent YAML files"),
-) -> None:
-    """Display full config and traits for a specific agent."""
-    path = agents_dir / f"{name.lower()}.yaml"
-    if not path.exists():
-        console.print(f"[red]Agent '{name}' not found at {path}[/red]")
-        raise typer.Exit(code=1)
-
-    config = load_agent_config(path)
-
-    console.print(Panel(
-        f"[bold]Name:[/bold] {config.name}\n"
-        f"[bold]Archetype:[/bold] {config.archetype.value}\n"
-        f"[bold]Traits:[/bold] {', '.join(config.traits)}\n\n"
-        f"[bold]Description:[/bold]\n{config.description}",
-        title=f"[bold cyan]{config.name}[/bold cyan]",
-        border_style="cyan",
-    ))
+@app.command()
+def control(session_id: str, action: str) -> None:
+    """Pause, resume, start or stop a session."""
+    console.print_json(data=send_command(session_id, action))
 
 
-@models_app.command("list")
-def models_list(
-    base_url: str = typer.Option(OLLAMA_BASE_URL, "--base-url", help="Ollama base URL"),
-) -> None:
-    """List locally available Ollama models."""
-    async def _fetch() -> list[str]:
-        return await list_available_models(base_url)
-
+@app.command()
+def run(scenario: str, participants: str = typer.Option(..., "--participants", help="Comma-separated participant IDs."), model: str = "qwen3.5:4b-mlx", turns: int = 20, judge: bool = False) -> None:
+    """Run a session using comma-separated participant IDs. Ctrl-C pauses it."""
+    config = SessionConfig(scenarioId=scenario, participantIds=participants.split(","), model=model, maxTurns=turns, judgeEnabled=judge)
+    snapshot = request("POST", "/sessions", config.model_dump())
+    session_id = snapshot["id"]
+    console.print(f"Session: {session_id}")
+    send_command(session_id, "start")
+    shown = 0
     try:
-        models = asyncio.run(_fetch())
-    except Exception as e:
-        console.print(f"[red]Could not connect to Ollama at {base_url}: {e}[/red]")
-        console.print("[dim]Make sure Ollama is running: https://ollama.com[/dim]")
-        raise typer.Exit(code=1)
+        while True:
+            snapshot = request("GET", f"/sessions/{session_id}")
+            for turn in snapshot["turns"][shown:]:
+                console.print(f"{turn['speakerName']}: {turn['text'] or '(slot skipped)'}")
+            shown = len(snapshot["turns"])
+            if snapshot["status"] in {"completed", "stopped", "paused"}:
+                if snapshot["error"]:
+                    console.print(snapshot["error"], style="red")
+                console.print(snapshot["canvas"])
+                if snapshot["finalJudgement"]:
+                    console.print_json(data=snapshot["finalJudgement"])
+                break
+            time.sleep(0.3)
+    except KeyboardInterrupt:
+        send_command(session_id, "pause")
+        console.print(f"Paused. Resume with chorus control {session_id} resume")
 
-    if not models:
-        console.print("[yellow]No models found. Pull one with: ollama pull llama3.2[/yellow]")
-        raise typer.Exit()
 
-    table = Table(title=f"Ollama Models ({base_url})", border_style="dim")
-    table.add_column("Model", style="cyan")
-
-    for model in sorted(models):
-        table.add_row(model)
-
-    console.print(table)
-
-
-if __name__ == "__main__":
-    app()
+@app.command()
+def export(session_id: str, output: Path, format: str = "markdown", journals: bool = False) -> None:
+    with client() as http:
+        response = http.get(f"/api/v1/sessions/{session_id}/export", params={"format": format, "includeJournals": str(journals).lower()})
+        response.raise_for_status()
+        output.write_text(response.text)
+    console.print(str(output))

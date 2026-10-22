@@ -1,0 +1,10 @@
+{
+  "focus": {
+    "yes": "Closing turns: consolidate one section, resolve contradictions, and record remaining unknowns with the evidence and owner needed. Do not add another promise to meet later.",
+    "no": "First check the CURRENT canvas for contradictions in plan limits, pilot percentages, dates, and dependencies. Correct a contradiction before adding scope. Choose the most important unresolved scenario requirement in the CURRENT canvas. Resolve one concrete gap; do not repeat a previously recorded proposal or assume earlier judge feedback is still current."
+  },
+  "contribution": {
+    "yes": "Your canvas revision is already prepared. Explain the specific change you actually made and why it helps the expected deliverable. Use past tense for your edit. Claim only edits supported by the changed-line evidence. If a meaningful edit is unclear, state a concrete proposal or decision rather than guessing what changed.",
+    "no": "No canvas edit was saved this turn. The existing shared document was preserved. Contribute a concrete new proposal, concern, question, or decision grounded in the discussion. Do not claim you edited, added, removed, or saved anything in the document. Do not discuss generation errors or retries."
+  }
+}

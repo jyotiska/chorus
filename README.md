@@ -1,240 +1,126 @@
 # Chorus
 
-A personality-driven multi-agent AI framework. Give agents distinct personalities, let them talk, watch emergent behaviour unfold.
+**A research framework for studying how AI agent swarms collaborate, disagree, and coordinate.**
 
-## Research direction
+Chorus is an independent research project and experimental framework for exploring how AI agent swarms interact, collaborate, and coordinate. The work investigates how traits, personalities, roles, and goals shape their behavior: how they share information, handle disagreement, reach consensus, and respond to adversarial pressure.
 
-Chorus is evolving into an independent research environment for studying agent behavior under social pressure, conflicting mandates, private information, and human intervention. The [research direction](docs/chorus-architecture.md) sets out the research questions, proposed experiments, AI safety relevance, budget, and implementation priorities. It guides future work; the capabilities described below reflect the current implementation.
+The research explores collaboration on short tasks and longer-running interactions, including how shared history affects coordination and responses to change. Chorus brings the experimental environment, agent interactions, evaluation, and records into one framework. Its API, CLI, and applications make that work accessible to run and inspect.
 
-## What it does
+The central question is:
 
-Chorus runs structured conversations between AI agents, each with a defined archetype, traits, and description. Agents stay in character, build on each other's ideas, disagree constructively, and produce richer outputs than a single LLM call ever could.
+> Under what conditions do interacting AI agents preserve or lose independent judgment, truthfulness, and responsiveness to evidence and human intervention?
 
-```
-─── Turn 1 ─────────────────────────────────────────
-Optimist
-   I think we should absolutely go for it. The market window is
-   open, our core features are solid, and early user feedback
-   has been overwhelmingly positive. Shipping beats perfection.
+## Why Chorus exists
 
-─── Turn 2 ─────────────────────────────────────────
-Pessimist
-   I hear the enthusiasm, but have we stress-tested the auth
-   system? Last month's load test showed 3x latency under peak.
-   Launching with a broken login is worse than launching late.
-```
+A conversation between agents can look collaborative while producing an incorrect decision. Agreement can reflect useful correction, repeated assumptions, or pressure to conform. A convincing explanation can coexist with an invalid final result.
 
-## Installation
+Chorus is being built to investigate those differences. The aim is to connect what agents say to what they decide, what evidence they use, and what they ultimately produce.
 
-Requires Python 3.11+.
+The project began with a simple idea: give agents distinct personalities and a shared problem, then observe what happens. The research develops that idea into experiments where conditions can be varied, outcomes checked, and observations examined by others.
+
+Success means useful experiments and defensible findings. Repeatable failures, null results, and the limits of a proposed intervention are all valuable outputs.
+
+## Research questions
+
+### Personality, roles, and collaboration
+
+How do traits, personalities, and assigned roles affect information sharing, disagreement, and coordination? When does changing a persona alter a decision, and when does it change only the way an agent speaks?
+
+### Consensus, conformity, and dissent
+
+When does discussion improve a group's answer? Can a confident majority or an authoritative role cause an agent to abandon a correct objection? What helps useful dissent survive while still allowing mistaken agents to be corrected?
+
+### Conflicting goals and adversarial pressure
+
+How do agents respond when their mandates conflict, a participant becomes misleading, or the task cannot be completed as specified? Do they disclose the conflict, request help, violate constraints, or report success anyway?
+
+### Judges, rewards, and penalties
+
+How does evaluation change collaboration? The project explores AI and human judges, and how reward and penalty systems might influence group behavior. A stated incentive and a consequence enforced by the environment are separate experimental conditions.
+
+### Human intervention and recovery
+
+When a human challenges a conclusion or changes the task, does the group revise its decision and final artifact? How does behavior change after a temporary intervention is removed, particularly as agents accumulate a shared history?
+
+These questions connect the project to AI safety through evidence use, truthful reporting, preservation of dissent, and effective human oversight.
+
+## Chorus is the core
+
+Chorus owns the execution rules, prompts, API contracts, model calls, validation, and persistent session records. Keeping these together gives the research a common foundation across different interfaces and problem settings.
+
+- **Chorus:** the Python framework and execution core, with an HTTP API and CLI.
+- **Nanoville:** a visual application for setting up scenarios, observing agent discussions, inspecting journals, and following a shared document.
+- **chorus-web:** an application for exploring scenarios, running discussions, and inspecting their outputs.
+
+Both applications are built on Chorus. The CLI provides another way to use the same core. Interface changes should preserve the execution rules and records needed to interpret a session.
+
+### What is implemented today
+
+The current engine incorporates the latest execution logic developed in Nanoville:
+
+- Scenario and participant catalogs, with role descriptions and personality traits.
+- Agent discussions with shared public history and turn limits.
+- A shared Markdown canvas with validated edits and preservation of supplied scenario evidence.
+- Separate observer journals, excluded from participant and judge context.
+- Optional judge checkpoints and a final assessment of the written deliverable.
+- Durable SQLite sessions, revisioned events, pause/resume/stop controls, and recovery after restart.
+- A FastAPI API, generated TypeScript contracts, a shared client, and a terminal CLI.
+
+These are the current building blocks for the research. Saved sessions and API event replay do not yet provide complete experimental reconstruction or deterministic model replay.
+
+### What comes next
+
+Research development is organized around four priorities:
+
+1. **Trustworthy records:** exact model inputs and outputs, resolved configurations, usage accounting, and independent outcome checks.
+2. **Controlled differences:** separate mandates, private evidence, authority, incentives, and model assignments for individual agents.
+3. **Interventions and branches:** checkpoints, scheduled changes, human participation, and comparisons from a common recorded history.
+4. **Repeated studies:** condition assignment, repeated runs, budget controls, analysis exports, and research reports.
+
+Human judging, enforced reward and penalty systems, private evidence assignments, experimental branching, and automated study batches remain planned work. The [research architecture](docs/chorus-architecture.md#9-implementation-sequence-and-completion-evidence) describes the development priorities and completion criteria.
+
+## Run Chorus
+
+Requirements: Python 3.11 or newer, a Unix-like environment for the current file locking, and a running Ollama-compatible server with a configured model installed.
+
+From the repository root:
 
 ```bash
-git clone https://github.com/jyotiska/chorus.git
-cd chorus
-python3.11 -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+python -m pip install -e '.[dev]'
+cp -n .env.example .env
+chorus serve
 ```
 
-Copy `.env.example` to `.env` and add your API keys:
+The local API runs on **http://127.0.0.1:43187**, with interactive documentation at **http://127.0.0.1:43187/docs**.
+
+In another terminal, activate the environment and inspect the available configuration:
 
 ```bash
-cp .env.example .env
+source .venv/bin/activate
+chorus catalog scenarios
+chorus catalog agents
+chorus catalog models
 ```
 
-## Quickstart
+If `gemma4:e2b-mlx` is reported as installed, a short exploratory session can be run with:
 
 ```bash
-# Run a debate between two agents
-chorus run --session chorus/templates/sessions/debate.yaml
-
-# Run interactively — inject messages, pause between turns
-chorus run --session chorus/templates/sessions/debate.yaml --interactive
-
-# Show agent state changes after every turn
-chorus run --session chorus/templates/sessions/debate.yaml --verbose
-
-# Pause after each turn with full state and memory view
-chorus run --session chorus/templates/sessions/apollo13.yaml --inspect
-
-# Run a three-agent creative session
-chorus run --session chorus/templates/sessions/creative_team.yaml
-
-# Override the topic on the fly
-chorus run --session chorus/templates/sessions/debate.yaml --topic "Should we rewrite in Rust?"
+chorus run ai-feature-launch \
+  --participants software-engineer,product-manager \
+  --model gemma4:e2b-mlx \
+  --turns 5
 ```
 
-## LLM Providers
+This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3.5:4b-mlx`; select an installed model explicitly if it is unavailable.
 
-Chorus supports Anthropic, OpenAI, and Ollama (local models). Set the provider in your session YAML.
+See [Running and developing Chorus](docs/running-chorus.md) for the full model list, configuration, CLI commands, API examples, frontend connections, project layout, and contract generation.
 
-### Anthropic
+## Explore and contribute
 
-```yaml
-provider: anthropic
-model: claude-sonnet-4-6   # optional, defaults to claude-sonnet-4-6
-```
+Chorus is being prepared for an open-source release so that others can inspect the framework, challenge the methods, reproduce experiments, and build on the work.
 
-Requires `ANTHROPIC_API_KEY` in your `.env`.
+Contributions are especially useful when they improve experimental validity: checkable scenarios, informative controls, independent evaluators, reliable recording, failure analysis, and clear documentation. Reports of surprising behavior are most useful with the scenario, model and settings, relevant session records, and steps to reproduce it.
 
-### OpenAI
-
-```yaml
-provider: openai
-model: gpt-4o   # optional, defaults to gpt-4o
-```
-
-Requires `OPENAI_API_KEY` in your `.env`.
-
-### Ollama (local)
-
-Run models locally with [Ollama](https://ollama.com). No API key needed.
-
-```bash
-ollama pull qwen3:0.6b
-chorus models list   # see what's available
-```
-
-```yaml
-provider: ollama
-model: qwen3:0.6b
-```
-
-## CLI Reference
-
-```bash
-# Sessions
-chorus run --session <path>                  # run a session
-chorus run --session <path> --interactive    # pause after each turn for user input
-chorus run --session <path> --verbose        # show state changes after each turn
-chorus run --session <path> --inspect        # full state + memory view after each turn
-chorus run --session <path> --topic "..."    # override topic from config
-
-# Agents
-chorus agents list                           # list all agent definitions
-chorus agents inspect <name>                 # show an agent's config and traits
-
-# Models
-chorus models list                           # list locally available Ollama models
-```
-
-## Configuration
-
-### Agent definition (`agents/my_agent.yaml`)
-
-```yaml
-name: Architect
-archetype: analytical
-traits:
-  - detail-oriented
-  - pragmatic
-  - cautious
-description: >
-  A systems thinker who builds frameworks and evaluates options
-  methodically. Prefers evidence over intuition.
-```
-
-Available archetypes: `analytical`, `creative`, `leader`, `support`, `contrarian`
-
-Available traits: `optimistic`, `pessimistic`, `cautious`, `bold`, `empathetic`, `pragmatic`, `visionary`, `detail-oriented`, `collaborative`, `independent`
-
-### Session config (`sessions/my_session.yaml`)
-
-```yaml
-topic: "What should our product's core differentiator be?"
-context: |
-  Optional background context injected into every agent's opening prompt.
-  Describe the situation, constraints, and relevant facts here.
-expectations:
-  - What the discussion should produce
-  - Specific questions that must be answered
-max_turns: 10
-agents:
-  - architect
-  - creative
-  - critic
-provider: anthropic
-model: claude-sonnet-4-6   # optional
-```
-
-The `agents` list references YAML filenames (without `.yaml`) in the agents directory.
-
-## Agent State
-
-Every agent carries live state that evolves across the conversation.
-
-**Tier 1 — Core Drives** (slow, personality-anchored, revert to baseline):
-`confidence` · `cooperation` · `assertiveness` · `openness`
-
-**Tier 2 — Dynamic State** (fast, situation-driven):
-`energy` · `momentum` · `frustration` · `focus`
-
-**Tier 3 — Derived** (computed on the fly):
-`mood` · `engagement` · `receptiveness` · `initiative`
-
-State updates use dampened additive composition to prevent wild swings. Personality acts as gravity — agents slowly recover to their archetype's baseline values. Run with `--verbose` to watch state evolve turn by turn, or `--inspect` for the full picture including memory.
-
-## Scenario Library
-
-Chorus ships with 12 ready-to-run scenarios:
-
-| Scenario | Session file |
-|---|---|
-| Fermi Estimation Chamber | `sessions/fermi_estimation.yaml` |
-| Murder Mystery | `sessions/murder_mystery.yaml` |
-| Apollo 13 Mission Control | `sessions/apollo13.yaml` |
-| Startup Founders' Divorce | `sessions/startup_founders_divorce.yaml` |
-| AI Alignment Summit | `sessions/ai_alignment_summit.yaml` |
-| The Heist Planning Room | `sessions/heist_planning.yaml` |
-| Trolley Problem Factory | `sessions/trolley_problem_factory.yaml` |
-| Red Team vs Blue Team | `sessions/red_team_vs_blue_team.yaml` |
-| Constitutional Convention | `sessions/constitutional_convention.yaml` |
-| Agents Reviewing Their Own Architecture | `sessions/architecture_review.yaml` |
-| The Infinite Novel | `sessions/infinite_novel.yaml` |
-| The AI Senate | `sessions/ai_senate.yaml` |
-
-All scenarios use `qwen3:0.6b` via Ollama by default. Change `provider` and `model` in the session YAML to use Anthropic or OpenAI.
-
-## Project Structure
-
-```
-chorus/
-├── chorus/
-│   ├── cli/              # Typer CLI entrypoint
-│   ├── core/             # Agent, personality, state, memory, types
-│   ├── llm/              # LLM adapters (Anthropic, OpenAI, Ollama)
-│   ├── orchestration/    # Session runner and turn management
-│   ├── parsing/          # Structured + fuzzy XML response parsing
-│   ├── prompts/          # 4-stage prompt pipeline and token budget
-│   ├── config/           # YAML config loading and validation
-│   └── templates/        # Bundled agent and session definitions
-├── tests/
-├── docs/
-└── pyproject.toml
-```
-
-## Running Tests
-
-```bash
-pip install -e ".[dev]"
-pytest tests/ -v
-```
-
-## Roadmap
-
-The next stages focus on controlled, reproducible research:
-
-- R0: Establish reproducible baselines and optional behavioral mechanics.
-- R1: Record exact inputs, outputs, token usage, and costs.
-- R2: Separate private information, mandates, authority, and model assignments.
-- R3: Add checkpoints, branching, and mid-conversation interventions.
-- R4: Implement checkable scenarios and outcome evaluation.
-- R5: Run repeated experiments with explicit budgets and failure accounting.
-- R6: Complete and report the first controlled study.
-- R7: Extend into adaptive human participation and recovery experiments.
-
-These stages are planned. See the [research direction](docs/chorus-architecture.md) for the scientific scope and the [technical milestone plan](docs/chorus-milestones.md) for implementation details and acceptance criteria.
-
-## License
-
-MIT
+The intended research outputs are runnable experiments, documented measurements, and reports that distinguish observation from interpretation. The project welcomes interest from people working on AI agents, swarms, coordination, multi-agent systems, and AI safety.

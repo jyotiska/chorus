@@ -1,4 +1,5 @@
 .venv/
+.DS_Store
 __pycache__/
 *.pyc
 *.pyo
@@ -8,3 +9,5 @@ __pycache__/
 .hypothesis/
 dist/
 build/
+*.sqlite3
+*.sqlite3.lock

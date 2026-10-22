@@ -1,51 +1,15 @@
-# Chorus — Claude Code Instructions
+# Chorus development guidance
 
-## Project Overview
+Chorus is the Python framework and local FastAPI backend for Nanoville and chorus-web. Nanoville's ported behavior is the standard. The old state/memory engine and YAML runtime have been replaced.
 
-Chorus is a personality-driven multi-agent AI framework. Agents have dynamic state, memory, and relationships, and converse in structured task phases. CLI-first, Python-based.
+Read README.md and TEST_PLAN.md before changes. Keep HTTP routes in `chorus/routers/` and shared application logic in `chorus/services/`. Keep CLI commands thin. Use typed Python and Pydantic contracts. Persist through SQLAlchemy repositories; do not write raw SQL. Keep model calls outside database transactions.
 
-## Project Structure
+The SQLite store has exclusive process ownership. Use one API runner process. Session revisions and operation identity protect atomic commits, cancellation, and duplicate commands. Retain full public history; context overflow pauses safely. Skipped speech discards its proposed edit and journal. Journal failures preserve public work. Journals are observer-only and never enter participant/judge prompts or public events.
 
-```
-chorus/
-├── chorus/
-│   ├── cli/              # Click/Typer CLI entrypoint
-│   ├── core/             # Agent, personality, types
-│   ├── llm/              # Abstract LLMAdapter + provider adapters
-│   ├── orchestration/    # Session runner, turn selection, phase manager
-│   ├── parsing/          # Structured + fuzzy response parsing
-│   ├── memory/           # Episodic, semantic, working memory
-│   ├── safety/           # Guardrails, filters, alignment monitoring
-│   ├── config/           # YAML config loading
-│   └── templates/        # Bundled agent and session YAML templates
-├── tests/
-├── pyproject.toml
-└── CLAUDE.md
-```
+API errors use `{error: string, code: string, requestId: string}` with stable error codes and appropriate HTTP status. Never expose provider addresses or credentials through client configuration. Default ports: Chorus 43187, Nanoville 43188, chorus-web 43189.
 
-## Global Rules
+Pydantic models are the contract authority. After changing contracts or `sdk/client.ts`, run `scripts/export_contracts.py` in the project Python environment; commit the generated schema/types/client in both frontends. Never add frontend model execution or session scheduling logic.
 
-- Write code that is easy to read.
-- Do not leave TODO comments. Write the actual working code.
-- Keep functions small. Each function must do only one thing.
-- Read the existing code before writing new code.
-- Do not duplicate code. Create shared helper functions instead.
+Run `.venv/bin/python -m pytest` for applicable changes. Preserve ported behavior and add regression cases for changed invariants. Run frontend verification after contract changes. Document any unavailable checks. Never log prompt or journal contents. Update the prompt version when generation instructions change.
 
-## Backend Rules (Python)
-
-- **Strict Typing:** Use Python type hints everywhere. Do not leave types blank.
-- **Folder Structure:** Keep CLI commands thin. Put all routing in a `routers` folder. Put all business logic in a `services` folder.
-- **Data Validation:** Use Pydantic models for all incoming and outgoing data.
-- **Database:** Use SQLAlchemy. Never write raw SQL queries.
-- **Heavy Tasks:** Use background tasks for slow operations (LLM calls, audio processing). Do not block the main response.
-- **Error Handling:** Use a central exception handler. Always return errors in this exact format: `{"detail": "Error message here", "code": 400}`.
-- **Security:** Never hardcode API keys. Always read them from environment variables.
-
-## Web Dashboard Rules (Next.js — M8 onwards)
-
-- **Strict TypeScript:** Use TypeScript for all files. Never use the `any` type.
-- **App Router:** Use Next.js App Router conventions. Keep pages inside the `app` folder.
-- **Server vs Client:** Default to server components. Only add `"use client"` if you need browser features like buttons or state.
-- **Data Fetching:** Fetch data server-side as much as possible.
-- **Component Design:** Keep UI pieces in a `components` folder. Build small, reusable pieces.
-- **API Calls:** Put all calls to the FastAPI backend in a separate `api` folder. Do not write fetch calls directly inside UI components.
+Each snapshot records ENGINE_VERSION. Bump it when prompt instructions, execution settings, or session semantics change. Sessions from another engine version stay readable but cannot silently resume under changed behavior.

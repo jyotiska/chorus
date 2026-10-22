@@ -46,7 +46,7 @@ agents:
   - paranoid
 
 provider: ollama
-model: gemma3:4b
+model: gemma4:e2b-mlx
 
 expectations:
   - The inside man must reveal something about the building or the security
