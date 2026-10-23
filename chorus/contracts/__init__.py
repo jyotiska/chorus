@@ -53,7 +53,7 @@ class Catalog(Contract):
 class SessionConfig(Contract):
     scenarioId: str
     participantIds: list[str] = Field(min_length=2, max_length=10)
-    model: str = "qwen3.5:4b-mlx"
+    model: str = "qwen3:4b"
     maxTurns: int = Field(default=20, ge=1, le=100, strict=True)
     judgeEnabled: bool = False
 

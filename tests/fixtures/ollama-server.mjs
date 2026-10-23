@@ -7,7 +7,7 @@ const server = createServer(async (request, response) => {
     response.writeHead(200, { "Content-Type": "application/json" });
     response.end(JSON.stringify(body));
   };
-  if (request.url === "/api/tags") return reply({ models: ["qwen3.5:0.8b-mlx", "qwen3.5:2b-mlx", "qwen3.5:4b-mlx", "gemma4:e2b-mlx", "gemma4:e4b-mlx"].map((name) => ({ name })) });
+  if (request.url === "/api/tags") return reply({ models: ["qwen3:4b", "qwen3.5:0.8b-mlx", "qwen3.5:2b-mlx", "qwen3.5:4b-mlx", "gemma4:e2b-mlx", "gemma4:e4b-mlx"].map((name) => ({ name })) });
   if (request.url === "/health") return reply({ ok: true });
   if (request.url === "/state") return reply(state);
   let input = "";
@@ -20,10 +20,23 @@ const server = createServer(async (request, response) => {
   const body = JSON.parse(input);
   const system = body.messages[0].content;
   state.privateLeak ||= JSON.stringify(body.messages).includes("PRIVATE-E2E");
-  const count = /Turns used: (\d+)/.exec(body.messages[1].content)?.[1] ?? "0";
+  const count = /Turns used: (\d+)/.exec(body.messages[1]?.content ?? "")?.[1] ?? "0";
   const review = { summary: "The team drafted a narrow trial.", strengths: ['The canvas requires [human review].'], improvements: [`Validate measures after turn ${count}.`], nextPriorities: [`Test safeguards after turn ${count}.`] };
+  const field = /CHORUS_REVIEW_FIELD: (\w+)/.exec(system)?.[1];
   let content;
-  if (body.format?.properties?.summary) {
+  if (body.format?.properties?.proof) {
+    content = body.model.endsWith("-mlx") ? "READY" : JSON.stringify({ proof: "chorus-schema-enforced" });
+  } else if (field) {
+    if (field === "summary") {
+      if (body.messages[1].content.includes("Final review at") || body.messages[1].content.includes("Final review after")) state.finalCalls++; else state.checkpointCalls++;
+    }
+    content = field.startsWith("rating_") ? "Partially met" : field === "strength" || field.startsWith("citation_") ? "1" : {
+      summary: review.summary,
+      improvement: "validation of the proposed measures",
+      priority: "validate the proposed safeguards",
+      feedback: "The team considered available feedback.",
+    }[field];
+  } else if (body.format?.properties?.summary) {
     const final = Boolean(body.format.properties.verdict);
     if (final) state.finalCalls++; else state.checkpointCalls++;
     content = JSON.stringify(final ? {

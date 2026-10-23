@@ -36,3 +36,26 @@ Both applications were started in production mode against the real local Chorus 
 - Isolated review diagnostics reproduced malformed JSON, missing response fields, and schema metadata returned as content. No failed draft was published and no validation guard was relaxed. The exact local runner/model compatibility cause remains unconfirmed.
 
 Open release issues: reliable structured judge generation with these installed MLX models, and reliable canvas generation with Qwen 2B. Automated green checks alone do not establish real-model acceptance.
+
+
+## Judge compatibility fix — 23 October 2026
+
+- Reproduced ignored JSON schema and JSON mode on Ollama 0.32.5 with the installed MLX models. A schema-constrained sentinel probe returned unconstrained plain text. The already-installed standard `qwen3:4b` enforced the same schema.
+- Fixed decoder regex anchoring, JSON string safety, and citation escaping incompatible with Ollama's grammar converter. Added judge capability metadata, a supported default, and rejection of unsupported judge/model configurations before session creation. Empty canvases cannot receive credit for written requirements.
+- 62 backend tests passed. Full `npm run check` passed in both applications using Node 24.22.1: 7 Nanoville unit/component tests, 8 Nanoville browser journeys, and 2 chorus-web browser journeys, plus lint, type checks and production builds.
+- Real-model checkpoint and final reviews passed against both recent pricing snapshots, including the empty canvas. A fresh isolated six-slot pricing discussion using `qwen3:4b` completed one checkpoint and its final judgement with a 2759-character saved canvas. The isolated database was removed after verification; existing user sessions were preserved.
+- Restarted the local backend and Nanoville. Verified the live studio at `http://localhost:43188` selects `qwen3:4b`, blocks an MLX model with judging enabled, and re-enables starting after choosing the supported model. Old engine sessions remain readable/exportable; start a new session to use the changed engine.
+
+This initial standard-runner restriction was superseded by the all-model compatibility workflow below.
+
+
+## All-model judge compatibility — 23 October 2026
+
+- Removed model restrictions and the `supportsJudge` flag. All catalog models can create judge-enabled sessions. The selected model is retained throughout; no helper model is substituted.
+- Added a cached enforcement probe. Schema-capable runners retain the compact JSON review path. Other runners, or invalid complex responses, use independent short-answer questions with bounded field retries. Chorus resolves judge-selected excerpt IDs into exact canvas citations, validates sentences and ratings, derives the verdict, and serializes the public review. Partial feedback never commits. Private journals and unpublished drafts are excluded from every question.
+- 97 backend tests passed, covering every catalog model, capability probing, schema echoes, wrapped choices, invalid/ambiguous answers, citation safety, context limits, token accounting, cancellation and resuming a failed review without repeating participants. Frontend checks passed: lint, types, builds, 7 Nanoville unit/component tests and 10 browser journeys across both applications. The 20-turn MLX journey explicitly exercises three text-path checkpoints and the final review.
+- Live reviews passed on saved pricing discussions using all five installed catalog models: `qwen3:4b`, Qwen 3.5 MLX 0.8B/2B/4B, and Gemma 4 E2B MLX. Each installed MLX model passed checkpoint, final and empty-canvas final cases. The standard Qwen model passed checkpoint and final reviews through schema enforcement.
+- `gemma4:e4b-mlx` is not installed locally. Its compatibility path is covered by deterministic tests; live generation was not tested for that entry.
+- Verified the live studio enables judging for every catalog entry. The engine version is now `discussion-v23-python4`; existing sessions stay readable and exportable, and new runs use the compatibility workflow.
+
+- An isolated copy of the five-slot pricing discussion resumed through a real Qwen 0.8B MLX checkpoint, then committed an early-stop final review that included the published checkpoint feedback. Participant slots and the canvas stayed unchanged; the user database was not modified.

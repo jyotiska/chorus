@@ -5,12 +5,12 @@ from dataclasses import dataclass
 import json
 import logging
 import time
-from typing import Any, TypeVar, Awaitable
+from typing import Any, TypeVar, Awaitable, Callable
 from uuid import uuid4
 import regex as re
 from pydantic import ValidationError
-from chorus.contracts import Agent, Snapshot, Review, FinalJudgement, TokenUsage
-from chorus.llm.transport import ModelCall, assert_budget, JOURNAL_TIMEOUT
+from chorus.contracts import Agent, Snapshot, Review, FinalJudgement, TokenUsage, Requirement, complete_sentence
+from chorus.llm.transport import ModelCall, OllamaTransport, assert_budget, JOURNAL_TIMEOUT
 from chorus.services.canvas import apply_edit, edit_adapter, evidence_block
 from chorus.services.errors import ChorusError
 from chorus.services.policies import compact, speech_error, canvas_body, canvas_error, grounding_error
@@ -50,7 +50,7 @@ def decoding_schema(schema: dict[str, Any]) -> dict[str, Any]:
             return resolve(copy.deepcopy(defs[node["$ref"].split("/")[-1]]))
         result = {k: resolve(v) for k, v in node.items() if k not in {"$defs", "discriminator", "maxLength"}}
         if result.get("minLength", 0) >= 8:
-            result["pattern"] = r"[^\n]*[.!?]"
+            result["pattern"] = r'^[^"\\\n]*[.!?]$'
         return result
     return resolve(schema)
 
@@ -218,12 +218,25 @@ def review_message(review: Review) -> str:
 async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[Review, TokenUsage, float]:
     started = time.monotonic()
     criteria, messages = judge_messages(session, final)
+    assert_budget(messages, 3000 if final else 1200)
+    usage = Usage()
+    run_id = str(uuid4())
+    if isinstance(call, OllamaTransport):
+        supported, probe = await call.structured_output_support(session.config.model, run_id)
+        check_cancelled()
+        if probe is not None:
+            usage.add(probe)
+        if not supported:
+            review = await text_review(session, final, call, usage, run_id)
+            return review, usage.total(), time.monotonic() - started
     schema = decoding_schema((FinalJudgement if final else Review).model_json_schema())
     props = schema["properties"]
     if not final:
         props["summary"]["minLength"] = 8
+        props["summary"]["maxLength"] = 300
         for key in ("strengths", "improvements", "nextPriorities"):
             props[key]["maxItems"] = 3
+            props[key]["items"]["maxLength"] = 140
     if final:
         requirement = props["requirements"]["items"]
         assessment = {"type": "object", "properties": {k: requirement["properties"][k] for k in ("status", "evidence")}, "required": ["status", "evidence"], "additionalProperties": False}
@@ -231,17 +244,25 @@ async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[R
         messages[0]["content"] += "\nReturn requirements as an object with exactly these keys: " + ", ".join(criteria) + ". Each value has status and evidence. Do not use an array or repeat a criterion."
     has_plan = bool(proposed_canvas(session.canvas, session.scenario.problem))
     if not has_plan:
-        props["strengths"]["items"]["pattern"] = r"No written deliverable exists yet\."
+        props["strengths"]["maxItems"] = 1
+        props["strengths"]["items"]["pattern"] = r"^No written deliverable exists yet\.$"
         messages[0]["content"] += "\nThere is no written plan. For strengths, return only: No written deliverable exists yet. Assess spoken progress in the summary; do not invent canvas citations."
+        if final:
+            props["verdict"]["enum"] = ["Needs more work"]
+            for item in props["requirements"]["properties"].values():
+                item["properties"]["status"]["enum"] = ["Missing"]
+            messages[0]["content"] += " No written requirement is satisfied: mark every requirement Missing and return Needs more work."
     else:
         excerpts = list(dict.fromkeys(" ".join(re.sub(r"^\s*[-#*>]+\s*", "", re.sub(r"\*\*|__", "", line)).strip().split()[:5]) for line in proposed_canvas(session.canvas, session.scenario.problem).split("\n") if not re.search(r"^\s*#", line) and len(line.strip()) >= 4 and not line.strip().startswith("|")))
         excerpts = [x for x in excerpts if len(x) >= 4 and not re.search(r'[\[\]"“”]', x)][:12]
         if excerpts:
-            citations = "|".join(re.escape(x) for x in excerpts)
-            props["strengths"]["items"]["pattern"] = rf"The canvas records \[(?:{citations})\] as a proposal\."
+            # Escape regex metacharacters only. Python's re.escape also escapes
+            # spaces and hyphens, which Ollama's grammar converter cannot parse.
+            citations = "|".join(re.sub(r"([\\.^$|?*+()[\]{}])", r"\\\1", x) for x in excerpts)
+            props["strengths"]["items"]["pattern"] = rf"^The canvas records \[(?:{citations})\] as a proposal\.$"
             if final:
                 for item in props["requirements"]["properties"].values():
-                    item["properties"]["evidence"]["pattern"] = rf'[^"\n]*\[(?:{citations})\][^"\n]*[.!?]'
+                    item["properties"]["evidence"]["pattern"] = rf'^[^"\\\n]*\[(?:{citations})\][^"\\\n]*[.!?]$'
             messages[0]["content"] += "\nWrite each strength as: The canvas records [exact excerpt] as a proposal. Use one of these exact current-canvas excerpts in each strength" + (" and requirement evidence" if final else "") + ", enclosed in square brackets: " + ", ".join(f"[{x}]" for x in excerpts[:8]) + ". A missing requirement can cite an existing section and explain what it lacks."
     # Some local runners do not expose decoding schemas to the model. State
     # the whole response contract in the prompt as well, without repeating the
@@ -253,8 +274,6 @@ async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[R
             return {key: prompt_shape(value) for key, value in node.items() if key not in {"title", "pattern", "description"}}
         return node
     messages[0]["content"] += "\n\nReturn exactly one complete JSON response object with every required top-level field below. The requirements ratings are nested inside the complete response, never the entire response. Do not add prose before or after the JSON object. The sentence and exact-citation rules above still apply. Complete response JSON Schema:\n" + json.dumps(prompt_shape(schema), ensure_ascii=False, separators=(",", ":"))
-    usage = Usage()
-    run_id = str(uuid4())
     error = "Return complete sentences and all required fields matching the schema."
     for attempt in range(2):
         result = await call(session.config.model, messages, output=3000 if final else 1200, format=schema, phase="final" if final else "checkpoint", attempt=attempt + 1, run_id=run_id)
@@ -269,6 +288,8 @@ async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[R
             if final and isinstance(raw.get("requirements"), dict):
                 raw["requirements"] = [{**value, "criterion": criterion} for criterion, value in raw["requirements"].items()]
             review = (FinalJudgement if final else Review).model_validate(raw)
+            if not has_plan and review.strengths != ["No written deliverable exists yet."]:
+                raise ValueError("There is no written plan. Return only No written deliverable exists yet. as the strength.")
             if not final and (len(review.summary) > 300 or any(len(items) > 3 or any(len(v) > 140 for v in items) for items in (review.strengths, review.improvements, review.nextPriorities))):
                 raise ValueError("Checkpoint summary and bullets exceed limits.")
             if isinstance(review, FinalJudgement):
@@ -276,8 +297,8 @@ async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[R
                     raise ValueError("Assess every supplied criterion exactly once.")
                 if review.verdict == "Meets requirements" and any(r.status != "Met" for r in review.requirements):
                     raise ValueError("A Meets requirements verdict requires every criterion to be Met.")
-                if not has_plan and (review.verdict == "Meets requirements" or next(r for r in review.requirements if r.criterion == "Expected deliverable").status != "Missing"):
-                    raise ValueError("No written deliverable exists. Mark Expected deliverable Missing.")
+                if not has_plan and (review.verdict != "Needs more work" or any(r.status != "Missing" for r in review.requirements)):
+                    raise ValueError("No written deliverable exists. Mark every requirement Missing and return Needs more work.")
             validation = review_evidence_error(review, session.canvas, session.scenario.problem) if has_plan else None
             if validation:
                 raise ValueError(validation)
@@ -286,4 +307,155 @@ async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[R
             logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": "final" if final else "checkpoint", "attempt": attempt + 1, "reason": "invalid_review"}))
             error = str(failure) if not isinstance(failure, ValidationError) else "Return all fields and complete short sentences within the schema limits."
             messages = messages[:2] + [{"role": "user", "content": f"Correct your previous review: {error} Your previous response was an unpublished draft, not feedback given to the agents. Do not mention drafts, validation, or corrections in the final review. The supplied conversation is the only record of published judge feedback. Return corrected JSON based on the actual conversation and canvas."}]
-    raise ChorusError("GENERATION_FAILED", "The judge could not produce a complete, evidence-based review. Resume to retry.")
+    review = await text_review(session, final, call, usage, run_id)
+    return review, usage.total(), time.monotonic() - started
+
+
+async def text_review(session: Snapshot, final: bool, call: ModelCall, usage: Usage, run_id: str) -> Review:
+    """Collect small validated answers; Chorus owns JSON, citations and verdicts."""
+    criteria, base = judge_messages(session, final)
+    # Retain the judge's evidence/privacy rules, replacing the JSON instructions
+    # and multi-part task with one question repeated after the full public input.
+    system = base[0]["content"].split("\n\n", 1)[0]
+    plan = proposed_canvas(session.canvas, session.scenario.problem)
+    excerpts: list[str] = []
+    for line in re.sub(r"\*\*|__", "", plan).splitlines():
+        if re.match(r"^\s*#{1,6}\s", line):
+            continue
+        for part in re.split(r"[\[\]]", line):
+            excerpt = " ".join(re.sub(r"^\s*[-#*>]+\s*", "", part).split()[:5])
+            if len(excerpt) > 70:
+                excerpt = excerpt[:70].rsplit(" ", 1)[0]
+            if len(excerpt) >= 4 and excerpt not in excerpts:
+                excerpts.append(excerpt)
+    if plan and not excerpts:
+        raise ChorusError("GENERATION_FAILED", "The canvas has no usable review evidence. Saved work is preserved.")
+    choices = "\n".join(f"{i + 1}: {value}" for i, value in enumerate(excerpts))
+    phase = "final" if final else "checkpoint"
+
+    async def ask(field: str, task: str, validate: Callable[[str], T], output: int = 128) -> T:
+        error = ""
+        for attempt in range(1, 4):
+            instruction = f"CHORUS_REVIEW_FIELD: {field}\n{task}"
+            if error:
+                instruction += "\nYour unpublished answer was invalid. " + error + " Return a fresh answer; do not discuss retries."
+            if not plan:
+                instruction += "\nThe written canvas is EMPTY. Do not credit any written work."
+            messages = [{"role": "system", "content": system + "\n\n" + instruction}, {"role": "user", "content": base[1]["content"] + "\n\nYOUR ONLY TASK:\n" + instruction}]
+            assert_budget(messages, output)
+            result = await call(session.config.model, messages, output=output, phase=phase, attempt=attempt, run_id=run_id)
+            check_cancelled()
+            usage.add(result)
+            try:
+                if result.get("done_reason") == "length" or has_tools(result):
+                    raise ValueError("Return a shorter complete answer without tool calls.")
+                answer = re.sub(r"^CHORUS_REVIEW_FIELD:\s*", "", content(result).strip(), flags=re.I)
+                return validate(answer)
+            except ValueError as failure:
+                error = "Return the requested field with a complete short sentence." if isinstance(failure, ValidationError) else str(failure)
+                logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": phase, "field": field, "attempt": attempt, "reason": "invalid_review_field"}))
+        raise ChorusError("GENERATION_FAILED", "The judge could not produce a complete, evidence-based review. Resume to retry.")
+
+    def answer_value(value: str) -> Any:
+        # Accept unambiguous wrappers, never infer a choice from prose.
+        value = re.sub(r"^```(?:json|text)?\s*|\s*```$", "", value.strip()).strip()
+        value = re.sub(r"^CHORUS_REVIEW_FIELD:\s*", "", value, flags=re.I)
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            parsed = value
+        if isinstance(parsed, dict) and len(parsed) == 1:
+            key, parsed_value = next(iter(parsed.items()))
+            if key in {"answer", "choice", "rating", "score", "selection", "strength", "excerpt", "citation", "number", "index", "id", "status"}:
+                return parsed_value
+        return parsed
+
+    async def number(field: str, task: str, low: int, high: int) -> int:
+        def validate(value: str) -> int:
+            parsed = answer_value(value)
+            if isinstance(parsed, str):
+                parsed = re.sub(r"^(?:answer|choice|rating|excerpt|citation|number|option):\s*", "", parsed, flags=re.I)
+                parsed = int(parsed.rstrip(".)")) if re.fullmatch(r"\d{1,4}[.)]?", parsed) else None
+            if type(parsed) is not int or not low <= parsed <= high:
+                raise ValueError(f"Return ONLY one number between {low} and {high}, with no other text.")
+            return parsed
+        return await ask(field, task, validate, output=48)
+
+    async def status(field: str, target: str) -> int:
+        def validate(value: str) -> int:
+            parsed = answer_value(value)
+            if isinstance(parsed, str):
+                parsed = re.sub(r"^(?:status|rating|answer):\s*", "", parsed, flags=re.I).strip().rstrip(".").lower()
+                if parsed in {"missing", "partially met", "met"}:
+                    return ("missing", "partially met", "met").index(parsed)
+            raise ValueError("Return ONLY one of these exact labels: Missing, Partially met, Met. No number or explanation.")
+        task = f"Evaluate ONLY this written requirement: {target}\nReturn ONLY one of these exact labels: Missing, Partially met, Met. A discussion promise is not written evidence. Incomplete details mean Partially met, not Met. No number or explanation."
+        return await ask(field, task, validate, output=48)
+
+    strengths = ["No written deliverable exists yet."]
+    if plan:
+        selected = await number("strength", "Choose ONE numbered current-canvas excerpt showing progress. Return ONLY its number, no other text.\nNumbered excerpts:\n" + choices, 1, len(excerpts))
+        strengths = [f"The canvas records [{excerpts[selected - 1]}] as a proposal."]
+
+    async def sentence(field: str, task: str, limit: int) -> str:
+        def validate(value: str) -> str:
+            value = " ".join(value.split())
+            if not 8 <= len(value) <= limit:
+                raise ValueError(f"Use one complete sentence of at most {limit} characters. Aim for 12 words.")
+            complete_sentence(value)
+            if plan:
+                trial = Review(summary=value, strengths=strengths, improvements=["Validate the proposed plan."], nextPriorities=["Validate the proposed plan."])
+                problem = review_evidence_error(trial, session.canvas, session.scenario.problem)
+                if problem:
+                    # Do not put an unpublished excerpt back into retry context.
+                    raise ValueError("Use only exact current-canvas citations, or omit citations in this sentence.")
+            elif re.search(r"\[[^\]]+\]", value):
+                raise ValueError("The written canvas is empty. Do not invent a citation.")
+            return value
+        return await ask(field, task + f" Use ONE complete sentence, at most {limit} characters. Aim for 12 words. No heading, label, list, or JSON.", validate)
+
+    async def phrase(field: str, task: str, prefix: str, limit: int) -> str:
+        def validate(value: str) -> str:
+            value = " ".join(value.split()).strip('"').rstrip(".!?")
+            if value.lower().startswith(prefix.lower()):
+                value = value[len(prefix):]
+            answer = prefix + value + "."
+            if not re.search(r"\p{L}{2}", value) or len(answer) > limit or re.search(r"[\[\]{}]", value):
+                raise ValueError("Return only ONE short phrase of at most 8 words, with no citation or list.")
+            complete_sentence(answer)
+            return answer
+        return await ask(field, task + " Return ONLY one short phrase of at most 8 words. No list, sentence, heading, label, citation, or JSON.", validate)
+
+    summary = await sentence("summary", "Assess actual progress on the deliverable.", 300 if not final else 600)
+    improvement = await phrase("improvement", "Name ONE missing detail the written plan needs, as a noun phrase.", "The plan needs ", 140 if not final else 300)
+    priority = await phrase("priority", "Name ONE next action to improve the written plan, starting with a verb.", "The next priority is: ", 140 if not final else 300)
+    values = dict(summary=summary, strengths=strengths, improvements=[improvement], nextPriorities=[priority])
+    if not final:
+        review = Review(**values)
+    else:
+        requirements: list[Requirement] = []
+        for index, criterion in enumerate(criteria):
+            if not plan:
+                requirements.append(Requirement(criterion=criterion, status="Missing", evidence="No written deliverable exists yet."))
+                continue
+            target = session.scenario.deliverable if index == 0 else session.scenario.guidelines[index - 1]
+            rating = await status(f"rating_{index}", f"{criterion}: {target}")
+            evidence = "The written plan does not address this requirement."
+            if rating:
+                citation = await number(f"citation_{index}", f"Choose the current-canvas excerpt that directly supports this requirement: {target}\nReturn ONLY its number. Return 0 if none supports it.\nNumbered excerpts:\n" + choices, 0, len(excerpts))
+                if citation:
+                    qualifier = "partly addresses" if rating == 1 else "addresses"
+                    evidence = f"The plan {qualifier} this requirement through [{excerpts[citation - 1]}]."
+                else:
+                    rating = 0
+                    evidence = "No supporting canvas passage was identified for this requirement."
+            requirements.append(Requirement(criterion=criterion, status=("Missing", "Partially met", "Met")[rating], evidence=evidence))
+        feedback = "No previous judge feedback was given."
+        if any(turn.kind == "judge" for turn in session.turns):
+            feedback = await sentence("feedback", "Explain how the CURRENT written plan responds to the published judge feedback in the conversation. Identify resolved or remaining concerns.", 600)
+        verdict = "Meets requirements" if all(item.status == "Met" for item in requirements) else "Needs more work" if all(item.status == "Missing" for item in requirements) else "Partially meets requirements"
+        review = FinalJudgement(**values, requirements=requirements, feedbackResponse=feedback, verdict=verdict)
+    problem = review_evidence_error(review, session.canvas, session.scenario.problem) if plan else None
+    if problem:
+        raise ChorusError("GENERATION_FAILED", "The judge could not produce a complete, evidence-based review. Resume to retry.")
+    return review

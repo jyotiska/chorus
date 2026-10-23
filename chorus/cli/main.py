@@ -67,7 +67,7 @@ def control(session_id: str, action: str) -> None:
 
 
 @app.command()
-def run(scenario: str, participants: str = typer.Option(..., "--participants", help="Comma-separated participant IDs."), model: str = "qwen3.5:4b-mlx", turns: int = 20, judge: bool = False) -> None:
+def run(scenario: str, participants: str = typer.Option(..., "--participants", help="Comma-separated participant IDs."), model: str = "qwen3:4b", turns: int = 20, judge: bool = False) -> None:
     """Run a session using comma-separated participant IDs. Ctrl-C pauses it."""
     config = SessionConfig(scenarioId=scenario, participantIds=participants.split(","), model=model, maxTurns=turns, judgeEnabled=judge)
     snapshot = request("POST", "/sessions", config.model_dump())

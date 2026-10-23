@@ -80,13 +80,18 @@ Then follow the README in the Nanoville or chorus-web checkout. Both use a serve
 
 The bundled catalog contains these exact model IDs:
 
+- `qwen3:4b` — default
 - `qwen3.5:0.8b-mlx`
 - `qwen3.5:2b-mlx`
-- `qwen3.5:4b-mlx` — default
+- `qwen3.5:4b-mlx`
 - `gemma4:e2b-mlx`
 - `gemma4:e4b-mlx`
 
-A configured model is not necessarily installed or reliable for every task. `chorus catalog models` and `GET /api/v1/models` report installation availability. Chorus does not download models or silently substitute another model. Select an installed ID explicitly when the default is unavailable.
+Install the default model with `ollama pull qwen3:4b` if needed. A configured model is not necessarily installed or reliable for every task. `chorus catalog models` and `GET /api/v1/models` report installation availability. Chorus does not download models or silently substitute another model. Select an installed ID explicitly when the default is unavailable.
+
+All catalog models support judge reviews, including MLX. Chorus checks whether each model's runner actually enforces JSON schemas and caches that result for the life of the backend. Runners that enforce schemas use the compact structured review. Other runners receive small individual questions: short assessments, numbered canvas excerpts, and requirement ratings. Chorus validates each answer, attaches only the excerpt selected by the judge, derives a consistent verdict, and serializes the same public review contract. Invalid complex reviews also fall back to this path. There is no model substitution.
+
+The compatibility path may make more model calls. Token totals include the capability probe and rejected or retried answers. Complete public history remains available to every question; journals and unpublished drafts never enter these prompts. A failed or cancelled review commits no partial feedback.
 
 Use `CHORUS_CATALOG` to supply a replacement catalog in the format of [chorus/catalog/catalog.json](../chorus/catalog/catalog.json). Session models must appear in that catalog. OpenAI and Anthropic execution are not implemented in this version.
 
@@ -220,7 +225,7 @@ Run `npm run check` separately in each frontend. Their browser tests use real Ch
 
 During live browser testing on **22 October 2026**:
 
-- Final judge responses failed validation with the tested local MLX models in both applications. Sessions paused safely and preserved their work. Explicit response-contract instructions were added, but did not resolve the failures.
+- Final judge responses failed validation with the tested local MLX models in both applications. On 23 October, diagnosed ignored format constraints in the MLX runner and incompatible regex patterns in Chorus. Corrected the decoder patterns and added `qwen3:4b` as the judge-capable default; an initial restriction to the standard runner was subsequently replaced by a validated text-answer compatibility path for all catalog models. Existing sessions remain readable, but the engine-version change requires starting a new session to use the fix.
 - Qwen 2B completed Nanoville’s five-turn reply-helper discussion without an accepted canvas edit, leaving an empty final document. Gemma E2B produced saved canvases in the tested scenarios.
 - The automated checks passed: 56 backend tests, 6 frontend component/client tests, and 10 browser integration tests across the applications. These results do not establish reliable real-model generation.
 

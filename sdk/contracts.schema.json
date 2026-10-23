@@ -427,7 +427,7 @@
           "type": "array"
         },
         "model": {
-          "default": "qwen3.5:4b-mlx",
+          "default": "qwen3:4b",
           "title": "Model",
           "type": "string"
         },
@@ -467,7 +467,7 @@
           "type": "integer"
         },
         "engineVersion": {
-          "default": "discussion-v23-python2",
+          "default": "discussion-v23-python4",
           "title": "Engineversion",
           "type": "string"
         },
