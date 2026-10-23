@@ -98,7 +98,7 @@ async def test_invalid_judge_citations_and_verdicts_are_retried(snapshot, model)
     with pytest.raises(ChorusError) as error:
         await run_review(snapshot, False, invalid)
     assert error.value.code == "GENERATION_FAILED"
-    assert len(model.calls) == 2
+    assert len([options for _, options in model.calls if options.get("format")]) == 2
     assert "invented evidence" not in json.dumps(model.calls[1][0])
 
 
@@ -179,8 +179,8 @@ def test_review_sentence_contract_and_decoder_preserve_completion_guards():
             complete_sentence(fragment)
     assert complete_sentence("A clear proposal.") == "A clear proposal."
     schema = decoding_schema(Review.model_json_schema())
-    assert schema["properties"]["summary"]["pattern"] == r"[^\n]*[.!?]"
-    assert schema["properties"]["strengths"]["items"]["pattern"] == r"[^\n]*[.!?]"
+    assert schema["properties"]["summary"]["pattern"] == r'^[^"\\\n]*[.!?]$'
+    assert schema["properties"]["strengths"]["items"]["pattern"] == r'^[^"\\\n]*[.!?]$'
     assert "maxLength" not in json.dumps(schema)
 
 
@@ -195,3 +195,51 @@ async def test_judge_prompt_explicitly_communicates_the_full_response_contract(s
     assert '"requirements"' in system
     assert '"nextPriorities"' in system
     assert "nested inside the complete response" in system
+
+
+def test_every_catalog_model_can_create_a_judged_session(svc):
+    for model in svc.catalog.models:
+        assert svc.create(SessionConfig(**{**CONFIG, "model": model.id, "judgeEnabled": True})).config.model == model.id
+
+
+async def test_review_decoder_patterns_are_anchored_and_grammar_compatible(snapshot, model):
+    import re
+    from chorus.services.canvas import evidence_block
+    snapshot.canvas = evidence_block(snapshot.scenario.problem) + "\n\n# Plan\n\nHuman review ($/unit) requires follow-up."
+    await run_review(snapshot, True, model)
+    def check(node):
+        if isinstance(node, dict):
+            if "pattern" in node:
+                assert node["pattern"].startswith("^") and node["pattern"].endswith("$")
+                assert r"\ " not in node["pattern"]
+                assert r"\-" not in node["pattern"]
+            for child in node.values():
+                check(child)
+        elif isinstance(node, list):
+            for child in node:
+                check(child)
+    check(model.calls[0][1]["format"])
+    pattern = model.calls[0][1]["format"]["properties"]["strengths"]["items"]["pattern"]
+    assert re.fullmatch(pattern, "The canvas records [Human review ($/unit) requires follow-up.] as a proposal.")
+
+
+async def test_empty_canvas_review_never_credits_written_work(snapshot, model):
+    async def empty_review(*args, **kwargs):
+        result = await model(*args, **kwargs)
+        raw = json.loads(result["message"]["content"])
+        raw["strengths"] = ["No written deliverable exists yet."]
+        if kwargs["phase"] == "final":
+            raw["verdict"] = "Needs more work"
+            for item in raw["requirements"].values():
+                item.update(status="Missing", evidence="No written deliverable exists yet.")
+        result["message"]["content"] = json.dumps(raw)
+        return result
+    review, _, _ = await run_review(snapshot, True, empty_review)
+    assert all(item.status == "Missing" for item in review.requirements)
+    assert review.verdict == "Needs more work"
+
+
+async def test_empty_canvas_review_rejects_hallucinated_strengths(snapshot, model):
+    with pytest.raises(ChorusError, match="complete, evidence-based review"):
+        await run_review(snapshot, False, model)
+    assert len([options for _, options in model.calls if options.get("format")]) == 2

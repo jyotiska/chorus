@@ -1494,6 +1494,10 @@
   ],
   "models": [
     {
+      "id": "qwen3:4b",
+      "label": "Qwen 3 4B"
+    },
+    {
       "id": "qwen3.5:0.8b-mlx",
       "label": "Qwen-3.5 0.8B MLX"
     },
@@ -1514,7 +1518,7 @@
       "label": "Gemma-4 E4B MLX"
     }
   ],
-  "defaultModel": "qwen3.5:4b-mlx",
+  "defaultModel": "qwen3:4b",
   "judge": {
     "id": "judge",
     "name": "Judge",

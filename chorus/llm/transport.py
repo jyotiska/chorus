@@ -32,6 +32,27 @@ class ModelCall(Protocol):
 class OllamaTransport:
     def __init__(self, host: str | None = None) -> None:
         self.host = (host or os.getenv("OLLAMA_HOST", "http://localhost:11434")).rstrip("/")
+        self._structured_outputs: dict[str, bool] = {}
+
+    async def structured_output_support(self, model: str, run_id: str) -> tuple[bool, dict[str, Any] | None]:
+        """Probe enforcement, rather than assuming acceptance means support."""
+        if model in self._structured_outputs:
+            return self._structured_outputs[model], None
+        expected = {"proof": "chorus-schema-enforced"}
+        schema = {"type": "object", "properties": {"proof": {"type": "string", "enum": [expected["proof"]]}}, "required": ["proof"], "additionalProperties": False}
+        try:
+            result = await self(model, [{"role": "user", "content": "Reply with only the plain text word READY."}], output=48, format=schema, phase="judge_format", run_id=run_id)
+        except ChorusError as error:
+            if error.code != "MODEL_REQUEST_FAILED" or not any(word in str(error).lower() for word in ("schema", "grammar", "format")):
+                raise
+            self._structured_outputs[model] = False
+            return False, None
+        try:
+            supported = result.get("done_reason") != "length" and json.loads(result["message"]["content"]) == expected
+        except (ValueError, KeyError, TypeError):
+            supported = False
+        self._structured_outputs[model] = supported
+        return supported, result
 
     async def models(self) -> set[str]:
         try:

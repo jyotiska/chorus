@@ -1263,7 +1263,7 @@
           "model": {
             "type": "string",
             "title": "Model",
-            "default": "qwen3.5:4b-mlx"
+            "default": "qwen3:4b"
           },
           "maxTurns": {
             "type": "integer",
@@ -1304,7 +1304,7 @@
           "model": {
             "type": "string",
             "title": "Model",
-            "default": "qwen3.5:4b-mlx"
+            "default": "qwen3:4b"
           },
           "maxTurns": {
             "type": "integer",
@@ -1344,7 +1344,7 @@
           "engineVersion": {
             "type": "string",
             "title": "Engineversion",
-            "default": "discussion-v23-python2"
+            "default": "discussion-v23-python4"
           },
           "config": {
             "$ref": "#/components/schemas/SessionConfig-Output"

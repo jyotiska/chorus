@@ -113,7 +113,7 @@ chorus run ai-feature-launch \
   --turns 5
 ```
 
-This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3.5:4b-mlx`; select an installed model explicitly if it is unavailable.
+This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3:4b`; install it with `ollama pull qwen3:4b` if needed. All catalog models support judging, including MLX runners without structured-output enforcement. Chorus uses validated individual answers when a runner cannot generate a reliable structured review.
 
 See [Running and developing Chorus](docs/running-chorus.md) for the full model list, configuration, CLI commands, API examples, frontend connections, project layout, and contract generation.
 
