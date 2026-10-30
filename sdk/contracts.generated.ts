@@ -9,6 +9,10 @@ export type Scenarioid = string;
  * @maxItems 10
  */
 export type Participantids = string[];
+/**
+ * @maxItems 10
+ */
+export type Adversaryids = string[];
 export type Model = string;
 export type Maxturns = number;
 export type Judgeenabled = boolean;
@@ -172,6 +176,7 @@ export interface Snapshot {
 export interface SessionConfig {
   scenarioId: Scenarioid;
   participantIds: Participantids;
+  adversaryIds: Adversaryids;
   model: Model;
   maxTurns: Maxturns;
   judgeEnabled: Judgeenabled;

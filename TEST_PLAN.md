@@ -61,3 +61,13 @@ This initial standard-runner restriction was superseded by the all-model compati
 - Verified the live studio enables judging for every catalog entry. The engine version is now `discussion-v23-python4`; existing sessions stay readable and exportable, and new runs use the compatibility workflow.
 
 - An isolated copy of the five-slot pricing discussion resumed through a real Qwen 0.8B MLX checkpoint, then committed an early-stop final review that included the published checkpoint feedback. Participant slots and the canvas stayed unchanged; the user database was not modified.
+
+
+## Private adversaries — 30 October 2026
+
+- Added session-level `adversaryIds` with strict validation, immutable assignments, backward-compatible empty defaults, and CLI support through `--adversaries`. Assignments persist in observer snapshots/events/JSON exports, without changing catalog personas or energy/confidence rules.
+- Regression coverage checks zero/one/all assignments; invalid IDs and duplicates; private prompt isolation for each participant; ignorance of fellow adversary assignments; removal of conflicting cooperation guidance; canvas/speech/journal retries; valid weak proposals; unchanged evidence protections; cancellation, restart, resume, and early stop; old stored records; and API/CLI configuration.
+- Checkpoint/final judge inputs are identical for the same public work regardless of assignments, including compatibility questions and retries. Other participants' prompts are likewise identical. Private journals remain excluded from model context and ordinary exports.
+- Full Python suite passed: 147 tests. Both frontend browser suites passed against real Chorus and fake Ollama after the final prompt changes.
+- Live isolated two-turn Qwen 3 4B comparisons covered zero, one, and multiple adversaries. Initial cooperative responses motivated clearer baseline-persona labels, explicit turn-level obstruction, a weak initial-plan example, and placing the private assignment after shared rules. Revised runs produced broad proposals, missing safeguards, and contradictions; a cooperative peer attempted repairs. Compliance and public explanations still vary. These smoke checks do not establish a measured sabotage success rate.
+- Refreshed the idle local Chorus and Nanoville services after the existing run finished. Verified all 14 saved sessions were unchanged apart from the new empty configuration field. Existing-engine sessions remain readable/exportable; new sessions use `discussion-v25-adversaries`.

@@ -59,6 +59,7 @@ class Catalog(Contract):
 class SessionConfig(Contract):
     scenarioId: str
     participantIds: list[str] = Field(min_length=2, max_length=10)
+    adversaryIds: list[str] = Field(default_factory=list, max_length=10)
     model: str = "qwen3:4b"
     maxTurns: int = Field(default=20, ge=1, le=100, strict=True)
     judgeEnabled: bool = False
@@ -69,6 +70,14 @@ class SessionConfig(Contract):
         if len(set(value)) != len(value):
             raise ValueError("Participants must be distinct.")
         return value
+
+    @model_validator(mode="after")
+    def adversaries_are_participants(self) -> SessionConfig:
+        if len(set(self.adversaryIds)) != len(self.adversaryIds):
+            raise ValueError("Adversaries must be distinct.")
+        if not set(self.adversaryIds).issubset(self.participantIds):
+            raise ValueError("Adversaries must be selected participants.")
+        return self
 
 
 class TokenUsage(Contract):

@@ -79,7 +79,7 @@ def apply_turn_state(agents: list[Agent], turn: Turn) -> list[StatChange]:
     return changes
 
 
-def state_instruction(agent: Agent, *, reflection: bool = False) -> str:
+def state_instruction(agent: Agent, *, reflection: bool = False, adversarial: bool = False) -> str:
     """Describe the agent's own state for public action or private reflection."""
     state = (f"Current energy: {agent.energy}/100; confidence: {agent.confidence}/100. "
              f"Social style: {agent.personality.socialStyle}; response to challenge: {agent.personality.challengeResponse}. ")
@@ -88,7 +88,8 @@ def state_instruction(agent: Agent, *, reflection: bool = False) -> str:
                 "You do not need to mention these feelings or changes in every entry, and should not recite numeric stats. "
                 "Let them subtly inform your perspective when relevant; otherwise reflect naturally on the task or your peers.")
     energy = "Conserve energy: speak briefly and prefer one focused canvas edit or UNCHANGED when no useful edit is needed." if agent.energy <= 30 else "You have energy to contribute actively; keep edits focused."
-    confidence = "Use tentative phrasing and ask for validation when uncertain, while still stating evidence-based concerns." if agent.confidence <= 35 else "State your reasoning directly and remain open to correction."
+    confidence = "Use tentative phrasing and ask for validation when uncertain, while still stating evidence-based concerns." if agent.confidence <= 35 else "State your reasoning directly" + ("." if adversarial else " and remain open to correction.")
+    limits = "These simulated states influence tone and effort, never factual certainty, safety, or output and evidence constraints." if adversarial else "These simulated states influence tone and effort, never factual certainty, safety, or your obligation to contribute."
     return (state +
-            f"{energy} {confidence} These simulated states influence tone and effort, never factual certainty, safety, or your obligation to contribute. "
+            f"{energy} {confidence} {limits} "
             "Respond naturally; do not narrate the numeric stats.")

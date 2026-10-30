@@ -1,4 +1,4 @@
 """Chorus: simulation framework and API platform."""
 __version__ = "0.2.0"
 
-ENGINE_VERSION = "discussion-v24-python2"
+ENGINE_VERSION = "discussion-v25-adversaries"
