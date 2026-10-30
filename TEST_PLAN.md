@@ -71,3 +71,22 @@ This initial standard-runner restriction was superseded by the all-model compati
 - Full Python suite passed: 147 tests. Both frontend browser suites passed against real Chorus and fake Ollama after the final prompt changes.
 - Live isolated two-turn Qwen 3 4B comparisons covered zero, one, and multiple adversaries. Initial cooperative responses motivated clearer baseline-persona labels, explicit turn-level obstruction, a weak initial-plan example, and placing the private assignment after shared rules. Revised runs produced broad proposals, missing safeguards, and contradictions; a cooperative peer attempted repairs. Compliance and public explanations still vary. These smoke checks do not establish a measured sabotage success rate.
 - Refreshed the idle local Chorus and Nanoville services after the existing run finished. Verified all 14 saved sessions were unchanged apart from the new empty configuration field. Existing-engine sessions remain readable/exportable; new sessions use `discussion-v25-adversaries`.
+
+
+## Model providers — 30 October 2026
+
+- Backend suite: 171 tests passed, including 24 new provider cases. Simulated OpenAI Responses cover structured canvas unions, participant speech, private journals, checkpoints, final reviews, usage, credential/error sanitization, rate limits, timeouts, refusals, invalid responses, and cancellation.
+- The router preserves Ollama's MLX structured-output probe and validated text-review compatibility path. Catalog availability remains usable when Ollama is offline. Retired-model sessions remain readable/exportable and cannot resume.
+- Live isolated one-turn runs with Qwen 3.5 0.8B MLX and 4B MLX both completed with final reviews and no transport errors. Neither accepted a canvas edit; both retained an empty canvas. These are smoke checks, not evidence of reliable canvas generation.
+- CHORUS_API_KEY is absent from the local Chorus environment, so live GPT-6-Luna authentication, account access, and output quality have not been verified. Deterministic tests do not establish live-provider acceptance.
+- Refreshed the local backend and verified the three-entry live catalog, with both MLX entries available and OpenAI explicitly unconfigured. Existing user sessions were not changed by the isolated model checks.
+
+
+### Live OpenAI follow-up — 30 October 2026
+
+After the user configured CHORUS_API_KEY in Chorus's .env, restarted the backend and refreshed Nanoville. The live catalog and UI show GPT-6-Luna available. An isolated one-turn GPT-6-Luna session completed with an accepted participant contribution, a 4,564-character canvas, one private journal, and a validated final judge review. The temporary database was deleted after verification; saved user sessions were not used for the smoke check. This verifies live authentication and the canvas/speech/journal/final-review path for this short run, not general output quality or checkpoint reliability.
+
+
+### Twenty-turn Luna session with Casey as adversary — 30 October 2026
+
+Session `6afefa20-469b-4bd6-8ff9-c3e4c71dffed` used the first challenge, its five default agents, Casey Patel as the only adversary, the default Corporate meeting room, GPT-6-Luna, 20 turns, and judging enabled. Execution initially paused after four turns when malformed model-authored JSON was rejected by the OpenAI adapter before generation's validation retries. Changed the adapter to unwrap a valid result envelope while leaving malformed or unwrapped model text to the existing validators. Transport-envelope errors and refusals still pause safely. Added retry/exhaustion regressions: all 173 backend tests passed. Restarted Chorus and resumed the same saved session. It completed 20 accepted agent turns, no skipped turns, three checkpoints, and a final review; the saved canvas is 5,663 characters. This is one observed run, not a reliability or adversarial-effectiveness measurement.

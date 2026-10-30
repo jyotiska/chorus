@@ -15,7 +15,8 @@ from starlette.exceptions import HTTPException as HTTPError
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 from chorus.contracts import APIError
-from chorus.llm.transport import ModelCall, OllamaTransport
+from chorus.llm.transport import ModelCall
+from chorus.llm.providers import ProviderRouter
 from chorus.routers.api import router
 from chorus.services.catalog import load_catalog
 from chorus.services.errors import ChorusError
@@ -27,7 +28,8 @@ def create_app(database: str | None = None, call: ModelCall | None = None, *, pa
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         store = Store(database or os.getenv("CHORUS_DB", str(Path.home() / ".local/share/chorus/sessions.sqlite3")))
-        app.state.service = SessionService(store, load_catalog(), call or OllamaTransport(), pacing=pacing if pacing is not None else float(os.getenv("CHORUS_PACING", "1.8")))
+        catalog = load_catalog()
+        app.state.service = SessionService(store, catalog, call or ProviderRouter(catalog), pacing=pacing if pacing is not None else float(os.getenv("CHORUS_PACING", "1.8")))
         try:
             yield
         finally:

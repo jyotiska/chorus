@@ -308,6 +308,15 @@
           "title": "Label",
           "type": "string"
         },
+        "provider": {
+          "default": "ollama",
+          "enum": [
+            "ollama",
+            "openai"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
         "installed": {
           "anyOf": [
             {
@@ -319,12 +328,39 @@
           ],
           "default": null,
           "title": "Installed"
+        },
+        "available": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Available"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailablereason"
         }
       },
       "required": [
         "id",
         "label",
-        "installed"
+        "provider",
+        "installed",
+        "available",
+        "unavailableReason"
       ],
       "title": "ModelInfo",
       "type": "object"
@@ -474,7 +510,7 @@
           "type": "array"
         },
         "model": {
-          "default": "qwen3:4b",
+          "default": "qwen3.5:4b-mlx",
           "title": "Model",
           "type": "string"
         },

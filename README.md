@@ -84,7 +84,7 @@ Human judging, enforced reward and penalty systems, private evidence assignments
 
 ## Run Chorus
 
-Requirements: Python 3.11 or newer, a Unix-like environment for the current file locking, and a running Ollama-compatible server with a configured model installed.
+Requirements: Python 3.11 or newer, a Unix-like environment for the current file locking, and either a running Ollama-compatible server with a supported model installed or CHORUS_API_KEY configured for OpenAI.
 
 From the repository root:
 
@@ -107,16 +107,16 @@ chorus catalog agents
 chorus catalog models
 ```
 
-If `gemma4:e2b-mlx` is reported as installed, a short exploratory session can be run with:
+If `qwen3.5:4b-mlx` is reported as installed, a short exploratory session can be run with:
 
 ```bash
 chorus run ai-feature-launch \
   --participants software-engineer,product-manager \
-  --model gemma4:e2b-mlx \
+  --model qwen3.5:4b-mlx \
   --turns 5
 ```
 
-This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3:4b`; install it with `ollama pull qwen3:4b` if needed. All catalog models support judging, including MLX runners without structured-output enforcement. Chorus uses validated individual answers when a runner cannot generate a reliable structured review.
+This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3.5:4b-mlx`, which must already be installed in Ollama. The only other choices are `qwen3.5:0.8b-mlx` and OpenAI `gpt-6-luna`. Set `CHORUS_API_KEY` in the backend environment or `.env` and restart Chorus to enable OpenAI. The same selected model powers all participant and judge calls. All catalog models support judging, including MLX runners without structured-output enforcement. Chorus uses validated individual answers when a runner cannot generate a reliable structured review.
 
 See [Running and developing Chorus](docs/running-chorus.md) for the full model list, configuration, CLI commands, API examples, frontend connections, project layout, and contract generation.
 
@@ -127,3 +127,5 @@ Chorus is being prepared for an open-source release so that others can inspect t
 Contributions are especially useful when they improve experimental validity: checkable scenarios, informative controls, independent evaluators, reliable recording, failure analysis, and clear documentation. Reports of surprising behavior are most useful with the scenario, model and settings, relevant session records, and steps to reproduce it.
 
 The intended research outputs are runnable experiments, documented measurements, and reports that distinguish observation from interpretation. The project welcomes interest from people working on AI agents, swarms, coordination, multi-agent systems, and AI safety.
+
+Model availability includes provider, local installation status, and configuration errors. An Ollama outage does not disable OpenAI. Credentials remain in Chorus; neither frontend receives them. Retired-model sessions remain readable/exportable and require a new session to continue. See [model setup](docs/running-chorus.md#model-catalog).

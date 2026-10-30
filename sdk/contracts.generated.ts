@@ -115,7 +115,10 @@ export type Agents1 = Agent[];
 export type Scenarios = Scenario[];
 export type Id3 = string;
 export type Label = string;
+export type Provider = "ollama" | "openai";
 export type Installed = boolean | null;
+export type Available = boolean | null;
+export type Unavailablereason = string | null;
 export type Models = ModelInfo[];
 export type Defaultmodel = string;
 export type Agentid1 = string;
@@ -260,7 +263,10 @@ export interface Catalog {
 export interface ModelInfo {
   id: Id3;
   label: Label;
+  provider: Provider;
   installed: Installed;
+  available: Available;
+  unavailableReason: Unavailablereason;
 }
 export interface Journal {
   agentId: Agentid1;

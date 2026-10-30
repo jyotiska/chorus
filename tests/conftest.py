@@ -7,7 +7,7 @@ from chorus.services.catalog import load_catalog
 from chorus.services.sessions import SessionService
 from chorus.storage import Store
 
-CONFIG = {"scenarioId": "ai-feature-launch", "participantIds": ["software-engineer", "product-manager"], "model": "qwen3:4b", "maxTurns": 20, "judgeEnabled": False}
+CONFIG = {"scenarioId": "ai-feature-launch", "participantIds": ["software-engineer", "product-manager"], "model": "qwen3.5:4b-mlx", "maxTurns": 20, "judgeEnabled": False}
 
 
 class FakeModel:

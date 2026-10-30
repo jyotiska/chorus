@@ -21,7 +21,7 @@ Service = Annotated[SessionService, Depends(service)]
 
 @router.get("/catalog", response_model=Catalog)
 async def catalog(svc: Service) -> Catalog:
-    return svc.catalog
+    return svc.catalog.model_copy(update={"models": await models(svc)})
 
 
 @router.get("/agents", response_model=list[Agent])
@@ -36,8 +36,12 @@ async def scenarios(svc: Service, collection: str | None = None) -> list[Scenari
 
 @router.get("/models", response_model=list[ModelInfo])
 async def models(svc: Service) -> list[ModelInfo]:
-    installed = await svc.call.models() if isinstance(svc.call, OllamaTransport) else set()
-    return [m.model_copy(update={"installed": m.id in installed}) for m in svc.catalog.models]
+    if hasattr(svc.call, "model_infos"):
+        return await svc.call.model_infos()
+    if isinstance(svc.call, OllamaTransport):
+        installed = await svc.call.models()
+        return [m.model_copy(update={"installed": m.id in installed, "available": m.id in installed}) for m in svc.catalog.models]
+    return svc.catalog.models
 
 
 @router.post("/sessions", response_model=Snapshot, status_code=201)

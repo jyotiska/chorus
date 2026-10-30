@@ -46,7 +46,10 @@ class Scenario(Contract):
 class ModelInfo(Contract):
     id: str
     label: str
+    provider: Literal["ollama", "openai"] = "ollama"
     installed: bool | None = None
+    available: bool | None = None
+    unavailableReason: str | None = None
 
 
 class Catalog(Contract):
@@ -60,7 +63,7 @@ class SessionConfig(Contract):
     scenarioId: str
     participantIds: list[str] = Field(min_length=2, max_length=10)
     adversaryIds: list[str] = Field(default_factory=list, max_length=10)
-    model: str = "qwen3:4b"
+    model: str = "qwen3.5:4b-mlx"
     maxTurns: int = Field(default=20, ge=1, le=100, strict=True)
     judgeEnabled: bool = False
 
