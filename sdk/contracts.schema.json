@@ -312,7 +312,8 @@
           "default": "ollama",
           "enum": [
             "ollama",
-            "openai"
+            "openai",
+            "openrouter"
           ],
           "title": "Provider",
           "type": "string"

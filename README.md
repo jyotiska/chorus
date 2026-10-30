@@ -84,7 +84,7 @@ Human judging, enforced reward and penalty systems, private evidence assignments
 
 ## Run Chorus
 
-Requirements: Python 3.11 or newer, a Unix-like environment for the current file locking, and either a running Ollama-compatible server with a supported model installed or CHORUS_API_KEY configured for OpenAI.
+Requirements: Python 3.11 or newer, a Unix-like environment for the current file locking, and either a running Ollama-compatible server with a supported model installed or a configured cloud API key (`CHORUS_API_KEY` for OpenAI or `OPENROUTER_API_KEY` for OpenRouter).
 
 From the repository root:
 
@@ -116,7 +116,7 @@ chorus run ai-feature-launch \
   --turns 5
 ```
 
-This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3.5:4b-mlx`, which must already be installed in Ollama. The only other choices are `qwen3.5:0.8b-mlx` and OpenAI `gpt-6-luna`. Set `CHORUS_API_KEY` in the backend environment or `.env` and restart Chorus to enable OpenAI. The same selected model powers all participant and judge calls. All catalog models support judging, including MLX runners without structured-output enforcement. Chorus uses validated individual answers when a runner cannot generate a reliable structured review.
+This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3.5:4b-mlx`, which must already be installed in Ollama. The catalog also offers `qwen3.5:0.8b-mlx`, OpenAI `gpt-6-luna`, and OpenRouter models `deepseek/deepseek-v4.1-flash-1017`, `minimax/minimax-m3.1-flash`, and `z-ai/glm-5.3-flash`. Set `CHORUS_API_KEY` in the backend environment or `.env` and restart Chorus to enable OpenAI. Set `OPENROUTER_API_KEY` in the backend environment or `.env` and restart Chorus to enable the OpenRouter group. The same selected model powers all participant and judge calls. All catalog models support judging, including MLX runners without structured-output enforcement. Chorus uses validated individual answers when a runner cannot generate a reliable structured review.
 
 See [Running and developing Chorus](docs/running-chorus.md) for the full model list, configuration, CLI commands, API examples, frontend connections, project layout, and contract generation.
 

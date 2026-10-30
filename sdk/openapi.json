@@ -1147,7 +1147,8 @@
             "type": "string",
             "enum": [
               "ollama",
-              "openai"
+              "openai",
+              "openrouter"
             ],
             "title": "Provider",
             "default": "ollama"
