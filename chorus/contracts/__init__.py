@@ -46,7 +46,7 @@ class Scenario(Contract):
 class ModelInfo(Contract):
     id: str
     label: str
-    provider: Literal["ollama", "openai"] = "ollama"
+    provider: Literal["ollama", "openai", "openrouter"] = "ollama"
     installed: bool | None = None
     available: bool | None = None
     unavailableReason: str | None = None

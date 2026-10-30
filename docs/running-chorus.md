@@ -8,7 +8,7 @@ Chorus currently runs locally for one person, using Python, FastAPI, SQLite, and
 
 ### 1. Install Chorus
 
-Requirements: Python 3.11 or newer and either a running Ollama-compatible server with a supported model installed, or CHORUS_API_KEY configured for OpenAI. The current storage implementation uses Unix file locking.
+Requirements: Python 3.11 or newer and either a running Ollama-compatible server with a supported model installed, or a configured cloud API key (`CHORUS_API_KEY` for OpenAI or `OPENROUTER_API_KEY` for OpenRouter). The current storage implementation uses Unix file locking.
 
 From the Chorus repository root:
 
@@ -93,10 +93,15 @@ The bundled catalog contains these exact model IDs:
 - `qwen3.5:0.8b-mlx` — Local MLX
 - `qwen3.5:4b-mlx` — Local MLX, default
 - `gpt-6-luna` — OpenAI APIs, displayed as GPT-6-Luna
+- `deepseek/deepseek-v4.1-flash-1017` — OpenRouter, DeepSeek V4.1 Flash 1017
+- `minimax/minimax-m3.1-flash` — OpenRouter, MiniMax M3.1 Flash
+- `z-ai/glm-5.3-flash` — OpenRouter, GLM 5.3 Flash
 
-The two local models must already be installed in Ollama. Chorus does not download or silently substitute models. `chorus catalog models`, `GET /api/v1/models`, and `GET /api/v1/catalog` report provider and availability. Local entries expose installation status; OpenAI availability means `CHORUS_API_KEY` is configured, not that account access or quota has been verified. An Ollama outage affects only local entries.
+The two local models must already be installed in Ollama. Chorus does not download or silently substitute models. `chorus catalog models`, `GET /api/v1/models`, and `GET /api/v1/catalog` report provider and availability. Local entries expose installation status; OpenAI availability means `CHORUS_API_KEY` is configured, not that account access or quota has been verified. An Ollama outage affects only local entries. OpenRouter availability depends independently on `OPENROUTER_API_KEY`; configuration availability does not verify credits or provider access.
 
 Set `CHORUS_API_KEY` in the backend shell environment or Chorus's `.env`, then restart Chorus to use GPT-6-Luna. Never add it to frontend environment files. Chorus calls `https://api.openai.com/v1/responses` with model `gpt-6-luna`, `store: false`, and reasoning disabled. The chosen model handles canvas edits, participant speech, private observer journals, and judge reviews. OpenAI uses strict structured output with an object wrapper for canvas unions; Chorus validates and unwraps results before publication. Requests retain the existing conservative 32,768-token application budget and bounded output allowances. No provider fallback occurs.
+
+Set `OPENROUTER_API_KEY` in the Chorus backend environment or `.env` and restart Chorus for OpenRouter. Requests go to `https://openrouter.ai/api/v1/chat/completions` with the exact selected model ID. Structured calls request a strict JSON schema and `provider.require_parameters: true` so OpenRouter selects a host that supports the requested format. DeepSeek requests reasoning disabled. MiniMax and GLM routes require reasoning, so Chorus requests low effort and adds 2,048 tokens to the total completion allowance per call, included in context-budget checks. All three exclude reasoning from returned content; only assistant reply text enters the application. Output usage includes any reasoning tokens charged by the provider. The same model handles all generation phases, with the same context budget, validation, usage accounting, cancellation, and canvas-preservation rules. No alternate model is requested. OpenRouter may route among hosts of that same model. Missing keys, insufficient credits, denied access, throttling, and provider failures return sanitized errors without exposing the credential or raw upstream payload.
 
 Missing credentials, authentication failures, denied model access, rate limits, timeouts, refusals, and malformed output produce safe errors. Public-generation failures pause execution and preserve committed work; journals retain their existing optional behavior. Requests can be cancelled without committing late output. Logs contain metadata and usage, not credentials, prompts, or journals.
 
@@ -105,13 +110,14 @@ All catalog models support judge reviews, including MLX. Chorus checks whether e
 
 The compatibility path may make more model calls. Token totals include the capability probe and rejected or retried answers. Complete public history remains available to every question; journals and unpublished drafts never enter these prompts. A failed or cancelled review commits no partial feedback.
 
-Use `CHORUS_CATALOG` to supply a replacement catalog in the format of [chorus/catalog/catalog.json](../chorus/catalog/catalog.json). Session models must appear in that catalog. Each model declares `provider: "ollama"` or `provider: "openai"`; omitted providers default to Ollama for existing custom catalogs.
+Use `CHORUS_CATALOG` to supply a replacement catalog in the format of [chorus/catalog/catalog.json](../chorus/catalog/catalog.json). Session models must appear in that catalog. Each model declares `provider: "ollama"`, `provider: "openai"`, or `provider: "openrouter"`; omitted providers default to Ollama for existing custom catalogs.
 
 ### Environment settings
 
 The backend loads `.env` at startup; existing shell environment values take precedence.
 
 - `CHORUS_API_KEY`: OpenAI API credential, required only for OpenAI models.
+- `OPENROUTER_API_KEY`: OpenRouter API credential, required only for OpenRouter models.
 - `OLLAMA_HOST`: local model server address; default `http://localhost:11434`.
 - `CHORUS_DB`: SQLite file; default `~/.local/share/chorus/sessions.sqlite3`.
 - `CHORUS_CATALOG`: optional path to a replacement catalog JSON file.
@@ -242,7 +248,7 @@ During live browser testing on **22 October 2026**:
 - Qwen 2B completed Nanoville’s five-turn reply-helper discussion without an accepted canvas edit, leaving an empty final document. Gemma E2B produced saved canvases in the tested scenarios.
 - The automated checks passed: 56 backend tests, 6 frontend component/client tests, and 10 browser integration tests across the applications. These results do not establish reliable real-model generation.
 
-Remote access, authentication, multiple users, cloud model providers, and multiple backend workers are outside the current release.
+Remote access, authentication, multiple users, and multiple backend workers are outside the current release.
 
 ## Migration and research
 

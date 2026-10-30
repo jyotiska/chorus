@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import copy
 import json
 import os
 import time
@@ -11,33 +10,9 @@ from typing import Any
 import httpx
 
 from chorus import ENGINE_VERSION
+from chorus.llm.structured import strict_schema, unwrap_result
 from chorus.llm.transport import CALL_TIMEOUT, assert_budget, input_estimate, logger
 from chorus.services.errors import ChorusError
-
-
-def strict_schema(schema: dict[str, Any]) -> dict[str, Any]:
-    """Wrap canvas unions in an object and adapt the decoding schema to OpenAI."""
-    def adapt(node: Any) -> Any:
-        if isinstance(node, list):
-            return [adapt(item) for item in node]
-        if not isinstance(node, dict):
-            return node
-        result = {key: copy.deepcopy(value) for key, value in node.items() if key not in {"title", "default", "discriminator"}}
-        for key in ("properties", "$defs"):
-            if key in result:
-                result[key] = {name: adapt(child) for name, child in result[key].items()}
-        for key in ("items", "anyOf", "oneOf"):
-            if key in result:
-                result[key] = adapt(result[key])
-        if "oneOf" in result:
-            result["anyOf"] = result.pop("oneOf")
-        if "const" in result:
-            result["enum"] = [result.pop("const")]
-        if result.get("type") == "object" or "properties" in result:
-            result["additionalProperties"] = False
-            result["required"] = list(result.get("properties", {}))
-        return result
-    return {"type": "object", "properties": {"result": adapt(schema)}, "required": ["result"], "additionalProperties": False}
 
 
 def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
@@ -67,15 +42,7 @@ def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
     if not text.strip() and not incomplete:
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned an empty response.")
     if structured and not incomplete:
-        try:
-            value = json.loads(text)
-        except ValueError:
-            # Model-authored JSON is validated by the generation layer, which
-            # owns bounded retries and preserving the previously saved canvas.
-            pass
-        else:
-            if isinstance(value, dict) and set(value) == {"result"}:
-                text = json.dumps(value["result"], ensure_ascii=False)
+        text = unwrap_result(text)
     result: dict[str, Any] = {"message": {"content": text}, "done_reason": "length" if incomplete else "stop"}
     usage = raw.get("usage")
     if usage is not None:

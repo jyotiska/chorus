@@ -90,3 +90,12 @@ After the user configured CHORUS_API_KEY in Chorus's .env, restarted the backend
 ### Twenty-turn Luna session with Casey as adversary — 30 October 2026
 
 Session `6afefa20-469b-4bd6-8ff9-c3e4c71dffed` used the first challenge, its five default agents, Casey Patel as the only adversary, the default Corporate meeting room, GPT-6-Luna, 20 turns, and judging enabled. Execution initially paused after four turns when malformed model-authored JSON was rejected by the OpenAI adapter before generation's validation retries. Changed the adapter to unwrap a valid result envelope while leaving malformed or unwrapped model text to the existing validators. Transport-envelope errors and refusals still pause safely. Added retry/exhaustion regressions: all 173 backend tests passed. Restarted Chorus and resumed the same saved session. It completed 20 accepted agent turns, no skipped turns, three checkpoints, and a final review; the saved canvas is 5,663 characters. This is one observed run, not a reliability or adversarial-effectiveness measurement.
+
+
+## OpenRouter integration — 30 October 2026
+
+- Python suite: 215 tests passed. Added exact OpenRouter model routing, strict schema requests, independent key availability, credit/rate-limit/authentication errors (including errors embedded in HTTP 200), malformed responses, cancellation, token accounting, bounded canvas retries, and required reasoning-budget context checks. Existing OpenAI/MLX behavior remains covered.
+- Mocked six-turn sessions exercised all three OpenRouter models through canvas, speech, journals, checkpoints, and final judging; private journals remained absent from participant/judge input and public snapshots.
+- Live isolated one-turn sessions completed for `deepseek/deepseek-v4.1-flash-1017`, `minimax/minimax-m3.1-flash`, and `z-ai/glm-5.3-flash`, each with a committed agent contribution, a private journal, and a final review. None accepted a canvas edit; the empty canvas was preserved normally. This confirms live API access and the short execution path, not reliable canvas generation or model quality.
+- MiniMax and GLM require reasoning on their current OpenRouter routes. Requests use low effort, exclude reasoning from returned content, and add 2,048 tokens to the bounded total completion allowance. DeepSeek accepts reasoning disabled. Token usage includes provider-charged reasoning tokens.
+- User sessions were not used for live checks; temporary smoke databases were deleted afterward. Keys remain in the ignored backend `.env` and are absent from frontend contracts and logs.

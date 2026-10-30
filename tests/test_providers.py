@@ -28,6 +28,7 @@ def response(text="A complete response.", **overrides):
 @pytest.fixture(autouse=True)
 def credential(monkeypatch):
     monkeypatch.setenv("CHORUS_API_KEY", "test-chorus-secret")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-secret")
 
 
 async def test_openai_request_normalizes_text_usage_and_strict_canvas_schema(caplog):
@@ -171,14 +172,14 @@ def test_catalog_reports_independent_provider_availability_and_never_exposes_key
     router = ProviderRouter(load_catalog(), ollama=OfflineLocal())
     with TestClient(create_app(str(tmp_path / "api.sqlite3"), router)) as client:
         catalog = client.get("/api/v1/catalog").json()
-        assert [item["id"] for item in catalog["models"]] == ["qwen3.5:0.8b-mlx", "qwen3.5:4b-mlx", "gpt-6-luna"]
+        assert [item["id"] for item in catalog["models"]] == ["qwen3.5:0.8b-mlx", "qwen3.5:4b-mlx", "gpt-6-luna", "deepseek/deepseek-v4.1-flash-1017", "minimax/minimax-m3.1-flash", "z-ai/glm-5.3-flash"]
         assert catalog["defaultModel"] == "qwen3.5:4b-mlx"
-        assert [item["available"] for item in catalog["models"]] == [False, False, True]
+        assert [item["available"] for item in catalog["models"]] == [False, False, True, True, True, True]
         assert catalog["models"][-1]["installed"] is None
         assert client.get("/api/v1/models").json() == catalog["models"]
         assert "test-chorus-secret" not in json.dumps(catalog)
         monkeypatch.delenv("CHORUS_API_KEY")
-        assert client.get("/api/v1/models").json()[-1]["available"] is False
+        assert next(item for item in client.get("/api/v1/models").json() if item["id"] == "gpt-6-luna")["available"] is False
         rejected = client.post("/api/v1/sessions", json={**CONFIG, "model": "gpt-6-luna"})
         assert rejected.json()["code"] == "MODEL_UNAVAILABLE" and "CHORUS_API_KEY" in rejected.json()["error"]
 
