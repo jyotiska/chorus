@@ -1143,6 +1143,15 @@
             "type": "string",
             "title": "Label"
           },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "ollama",
+              "openai"
+            ],
+            "title": "Provider",
+            "default": "ollama"
+          },
           "installed": {
             "anyOf": [
               {
@@ -1153,6 +1162,28 @@
               }
             ],
             "title": "Installed"
+          },
+          "available": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
           }
         },
         "additionalProperties": false,
@@ -1160,7 +1191,10 @@
         "required": [
           "id",
           "label",
-          "installed"
+          "provider",
+          "installed",
+          "available",
+          "unavailableReason"
         ],
         "title": "ModelInfo"
       },
@@ -1310,7 +1344,7 @@
           "model": {
             "type": "string",
             "title": "Model",
-            "default": "qwen3:4b"
+            "default": "qwen3.5:4b-mlx"
           },
           "maxTurns": {
             "type": "integer",
@@ -1359,7 +1393,7 @@
           "model": {
             "type": "string",
             "title": "Model",
-            "default": "qwen3:4b"
+            "default": "qwen3.5:4b-mlx"
           },
           "maxTurns": {
             "type": "integer",

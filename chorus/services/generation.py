@@ -10,7 +10,7 @@ from uuid import uuid4
 import regex as re
 from pydantic import ValidationError
 from chorus.contracts import Agent, Snapshot, Review, FinalJudgement, TokenUsage, Requirement, complete_sentence
-from chorus.llm.transport import ModelCall, OllamaTransport, assert_budget, JOURNAL_TIMEOUT
+from chorus.llm.transport import ModelCall, assert_budget, JOURNAL_TIMEOUT
 from chorus.services.canvas import apply_edit, edit_adapter, evidence_block
 from chorus.services.errors import ChorusError
 from chorus.services.policies import compact, speech_error, canvas_body, canvas_error, grounding_error
@@ -221,8 +221,9 @@ async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[R
     assert_budget(messages, 3000 if final else 1200)
     usage = Usage()
     run_id = str(uuid4())
-    if isinstance(call, OllamaTransport):
-        supported, probe = await call.structured_output_support(session.config.model, run_id)
+    capability = getattr(call, "structured_output_support", None)
+    if capability is not None:
+        supported, probe = await capability(session.config.model, run_id)
         check_cancelled()
         if probe is not None:
             usage.add(probe)

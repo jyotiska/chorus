@@ -1554,31 +1554,22 @@
   ],
   "models": [
     {
-      "id": "qwen3:4b",
-      "label": "Qwen 3 4B"
-    },
-    {
       "id": "qwen3.5:0.8b-mlx",
-      "label": "Qwen-3.5 0.8B MLX"
-    },
-    {
-      "id": "qwen3.5:2b-mlx",
-      "label": "Qwen-3.5 2B MLX"
+      "label": "Qwen 3.5 0.8B MLX",
+      "provider": "ollama"
     },
     {
       "id": "qwen3.5:4b-mlx",
-      "label": "Qwen-3.5 4B MLX"
+      "label": "Qwen 3.5 4B MLX",
+      "provider": "ollama"
     },
     {
-      "id": "gemma4:e2b-mlx",
-      "label": "Gemma-4 E2B MLX"
-    },
-    {
-      "id": "gemma4:e4b-mlx",
-      "label": "Gemma-4 E4B MLX"
+      "id": "gpt-6-luna",
+      "label": "GPT-6-Luna",
+      "provider": "openai"
     }
   ],
-  "defaultModel": "qwen3:4b",
+  "defaultModel": "qwen3.5:4b-mlx",
   "judge": {
     "id": "judge",
     "name": "Judge",

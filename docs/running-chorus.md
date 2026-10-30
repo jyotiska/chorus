@@ -8,7 +8,7 @@ Chorus currently runs locally for one person, using Python, FastAPI, SQLite, and
 
 ### 1. Install Chorus
 
-Requirements: Python 3.11 or newer and a running Ollama-compatible server with a configured model installed. The current storage implementation uses Unix file locking.
+Requirements: Python 3.11 or newer and either a running Ollama-compatible server with a supported model installed, or CHORUS_API_KEY configured for OpenAI. The current storage implementation uses Unix file locking.
 
 From the Chorus repository root:
 
@@ -47,12 +47,12 @@ chorus catalog scenarios
 chorus catalog agents
 ```
 
-Choose a model reported as installed. For example, if `gemma4:e2b-mlx` is available:
+Choose a model reported as installed. For example, if `qwen3.5:4b-mlx` is available:
 
 ```bash
 chorus run ai-feature-launch \
   --participants software-engineer,product-manager \
-  --model gemma4:e2b-mlx \
+  --model qwen3.5:4b-mlx \
   --turns 5
 ```
 
@@ -90,26 +90,29 @@ Then follow the README in the Nanoville or chorus-web checkout. Both use a serve
 
 The bundled catalog contains these exact model IDs:
 
-- `qwen3:4b` — default
-- `qwen3.5:0.8b-mlx`
-- `qwen3.5:2b-mlx`
-- `qwen3.5:4b-mlx`
-- `gemma4:e2b-mlx`
-- `gemma4:e4b-mlx`
+- `qwen3.5:0.8b-mlx` — Local MLX
+- `qwen3.5:4b-mlx` — Local MLX, default
+- `gpt-6-luna` — OpenAI APIs, displayed as GPT-6-Luna
 
-Install the default model with `ollama pull qwen3:4b` if needed. A configured model is not necessarily installed or reliable for every task. `chorus catalog models` and `GET /api/v1/models` report installation availability. Chorus does not download models or silently substitute another model. Select an installed ID explicitly when the default is unavailable.
+The two local models must already be installed in Ollama. Chorus does not download or silently substitute models. `chorus catalog models`, `GET /api/v1/models`, and `GET /api/v1/catalog` report provider and availability. Local entries expose installation status; OpenAI availability means `CHORUS_API_KEY` is configured, not that account access or quota has been verified. An Ollama outage affects only local entries.
 
+Set `CHORUS_API_KEY` in the backend shell environment or Chorus's `.env`, then restart Chorus to use GPT-6-Luna. Never add it to frontend environment files. Chorus calls `https://api.openai.com/v1/responses` with model `gpt-6-luna`, `store: false`, and reasoning disabled. The chosen model handles canvas edits, participant speech, private observer journals, and judge reviews. OpenAI uses strict structured output with an object wrapper for canvas unions; Chorus validates and unwraps results before publication. Requests retain the existing conservative 32,768-token application budget and bounded output allowances. No provider fallback occurs.
+
+Missing credentials, authentication failures, denied model access, rate limits, timeouts, refusals, and malformed output produce safe errors. Public-generation failures pause execution and preserve committed work; journals retain their existing optional behavior. Requests can be cancelled without committing late output. Logs contain metadata and usage, not credentials, prompts, or journals.
+
+Sessions using removed models remain readable and exportable but cannot start or resume execution. Start a new session with a current model.
 All catalog models support judge reviews, including MLX. Chorus checks whether each model's runner actually enforces JSON schemas and caches that result for the life of the backend. Runners that enforce schemas use the compact structured review. Other runners receive small individual questions: short assessments, numbered canvas excerpts, and requirement ratings. Chorus validates each answer, attaches only the excerpt selected by the judge, derives a consistent verdict, and serializes the same public review contract. Invalid complex reviews also fall back to this path. There is no model substitution.
 
 The compatibility path may make more model calls. Token totals include the capability probe and rejected or retried answers. Complete public history remains available to every question; journals and unpublished drafts never enter these prompts. A failed or cancelled review commits no partial feedback.
 
-Use `CHORUS_CATALOG` to supply a replacement catalog in the format of [chorus/catalog/catalog.json](../chorus/catalog/catalog.json). Session models must appear in that catalog. OpenAI and Anthropic execution are not implemented in this version.
+Use `CHORUS_CATALOG` to supply a replacement catalog in the format of [chorus/catalog/catalog.json](../chorus/catalog/catalog.json). Session models must appear in that catalog. Each model declares `provider: "ollama"` or `provider: "openai"`; omitted providers default to Ollama for existing custom catalogs.
 
 ### Environment settings
 
 The backend loads `.env` at startup; existing shell environment values take precedence.
 
-- `OLLAMA_HOST`: model server address; default `http://localhost:11434`.
+- `CHORUS_API_KEY`: OpenAI API credential, required only for OpenAI models.
+- `OLLAMA_HOST`: local model server address; default `http://localhost:11434`.
 - `CHORUS_DB`: SQLite file; default `~/.local/share/chorus/sessions.sqlite3`.
 - `CHORUS_CATALOG`: optional path to a replacement catalog JSON file.
 - `CHORUS_PACING`: delay between participant operations in seconds; default `1.8`.
@@ -160,7 +163,7 @@ curl -sS http://127.0.0.1:43187/api/v1/sessions \
   -d '{
     "scenarioId": "ai-feature-launch",
     "participantIds": ["software-engineer", "product-manager"],
-    "model": "gemma4:e2b-mlx",
+    "model": "qwen3.5:4b-mlx",
     "maxTurns": 5,
     "judgeEnabled": false
   }'

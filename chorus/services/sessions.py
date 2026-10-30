@@ -47,8 +47,16 @@ class SessionService:
 
     def create(self, config: SessionConfig) -> Snapshot:
         scenario, agents = resolve_config(config, self.catalog)
+        self.validate_model(config.model)
         config = config.model_copy(update={"participantIds": [a.id for a in agents]})
         return self.store.create(Snapshot(id=str(uuid4()), config=config, scenario=scenario, agents=agents, createdAt=now(), updatedAt=now()))
+
+    def validate_model(self, model: str) -> None:
+        if model not in {item.id for item in self.catalog.models}:
+            raise ChorusError("MODEL_NOT_FOUND", "This session uses a retired model. Its saved work remains available; start a new session with a current model.", 409)
+        validate = getattr(self.call, "validate_model", None)
+        if validate is not None:
+            validate(model)
 
     def command(self, session_id: str, command: Command) -> Snapshot:
         session = self.store.get(session_id)
@@ -60,6 +68,8 @@ class SessionService:
         if session.status in {"completed", "stopped"}:
             raise ChorusError("INVALID_STATE", "This session has ended.", 409)
         action = command.action
+        if action in {"start", "resume"} or action == "stop" and session.config.judgeEnabled:
+            self.validate_model(session.config.model)
         if action in {"start", "resume"}:
             if session.engineVersion != ENGINE_VERSION:
                 raise ChorusError("VERSION_MISMATCH", "This session uses a different engine version. Keep its saved work and start a new session.", 409)
