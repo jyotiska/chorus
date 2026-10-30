@@ -58,6 +58,16 @@ chorus run ai-feature-launch \
 
 Add `--judge` to request checkpoint and final reviews. The CLI prints the session ID, committed contributions, and resulting canvas. Ctrl-C while watching a run pauses the session.
 
+### Private adversaries
+
+Add `--adversaries software-engineer` (or comma-separated participant IDs) to privately assign an opposing goal before the session starts. The HTTP equivalent is `adversaryIds` in the session creation configuration. It defaults to `[]`; IDs must be distinct selected participants. Zero, one, multiple, or all participants can be adversaries. The judge cannot be assigned.
+
+Assignments are immutable for a session and persist in its configuration, snapshots, events, and observer JSON exports. Markdown export contains only the shared canvas. Existing stored records without the field load as no adversaries; no SQLite table migration is needed. Start a new session after the `discussion-v25-adversaries` engine update; sessions from earlier engines remain readable/exportable.
+
+Chorus replaces cooperative guidance with a private opposing goal for the assigned agent's canvas edits, spoken contribution, and observer-only journal, including retries. The agent keeps its name, professional expertise, baseline traits, and deterministic energy/confidence rules. Formatting, evidence protection, bounded retries, cancellation, and atomic commits still apply. Sabotage may weaken proposals or obstruct progress within those constraints.
+
+Only the current agent's own assignment is added to its system prompt. Other participants, other adversaries, and judge checkpoint/final/compatibility prompts receive no assignment metadata or count. Judge criteria remain unchanged. Journals stay observer-only. These are model-input boundaries, not protection against the human observer reading the local API: behavior or model disclosure can reveal an assignment, and a prompted adversary may still cooperate.
+
 ## Applications built on Chorus
 
 The three projects run as separate processes:

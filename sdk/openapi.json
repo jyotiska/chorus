@@ -1299,6 +1299,14 @@
             "minItems": 2,
             "title": "Participantids"
           },
+          "adversaryIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Adversaryids"
+          },
           "model": {
             "type": "string",
             "title": "Model",
@@ -1340,6 +1348,14 @@
             "minItems": 2,
             "title": "Participantids"
           },
+          "adversaryIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Adversaryids"
+          },
           "model": {
             "type": "string",
             "title": "Model",
@@ -1363,6 +1379,7 @@
         "required": [
           "scenarioId",
           "participantIds",
+          "adversaryIds",
           "model",
           "maxTurns",
           "judgeEnabled"
@@ -1383,7 +1400,7 @@
           "engineVersion": {
             "type": "string",
             "title": "Engineversion",
-            "default": "discussion-v24-python2"
+            "default": "discussion-v25-adversaries"
           },
           "config": {
             "$ref": "#/components/schemas/SessionConfig-Output"

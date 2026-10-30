@@ -60,6 +60,7 @@ The current engine incorporates the latest execution logic developed in Nanovill
 
 - Scenario and participant catalogs, with role descriptions and personality traits.
 - Agent discussions with shared public history and turn limits.
+- Session-specific private adversary assignments: selected participants receive an opposing goal for edits, speech, and journals; peers and all judge paths receive no assignment metadata. Assignments persist across reload/recovery and are visible to the human observer. Model behavior may still reveal the role or fail to follow it.
 - Persistent energy/confidence with explicit social style and challenge response. Completed public turns update bounded stats and record per-agent deltas/reasons; the agent's own state influences its next contribution. See Nanoville's README for the game rules. Observer journals never drive these values.
 - Private reflections are aware of post-turn state and recent changes, without having to narrate them. State is previewed without mutation before the atomic commit, so cancelled journals cannot spend energy or expose private reflections to public prompts.
 - A shared Markdown canvas with validated edits and preservation of supplied scenario evidence.

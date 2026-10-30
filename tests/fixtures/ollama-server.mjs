@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 
-let state = { canvasDelayMs: 0, invalidCanvasTurn: 0, invalidSpeechTurn: 0, canvasCalls: 0, spokenCalls: 0, checkpointCalls: 0, finalCalls: 0, privateLeak: false };
+let state = { canvasDelayMs: 0, invalidCanvasTurn: 0, invalidSpeechTurn: 0, canvasCalls: 0, spokenCalls: 0, checkpointCalls: 0, finalCalls: 0, privateLeak: false, assignmentCalls: [] };
 const server = createServer(async (request, response) => {
   const reply = (body) => {
     if (response.destroyed) return;
@@ -13,7 +13,7 @@ const server = createServer(async (request, response) => {
   let input = "";
   for await (const chunk of request) input += chunk;
   if (request.url === "/reset") {
-    state = { canvasDelayMs: 0, invalidCanvasTurn: 0, invalidSpeechTurn: 0, canvasCalls: 0, spokenCalls: 0, checkpointCalls: 0, finalCalls: 0, privateLeak: false, ...JSON.parse(input || "{}") };
+    state = { canvasDelayMs: 0, invalidCanvasTurn: 0, invalidSpeechTurn: 0, canvasCalls: 0, spokenCalls: 0, checkpointCalls: 0, finalCalls: 0, privateLeak: false, assignmentCalls: [], ...JSON.parse(input || "{}") };
     return reply({ ok: true });
   }
   if (request.url !== "/api/chat") { response.writeHead(404).end(); return; }
@@ -23,6 +23,10 @@ const server = createServer(async (request, response) => {
   const count = /Turns used: (\d+)/.exec(body.messages[1]?.content ?? "")?.[1] ?? "0";
   const review = { summary: "The team drafted a narrow trial.", strengths: ['The canvas requires [human review].'], improvements: [`Validate measures after turn ${count}.`], nextPriorities: [`Test safeguards after turn ${count}.`] };
   const field = /CHORUS_REVIEW_FIELD: (\w+)/.exec(system)?.[1];
+  const phase = body.format?.properties?.proof || field || body.format?.properties?.summary ? "judge"
+    : system.includes("private first-person journal") ? "journal"
+    : system.includes("Your canvas revision is already prepared") || system.includes("No canvas edit was saved") ? "spoken" : "canvas";
+  state.assignmentCalls.push({ phase, speaker: /^You are ([^,]+),/.exec(system)?.[1] ?? "Judge", assigned: system.includes("PRIVATE ADVERSARY ASSIGNMENT:") });
   let content;
   if (body.format?.properties?.proof) {
     content = body.model.endsWith("-mlx") ? "READY" : JSON.stringify({ proof: "chorus-schema-enforced" });

@@ -465,6 +465,14 @@
           "title": "Participantids",
           "type": "array"
         },
+        "adversaryIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Adversaryids",
+          "type": "array"
+        },
         "model": {
           "default": "qwen3:4b",
           "title": "Model",
@@ -486,6 +494,7 @@
       "required": [
         "scenarioId",
         "participantIds",
+        "adversaryIds",
         "model",
         "maxTurns",
         "judgeEnabled"
@@ -506,7 +515,7 @@
           "type": "integer"
         },
         "engineVersion": {
-          "default": "discussion-v24-python2",
+          "default": "discussion-v25-adversaries",
           "title": "Engineversion",
           "type": "string"
         },

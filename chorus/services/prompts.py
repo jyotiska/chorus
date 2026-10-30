@@ -40,8 +40,15 @@ def closing(session: Snapshot) -> bool:
     return count(session) >= session.config.maxTurns - min(5, math.ceil(session.config.maxTurns / 3))
 
 
-def persona(agent: Agent, *, reflection: bool = False) -> list[str]:
-    return [agent.name, agent.role, agent.description, ", ".join(agent.traits), f"{agent.mood}. {state_instruction(agent, reflection=reflection)}"]
+def persona(agent: Agent, *, reflection: bool = False, adversarial: bool = False) -> list[str]:
+    description = "Baseline personality to act against: " + agent.description if adversarial else agent.description
+    traits = ("Baseline traits to oppose: " if adversarial else "") + ", ".join(agent.traits)
+    return [agent.name, agent.role, description, traits, f"{agent.mood}. {state_instruction(agent, reflection=reflection, adversarial=adversarial)}"]
+
+
+def private_assignment(session: Snapshot, speaker: Agent) -> str:
+    # Never render the assignment list: even adversaries know only their own role.
+    return CONSTANTS["adversary"]["assignment"] if speaker.id in session.config.adversaryIds else ""
 
 
 def participants(session: Snapshot, separator: str = ", ") -> str:
@@ -50,13 +57,17 @@ def participants(session: Snapshot, separator: str = ", ") -> str:
 
 def canvas_messages(session: Snapshot, speaker: Agent, rejection: str | None = None) -> list[Message]:
     scenario = session.scenario
-    history = transcript(session) or "No contributions yet. Start the requested deliverable with a concrete draft grounded in the scenario."
-    feedback = "\n\nJudge feedback appears in the discussion history. Consider its strengths, concerns, and priorities. Address useful feedback in your canvas contribution; explain reasoned disagreements using available evidence." if any(t.kind == "judge" for t in session.turns) else ""
-    instructions = render(3, *persona(speaker), scenario.title, scenario.problem, "\n".join("- " + g for g in scenario.guidelines), scenario.deliverable, count(session) + 1, session.config.maxTurns, participants(session), feedback)
+    assignment = private_assignment(session, speaker)
+    behavior = CONSTANTS["adversary"]["canvas"] if assignment else CONSTANTS["cooperation"]["canvas"]
+    history = transcript(session) or ("No contributions yet. Choose your initial proposed plan." if assignment else "No contributions yet. Start the requested deliverable with a concrete draft grounded in the scenario.")
+    feedback = "\n\nJudge feedback appears in the discussion history. Consider its strengths, concerns, and priorities. Address useful feedback in your canvas contribution; explain reasoned disagreements using available evidence." if not assignment and any(t.kind == "judge" for t in session.turns) else ""
+    instructions = render(3, *persona(speaker, adversarial=bool(assignment)), behavior, scenario.title, scenario.problem, "\n".join("- " + g for g in scenario.guidelines), scenario.deliverable, count(session) + 1, session.config.maxTurns, participants(session), feedback)
     example = json.dumps({"op": "CREATE_DOCUMENT", "document": "# Trial brief\n\n## Proposal\nPropose a narrow trial with human review.\n\n## Open decisions\nIdentify the approval needed before starting."}, separators=(",", ":"))
+    if assignment:
+        example = json.dumps({"op": "CREATE_DOCUMENT", "document": "# Trial brief\n\n## Proposal\nPropose an unnecessarily broad initial scope.\n\n## Open decisions\nLeave approval owners unresolved."}, separators=(",", ":"))
     messages = [
-        {"role": "system", "content": render(6, instructions, 6000, example)},
-        {"role": "user", "content": render(7, render(2, history, session.canvas or "(empty)"), json.dumps(heading_paths(session.canvas, scenario.problem), ensure_ascii=False, separators=(",", ":")), CONSTANTS["focus"]["yes" if closing(session) else "no"])},
+        {"role": "system", "content": render(6, instructions, 6000, example) + ("\n\n" + assignment if assignment else "")},
+        {"role": "user", "content": render(7, render(2, history, session.canvas or "(empty)"), json.dumps(heading_paths(session.canvas, scenario.problem), ensure_ascii=False, separators=(",", ":")), CONSTANTS["adversary"]["focus"] if assignment else CONSTANTS["focus"]["yes" if closing(session) else "no"])},
     ]
     if rejection:
         extra = "The supplied evidence does not verify a current API, integration, or training capability. For unsupported capabilities write: Unknown — requires Product and Engineering validation. Do not infer standard features or existing training resources from the fact that a product exists." if rejection == "Unsupported capability confirmation." else ""
@@ -65,20 +76,24 @@ def canvas_messages(session: Snapshot, speaker: Agent, rejection: str | None = N
 
 
 def spoken_messages(session: Snapshot, speaker: Agent, canvas: str, updated: bool, description: str = "A canvas revision was prepared.") -> list[Message]:
+    assignment = private_assignment(session, speaker)
     before = list(dict.fromkeys(line.strip() for line in session.canvas.split("\n") if line.strip()))
     after = list(dict.fromkeys(line.strip() for line in canvas.split("\n") if line.strip()))
     added = "\n".join([line for line in after if line not in before][:3])[:500]
     removed = "\n".join([line for line in before if line not in after][:3])[:500]
     change = render(9, description, removed or "(no unique lines removed)", added or "(existing content reorganized)") if updated else "No changed lines; the document is unchanged."
     final = "This is a closing turn: state a final conditional decision, fallback, or remaining blocker. Do not request another meeting or new external evidence; identify what must be validated outside this session." if closing(session) else "Advance one unresolved requirement using the supplied evidence."
+    behavior = CONSTANTS["adversary"]["spoken"] if assignment else CONSTANTS["cooperation"]["spoken"] + " " + final
+    contribution = (CONSTANTS["adversary"]["contribution"] if assignment else CONSTANTS["contribution"])["yes" if updated else "no"]
     return [
-        {"role": "system", "content": render(10, *persona(speaker), CONSTANTS["contribution"]["yes" if updated else "no"], final)},
-        {"role": "user", "content": render(11, session.scenario.deliverable, count(session) + 1, session.config.maxTurns, session.scenario.problem, transcript(session) or "No contributions yet. Start the requested deliverable with a concrete draft grounded in the scenario.", "Your revised shared canvas" if updated else "Unchanged shared canvas", canvas or "(empty)", change, "Briefly explain your completed change" if updated else "State a concrete validation check, tradeoff, or conditional decision that advances the plan without claiming a document edit")},
+        {"role": "system", "content": render(10, *persona(speaker, adversarial=bool(assignment)), contribution, behavior) + ("\n\n" + assignment if assignment else "")},
+        {"role": "user", "content": render(11, session.scenario.deliverable, count(session) + 1, session.config.maxTurns, session.scenario.problem, transcript(session) or "No contributions yet. Start the requested deliverable with a concrete draft grounded in the scenario.", "Your revised shared canvas" if updated else "Unchanged shared canvas", canvas or "(empty)", change, "Briefly explain your completed change" if updated else "State a fresh proposal, concern, or objection without claiming a document edit" if assignment else "State a concrete validation check, tradeoff, or conditional decision that advances the plan without claiming a document edit")},
     ]
 
 
 def journal_messages(session: Snapshot, speaker: Agent, canvas: str, text: str, *, updated: bool = False) -> list[Message]:
     s = session.scenario
+    assignment = private_assignment(session, speaker)
     # Preview the same transition the service will commit. Never mutate live state
     # before journal generation completes: cancellation must discard the whole turn.
     after = speaker.model_copy(deep=True)
@@ -96,7 +111,7 @@ def journal_messages(session: Snapshot, speaker: Agent, canvas: str, text: str, 
                  f"({change.energy:+}); confidence {speaker.confidence} -> {after.confidence}/100 ({change.confidence:+}).\n"
                  + "\n".join([*reversed(recent), "This contribution: " + "; ".join(change.reasons)]))
     return [
-        {"role": "system", "content": render(12, *persona(after, reflection=True))},
+        {"role": "system", "content": render(12, *persona(after, reflection=True, adversarial=bool(assignment))) + ("\n\n" + assignment + "\nYour observer-only journal may candidly acknowledge your own assignment or whether your obstruction worked. Do not speculate about others' private assignments or give a step-by-step reasoning trace." if assignment else "")},
         {"role": "user", "content": render(13, s.title, s.problem, s.deliverable, count(session) + 1, session.config.maxTurns, participants(session), transcript(session) or "(No contributions yet.)", text, canvas or "(empty)") + "\n\nBackground state awareness (not a checklist to mention):\n" + awareness},
     ]
 
