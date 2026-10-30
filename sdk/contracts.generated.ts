@@ -28,6 +28,8 @@ export type Traits = string[];
 export type Mood = string;
 export type Energy = number;
 export type Confidence = number;
+export type Socialstyle = "introverted" | "ambiverted" | "extroverted";
+export type Challengeresponse = "sensitive" | "balanced" | "resilient";
 export type Collection1 = string;
 export type Agents = Agent[];
 export type Status = "ready" | "running" | "reviewing" | "paused" | "stopped" | "completed";
@@ -40,6 +42,14 @@ export type Actions = string[];
 export type Input = number | null;
 export type Output = number | null;
 export type Latencyseconds = number;
+export type Agentid = string;
+export type Energy1 = number;
+export type Confidence1 = number;
+/**
+ * @minItems 1
+ */
+export type Reasons = string[];
+export type Statchanges = StatChange[];
 export type Turns = Turn[];
 export type Canvas = string;
 export type Endedearly = boolean;
@@ -104,7 +114,7 @@ export type Label = string;
 export type Installed = boolean | null;
 export type Models = ModelInfo[];
 export type Defaultmodel = string;
-export type Agentid = string;
+export type Agentid1 = string;
 export type Turnnumber1 = number;
 export type Createdat1 = string;
 export type Text1 = string | null;
@@ -185,7 +195,12 @@ export interface Agent {
   mood: Mood;
   energy: Energy;
   confidence: Confidence;
+  personality: Personality;
   collection: Collection1;
+}
+export interface Personality {
+  socialStyle: Socialstyle;
+  challengeResponse: Challengeresponse;
 }
 export interface Turn {
   kind: Kind;
@@ -196,10 +211,17 @@ export interface Turn {
   actions: Actions;
   tokenUsage: TokenUsage;
   latencySeconds: Latencyseconds;
+  statChanges: Statchanges;
 }
 export interface TokenUsage {
   input: Input;
   output: Output;
+}
+export interface StatChange {
+  agentId: Agentid;
+  energy: Energy1;
+  confidence: Confidence1;
+  reasons: Reasons;
 }
 export interface FinalJudgement {
   summary: Summary1;
@@ -236,7 +258,7 @@ export interface ModelInfo {
   installed: Installed;
 }
 export interface Journal {
-  agentId: Agentid;
+  agentId: Agentid1;
   turnNumber: Turnnumber1;
   createdAt: Createdat1;
   text: Text1;

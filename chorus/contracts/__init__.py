@@ -14,6 +14,11 @@ class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, json_schema_serialization_defaults_required=True)
 
 
+class Personality(Contract):
+    socialStyle: Literal["introverted", "ambiverted", "extroverted"] = "ambiverted"
+    challengeResponse: Literal["sensitive", "balanced", "resilient"] = "balanced"
+
+
 class Agent(Contract):
     id: str
     name: str
@@ -21,8 +26,9 @@ class Agent(Contract):
     description: str
     traits: list[str]
     mood: str = "focused"
-    energy: int = 80
-    confidence: int = 80
+    energy: int = Field(default=80, ge=0, le=100)
+    confidence: int = Field(default=80, ge=0, le=100)
+    personality: Personality = Field(default_factory=Personality)
     collection: str = "nanoville"
 
 
@@ -70,6 +76,13 @@ class TokenUsage(Contract):
     output: int | None = Field(default=None, ge=0)
 
 
+class StatChange(Contract):
+    agentId: str
+    energy: int = Field(ge=-100, le=100)
+    confidence: int = Field(ge=-100, le=100)
+    reasons: list[str] = Field(min_length=1)
+
+
 class Turn(Contract):
     kind: Literal["agent", "judge", "skipped"]
     turnNumber: int
@@ -79,6 +92,7 @@ class Turn(Contract):
     actions: list[str] = Field(default_factory=list)
     tokenUsage: TokenUsage = Field(default_factory=TokenUsage)
     latencySeconds: float = Field(default=0, ge=0)
+    statChanges: list[StatChange] = Field(default_factory=list)
 
 
 def complete_sentence(value: str) -> str:

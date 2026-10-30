@@ -76,13 +76,20 @@
         },
         "energy": {
           "default": 80,
+          "maximum": 100,
+          "minimum": 0,
           "title": "Energy",
           "type": "integer"
         },
         "confidence": {
           "default": 80,
+          "maximum": 100,
+          "minimum": 0,
           "title": "Confidence",
           "type": "integer"
+        },
+        "personality": {
+          "$ref": "#/$defs/Personality"
         },
         "collection": {
           "default": "nanoville",
@@ -99,6 +106,7 @@
         "mood",
         "energy",
         "confidence",
+        "personality",
         "collection"
       ],
       "title": "Agent",
@@ -321,6 +329,37 @@
       "title": "ModelInfo",
       "type": "object"
     },
+    "Personality": {
+      "additionalProperties": false,
+      "properties": {
+        "socialStyle": {
+          "default": "ambiverted",
+          "enum": [
+            "introverted",
+            "ambiverted",
+            "extroverted"
+          ],
+          "title": "Socialstyle",
+          "type": "string"
+        },
+        "challengeResponse": {
+          "default": "balanced",
+          "enum": [
+            "sensitive",
+            "balanced",
+            "resilient"
+          ],
+          "title": "Challengeresponse",
+          "type": "string"
+        }
+      },
+      "required": [
+        "socialStyle",
+        "challengeResponse"
+      ],
+      "title": "Personality",
+      "type": "object"
+    },
     "Requirement": {
       "additionalProperties": false,
       "properties": {
@@ -467,7 +506,7 @@
           "type": "integer"
         },
         "engineVersion": {
-          "default": "discussion-v23-python4",
+          "default": "discussion-v24-python2",
           "title": "Engineversion",
           "type": "string"
         },
@@ -603,6 +642,43 @@
       "title": "Snapshot",
       "type": "object"
     },
+    "StatChange": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "energy": {
+          "maximum": 100,
+          "minimum": -100,
+          "title": "Energy",
+          "type": "integer"
+        },
+        "confidence": {
+          "maximum": 100,
+          "minimum": -100,
+          "title": "Confidence",
+          "type": "integer"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "agentId",
+        "energy",
+        "confidence",
+        "reasons"
+      ],
+      "title": "StatChange",
+      "type": "object"
+    },
     "TokenUsage": {
       "additionalProperties": false,
       "properties": {
@@ -684,6 +760,13 @@
           "minimum": 0,
           "title": "Latencyseconds",
           "type": "number"
+        },
+        "statChanges": {
+          "items": {
+            "$ref": "#/$defs/StatChange"
+          },
+          "title": "Statchanges",
+          "type": "array"
         }
       },
       "required": [
@@ -694,7 +777,8 @@
         "text",
         "actions",
         "tokenUsage",
-        "latencySeconds"
+        "latencySeconds",
+        "statChanges"
       ],
       "title": "Turn",
       "type": "object"

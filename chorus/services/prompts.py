@@ -1,11 +1,12 @@
-"""Nanoville discussion-v23 prompts, rendered in Python from preserved text."""
+"""Nanoville prompts, rendered in Python from preserved text."""
 from __future__ import annotations
 import json
 import math
 from importlib.resources import files
 from chorus import ENGINE_VERSION
-from chorus.contracts import Snapshot, Agent
+from chorus.contracts import Snapshot, Agent, Turn
 from chorus.services.canvas import heading_paths
+from chorus.services.agent_state import apply_turn_state, state_instruction
 
 PROMPT_VERSION = ENGINE_VERSION
 TEMPLATES = json.loads(files("chorus").joinpath("services/prompt-templates.json").read_text())
@@ -39,8 +40,8 @@ def closing(session: Snapshot) -> bool:
     return count(session) >= session.config.maxTurns - min(5, math.ceil(session.config.maxTurns / 3))
 
 
-def persona(agent: Agent) -> list[str]:
-    return [agent.name, agent.role, agent.description, ", ".join(agent.traits), agent.mood]
+def persona(agent: Agent, *, reflection: bool = False) -> list[str]:
+    return [agent.name, agent.role, agent.description, ", ".join(agent.traits), f"{agent.mood}. {state_instruction(agent, reflection=reflection)}"]
 
 
 def participants(session: Snapshot, separator: str = ", ") -> str:
@@ -76,11 +77,27 @@ def spoken_messages(session: Snapshot, speaker: Agent, canvas: str, updated: boo
     ]
 
 
-def journal_messages(session: Snapshot, speaker: Agent, canvas: str, text: str) -> list[Message]:
+def journal_messages(session: Snapshot, speaker: Agent, canvas: str, text: str, *, updated: bool = False) -> list[Message]:
     s = session.scenario
+    # Preview the same transition the service will commit. Never mutate live state
+    # before journal generation completes: cancellation must discard the whole turn.
+    after = speaker.model_copy(deep=True)
+    pending_turn = Turn(kind="agent", turnNumber=count(session) + 1, speakerId=speaker.id,
+                        speakerName=speaker.name, text=text, actions=["updated"] if updated else [])
+    change = apply_turn_state([after], pending_turn)[0]
+    recent = []
+    for turn in reversed(session.turns):
+        if turn.kind == "agent" and turn.speakerId == speaker.id:
+            break
+        for prior in turn.statChanges:
+            if prior.agentId == speaker.id:
+                recent.append(f"Turn {turn.turnNumber}: energy {prior.energy:+}, confidence {prior.confidence:+}. " + "; ".join(prior.reasons))
+    awareness = (f"Your state after this contribution: energy {speaker.energy} -> {after.energy}/100 "
+                 f"({change.energy:+}); confidence {speaker.confidence} -> {after.confidence}/100 ({change.confidence:+}).\n"
+                 + "\n".join([*reversed(recent), "This contribution: " + "; ".join(change.reasons)]))
     return [
-        {"role": "system", "content": render(12, *persona(speaker))},
-        {"role": "user", "content": render(13, s.title, s.problem, s.deliverable, count(session) + 1, session.config.maxTurns, participants(session), transcript(session) or "(No contributions yet.)", text, canvas or "(empty)")},
+        {"role": "system", "content": render(12, *persona(after, reflection=True))},
+        {"role": "user", "content": render(13, s.title, s.problem, s.deliverable, count(session) + 1, session.config.maxTurns, participants(session), transcript(session) or "(No contributions yet.)", text, canvas or "(empty)") + "\n\nBackground state awareness (not a checklist to mention):\n" + awareness},
     ]
 
 

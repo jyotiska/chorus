@@ -164,7 +164,7 @@ async def run_turn(session: Snapshot, speaker: Agent, call: ModelCall) -> TurnRe
         logger.info(json.dumps({"event": "slot_prepared_as_skipped", "runId": run_id, "reason": "invalid_contribution"}))
         return TurnResult(skipped=True, usage=usage.total(), latency=time.monotonic() - started, run_id=run_id)
     journal = None
-    messages = journal_messages(session, speaker, current, text)
+    messages = journal_messages(session, speaker, current, text, updated=updated)
     try:
         for attempt in range(2):
             result = await bounded(call(session.config.model, messages, output=256, phase="journal", attempt=attempt + 1, run_id=run_id), JOURNAL_TIMEOUT)
