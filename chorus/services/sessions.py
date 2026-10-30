@@ -10,6 +10,7 @@ from chorus.services.catalog import resolve_config
 from chorus.services.errors import ChorusError
 from chorus.services.generation import bounded, run_turn, run_review, review_message
 from chorus.services.prompts import count
+from chorus.services.agent_state import apply_turn_state
 from chorus.storage import Store, now
 
 logger = logging.getLogger("chorus.sessions")
@@ -110,6 +111,7 @@ class SessionService:
                             session.turns.append(turn)
                             if not result.skipped:
                                 session.canvas = result.canvas
+                                turn.statChanges = apply_turn_state(session.agents, turn)
                                 journal = Journal(agentId=speaker.id, turnNumber=used, text=result.journal, createdAt=now())
                             if used >= session.config.maxTurns:
                                 session.status = "reviewing" if session.config.judgeEnabled else "completed"

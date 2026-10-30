@@ -13,7 +13,11 @@
       "energy": 78,
       "confidence": 82,
       "mood": "focused",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "introverted",
+        "challengeResponse": "balanced"
+      }
     },
     {
       "id": "product-manager",
@@ -28,7 +32,11 @@
       "energy": 74,
       "confidence": 79,
       "mood": "curious",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "extroverted",
+        "challengeResponse": "balanced"
+      }
     },
     {
       "id": "ux-designer",
@@ -43,7 +51,11 @@
       "energy": 71,
       "confidence": 76,
       "mood": "hopeful",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "introverted",
+        "challengeResponse": "sensitive"
+      }
     },
     {
       "id": "data-scientist",
@@ -58,7 +70,11 @@
       "energy": 68,
       "confidence": 84,
       "mood": "focused",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "introverted",
+        "challengeResponse": "balanced"
+      }
     },
     {
       "id": "cybersecurity-analyst",
@@ -73,7 +89,11 @@
       "energy": 73,
       "confidence": 80,
       "mood": "calm",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "introverted",
+        "challengeResponse": "resilient"
+      }
     },
     {
       "id": "devops-engineer",
@@ -88,7 +108,11 @@
       "energy": 81,
       "confidence": 77,
       "mood": "cheerful",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "ambiverted",
+        "challengeResponse": "resilient"
+      }
     },
     {
       "id": "startup-founder",
@@ -103,7 +127,11 @@
       "energy": 91,
       "confidence": 88,
       "mood": "hopeful",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "extroverted",
+        "challengeResponse": "resilient"
+      }
     },
     {
       "id": "venture-capitalist",
@@ -118,7 +146,11 @@
       "energy": 66,
       "confidence": 86,
       "mood": "curious",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "ambiverted",
+        "challengeResponse": "resilient"
+      }
     },
     {
       "id": "marketing-strategist",
@@ -133,7 +165,11 @@
       "energy": 83,
       "confidence": 81,
       "mood": "cheerful",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "extroverted",
+        "challengeResponse": "balanced"
+      }
     },
     {
       "id": "sales-executive",
@@ -148,7 +184,11 @@
       "energy": 88,
       "confidence": 89,
       "mood": "cheerful",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "extroverted",
+        "challengeResponse": "resilient"
+      }
     },
     {
       "id": "business-analyst",
@@ -163,7 +203,11 @@
       "energy": 69,
       "confidence": 75,
       "mood": "calm",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "introverted",
+        "challengeResponse": "sensitive"
+      }
     },
     {
       "id": "finance-controller",
@@ -178,7 +222,11 @@
       "energy": 62,
       "confidence": 83,
       "mood": "focused",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "introverted",
+        "challengeResponse": "balanced"
+      }
     },
     {
       "id": "people-leader",
@@ -193,7 +241,11 @@
       "energy": 72,
       "confidence": 78,
       "mood": "hopeful",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "ambiverted",
+        "challengeResponse": "sensitive"
+      }
     },
     {
       "id": "operations-manager",
@@ -208,7 +260,11 @@
       "energy": 76,
       "confidence": 80,
       "mood": "calm",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "ambiverted",
+        "challengeResponse": "resilient"
+      }
     },
     {
       "id": "customer-success-manager",
@@ -223,7 +279,11 @@
       "energy": 79,
       "confidence": 77,
       "mood": "cheerful",
-      "collection": "nanoville"
+      "collection": "nanoville",
+      "personality": {
+        "socialStyle": "extroverted",
+        "challengeResponse": "sensitive"
+      }
     },
     {
       "id": "chorus-web:accelerationist",

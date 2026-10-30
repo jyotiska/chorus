@@ -898,13 +898,20 @@
           },
           "energy": {
             "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
             "title": "Energy",
             "default": 80
           },
           "confidence": {
             "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
             "title": "Confidence",
             "default": 80
+          },
+          "personality": {
+            "$ref": "#/components/schemas/Personality"
           },
           "collection": {
             "type": "string",
@@ -923,6 +930,7 @@
           "mood",
           "energy",
           "confidence",
+          "personality",
           "collection"
         ],
         "title": "Agent"
@@ -1156,6 +1164,37 @@
         ],
         "title": "ModelInfo"
       },
+      "Personality": {
+        "properties": {
+          "socialStyle": {
+            "type": "string",
+            "enum": [
+              "introverted",
+              "ambiverted",
+              "extroverted"
+            ],
+            "title": "Socialstyle",
+            "default": "ambiverted"
+          },
+          "challengeResponse": {
+            "type": "string",
+            "enum": [
+              "sensitive",
+              "balanced",
+              "resilient"
+            ],
+            "title": "Challengeresponse",
+            "default": "balanced"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "socialStyle",
+          "challengeResponse"
+        ],
+        "title": "Personality"
+      },
       "Requirement": {
         "properties": {
           "criterion": {
@@ -1344,7 +1383,7 @@
           "engineVersion": {
             "type": "string",
             "title": "Engineversion",
-            "default": "discussion-v23-python4"
+            "default": "discussion-v24-python2"
           },
           "config": {
             "$ref": "#/components/schemas/SessionConfig-Output"
@@ -1476,6 +1515,43 @@
         ],
         "title": "Snapshot"
       },
+      "StatChange": {
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "energy": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Energy"
+          },
+          "confidence": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": -100.0,
+            "title": "Confidence"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Reasons"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agentId",
+          "energy",
+          "confidence",
+          "reasons"
+        ],
+        "title": "StatChange"
+      },
       "TokenUsage": {
         "properties": {
           "input": {
@@ -1554,6 +1630,13 @@
             "minimum": 0.0,
             "title": "Latencyseconds",
             "default": 0
+          },
+          "statChanges": {
+            "items": {
+              "$ref": "#/components/schemas/StatChange"
+            },
+            "type": "array",
+            "title": "Statchanges"
           }
         },
         "additionalProperties": false,
@@ -1566,7 +1649,8 @@
           "text",
           "actions",
           "tokenUsage",
-          "latencySeconds"
+          "latencySeconds",
+          "statChanges"
         ],
         "title": "Turn"
       },
