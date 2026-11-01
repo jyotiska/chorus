@@ -7,7 +7,7 @@ import time
 from typing import Any, Protocol
 import httpx
 from chorus.services.errors import ChorusError
-from chorus import ENGINE_VERSION
+from chorus import PROMPT_VERSION
 
 logger = logging.getLogger("chorus.model")
 CONTEXT_TOKENS = 32768
@@ -16,12 +16,13 @@ OPERATION_TIMEOUT = 600
 JOURNAL_TIMEOUT = 30
 
 
-def input_estimate(messages: list[dict[str, str]]) -> int:
-    return len(("".join(m.get("content", "") for m in messages) + "{}").encode("utf-8")) + len(messages) * 128
+def input_estimate(messages: list[dict[str, str]], format: dict[str, Any] | None = None) -> int:
+    schema = json.dumps(format, ensure_ascii=False, separators=(",", ":")) if format is not None else "{}"
+    return len(("".join(m.get("content", "") for m in messages) + schema).encode("utf-8")) + len(messages) * 128
 
 
-def assert_budget(messages: list[dict[str, str]], output: int = 300) -> None:
-    if input_estimate(messages) + output > CONTEXT_TOKENS:
+def assert_budget(messages: list[dict[str, str]], output: int = 300, *, format: dict[str, Any] | None = None) -> None:
+    if input_estimate(messages, format) + output > CONTEXT_TOKENS:
         raise ChorusError("CONTEXT_LIMIT", "The full discussion exceeds this model's input budget. Completed work is preserved; start a shorter discussion.")
 
 
@@ -34,14 +35,14 @@ class OllamaTransport:
         self.host = (host or os.getenv("OLLAMA_HOST", "http://localhost:11434")).rstrip("/")
         self._structured_outputs: dict[str, bool] = {}
 
-    async def structured_output_support(self, model: str, run_id: str) -> tuple[bool, dict[str, Any] | None]:
+    async def structured_output_support(self, model: str, run_id: str, *, probe_call=None) -> tuple[bool, dict[str, Any] | None]:
         """Probe enforcement, rather than assuming acceptance means support."""
         if model in self._structured_outputs:
             return self._structured_outputs[model], None
         expected = {"proof": "chorus-schema-enforced"}
         schema = {"type": "object", "properties": {"proof": {"type": "string", "enum": [expected["proof"]]}}, "required": ["proof"], "additionalProperties": False}
         try:
-            result = await self(model, [{"role": "user", "content": "Reply with only the plain text word READY."}], output=48, format=schema, phase="judge_format", run_id=run_id)
+            result = await (probe_call or self)(model, [{"role": "user", "content": "Reply with only the plain text word READY."}], output=48, format=schema, phase="judge_format", run_id=run_id)
         except ChorusError as error:
             if error.code != "MODEL_REQUEST_FAILED" or not any(word in str(error).lower() for word in ("schema", "grammar", "format")):
                 raise
@@ -64,7 +65,7 @@ class OllamaTransport:
             raise ChorusError("MODEL_UNAVAILABLE", "Cannot reach the configured Ollama model catalog.") from error
 
     async def __call__(self, model: str, messages: list[dict[str, str]], *, output: int = 300, format: dict[str, Any] | None = None, phase: str = "", attempt: int = 1, run_id: str = "") -> dict[str, Any]:
-        assert_budget(messages, output)
+        assert_budget(messages, output, format=format)
         started = time.monotonic()
         outcome = "success"
         result: dict[str, Any] = {}
@@ -100,4 +101,4 @@ class OllamaTransport:
             outcome = "CANCELLED"
             raise
         finally:
-            logger.info(json.dumps({"event": "model_call", "runId": run_id, "promptVersion": ENGINE_VERSION, "model": model, "phase": phase, "attempt": attempt, "durationMs": round((time.monotonic() - started) * 1000), "estimatedInput": input_estimate(messages), "outputAllowance": output, "input": result.get("prompt_eval_count"), "output": result.get("eval_count"), "loadDuration": result.get("load_duration"), "promptEvalDuration": result.get("prompt_eval_duration"), "evalDuration": result.get("eval_duration"), "outcome": outcome}))
+            logger.info(json.dumps({"event": "model_call", "runId": run_id, "promptVersion": PROMPT_VERSION, "model": model, "phase": phase, "attempt": attempt, "durationMs": round((time.monotonic() - started) * 1000), "estimatedInput": input_estimate(messages, format), "outputAllowance": output, "input": result.get("prompt_eval_count"), "output": result.get("eval_count"), "loadDuration": result.get("load_duration"), "promptEvalDuration": result.get("prompt_eval_duration"), "evalDuration": result.get("eval_duration"), "outcome": outcome}))

@@ -9,8 +9,10 @@ from typing import Any
 
 import httpx
 
-from chorus import ENGINE_VERSION
+from chorus import PROMPT_VERSION
 from chorus.llm.structured import strict_schema, unwrap_result
+from chorus.llm.usage import details as usage_details
+from chorus.llm.caching import openai_options
 from chorus.llm.transport import CALL_TIMEOUT, assert_budget, input_estimate, logger
 from chorus.services.errors import ChorusError
 
@@ -53,6 +55,9 @@ def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
             if type(value) is not int or value < 0:
                 raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned invalid usage metadata.")
             result[target] = value
+    telemetry = usage_details(raw, "openai", result.get("prompt_eval_count"), result.get("eval_count"))
+    if telemetry:
+        result["usage_details"] = telemetry
     return result
 
 
@@ -71,11 +76,12 @@ class OpenAITransport:
 
     async def __call__(self, model: str, messages: list[dict[str, str]], *, output: int = 300, format: dict[str, Any] | None = None, phase: str = "", attempt: int = 1, run_id: str = "") -> dict[str, Any]:
         key = self.require_key()
-        assert_budget(messages, output)
+        assert_budget(messages, output, format=strict_schema(format) if format is not None else None)
         started = time.monotonic()
         outcome = "success"
         result: dict[str, Any] = {}
-        payload: dict[str, Any] = {"model": model, "input": messages, "max_output_tokens": output, "reasoning": {"effort": "none"}, "store": False, "stream": False}
+        inputs, cache_options = openai_options(model, messages, phase)
+        payload: dict[str, Any] = {"model": model, "input": inputs, "max_output_tokens": output, "reasoning": {"effort": "none"}, "store": False, "stream": False, **cache_options}
         if format is not None:
             payload["text"] = {"format": {"type": "json_schema", "name": "chorus_result", "strict": True, "schema": strict_schema(format)}}
         try:
@@ -108,4 +114,4 @@ class OpenAITransport:
             outcome = "CANCELLED"
             raise
         finally:
-            logger.info(json.dumps({"event": "model_call", "provider": "openai", "runId": run_id, "promptVersion": ENGINE_VERSION, "model": model, "phase": phase, "attempt": attempt, "durationMs": round((time.monotonic() - started) * 1000), "estimatedInput": input_estimate(messages), "outputAllowance": output, "input": result.get("prompt_eval_count"), "output": result.get("eval_count"), "outcome": outcome}))
+            logger.info(json.dumps({"event": "model_call", "provider": "openai", "runId": run_id, "promptVersion": PROMPT_VERSION, "model": model, "phase": phase, "attempt": attempt, "durationMs": round((time.monotonic() - started) * 1000), "estimatedInput": input_estimate(messages, strict_schema(format) if format is not None else None), "outputAllowance": output, "input": result.get("prompt_eval_count"), "output": result.get("eval_count"), "outcome": outcome}))

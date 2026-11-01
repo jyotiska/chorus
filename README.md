@@ -68,6 +68,8 @@ The current engine incorporates the latest execution logic developed in Nanovill
 - Optional judge checkpoints and a final assessment of the written deliverable.
 - Durable SQLite sessions, revisioned events, pause/resume/stop controls, and recovery after restart.
 - A FastAPI API, generated TypeScript contracts, a shared client, and a terminal CLI.
+- Per-response input/output/cache counts and context usage in both applications, with separate turn totals and a durable metadata-only model-call ledger. GPT uses direct OpenAI; other external models use OpenRouter with stable agent/phase cache identities.
+- Usage details distinguish rejected canvas/speech attempts from validated work discarded with a skipped slot. New rejections include safe validation feedback; skipped turns show aggregate cache reads and explicitly label the last attempted response context.
 
 These are the current building blocks for the research. Saved sessions and API event replay do not yet provide complete experimental reconstruction or deterministic model replay.
 

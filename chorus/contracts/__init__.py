@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from typing import Annotated, Literal
+from hashlib import sha256
 from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 import regex
-from chorus import ENGINE_VERSION
+from chorus import ENGINE_VERSION, PROMPT_VERSION
 
 
 ErrorCode = Literal["INVALID_REQUEST", "INVALID_MODEL_RESPONSE", "GENERATION_FAILED", "MODEL_UNAVAILABLE", "MODEL_NOT_FOUND", "MODEL_REQUEST_FAILED", "TIMEOUT", "CANCELLED", "CONTEXT_LIMIT", "NOT_FOUND", "CONFLICT", "INVALID_STATE", "CAPACITY", "RECOVERED", "VERSION_MISMATCH", "FORBIDDEN", "BACKEND_UNAVAILABLE"]
@@ -88,6 +89,58 @@ class TokenUsage(Contract):
     output: int | None = Field(default=None, ge=0)
 
 
+class ResponseContext(Contract):
+    modelWindowTokens: int | None = Field(default=None, gt=0)
+    configuredWindowTokens: int = Field(gt=0)
+    effectiveWindowTokens: int = Field(gt=0)
+    inputTokens: int = Field(ge=0)
+    inputSource: Literal["provider", "estimated"]
+    completionReserveTokens: int = Field(ge=0)
+    usableInputTokens: int = Field(ge=0)
+    capabilityVersion: str
+
+
+def optional_validation(schema: dict) -> None:
+    schema["required"] = [name for name in schema.get("required", []) if name not in {"validationPassed", "rejectionReason"}]
+
+
+class CallMetrics(Contract):
+    model_config = ConfigDict(json_schema_extra=optional_validation)
+    id: str
+    agentId: str
+    promptVersion: str = "prompt-" + sha256(PROMPT_VERSION.encode()).hexdigest()[:16]
+    phase: str
+    attempt: int = Field(ge=1)
+    model: str
+    route: Literal["openai", "openrouter", "ollama", "unknown"]
+    provider: str | None = None
+    requestId: str | None = None
+    input: int | None = Field(default=None, ge=0)
+    output: int | None = Field(default=None, ge=0)
+    cachedInput: int | None = Field(default=None, ge=0)
+    cacheWriteInput: int | None = Field(default=None, ge=0)
+    reasoningOutput: int | None = Field(default=None, ge=0)
+    costUSD: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    cacheStatus: Literal["hit", "no_read", "unknown"] = "unknown"
+    outcome: str = "success"
+    accepted: bool = False
+    validationPassed: bool | None = None
+    rejectionReason: str | None = None
+    durationMs: int = Field(default=0, ge=0)
+    context: ResponseContext
+
+
+class TurnTelemetry(Contract):
+    response: CallMetrics | None = None
+    calls: list[CallMetrics] = Field(default_factory=list)
+
+
+def optional_telemetry(schema: dict) -> None:
+    # New metadata is optional on the wire so pre-telemetry saved events and
+    # client fixtures remain valid. Backend serialization still supplies it.
+    schema["required"] = [name for name in schema.get("required", []) if name not in {"usageDetails", "finalUsageDetails"}]
+
+
 class StatChange(Contract):
     agentId: str
     energy: int = Field(ge=-100, le=100)
@@ -96,6 +149,7 @@ class StatChange(Contract):
 
 
 class Turn(Contract):
+    model_config = ConfigDict(json_schema_extra=optional_telemetry)
     kind: Literal["agent", "judge", "skipped"]
     turnNumber: int
     speakerId: str
@@ -105,6 +159,7 @@ class Turn(Contract):
     tokenUsage: TokenUsage = Field(default_factory=TokenUsage)
     latencySeconds: float = Field(default=0, ge=0)
     statChanges: list[StatChange] = Field(default_factory=list)
+    usageDetails: TurnTelemetry | None = None
 
 
 def complete_sentence(value: str) -> str:
@@ -161,6 +216,7 @@ class Work(Contract):
 
 
 class Snapshot(Contract):
+    model_config = ConfigDict(json_schema_extra=optional_telemetry)
     id: str
     revision: int = 0
     engineVersion: str = ENGINE_VERSION
@@ -172,6 +228,7 @@ class Snapshot(Contract):
     canvas: str = Field(default="", max_length=20000)
     endedEarly: bool = False
     finalJudgement: FinalJudgement | None = None
+    finalUsageDetails: TurnTelemetry | None = None
     pending: Work | None = None
     error: str = ""
     errorCode: ErrorCode | None = None

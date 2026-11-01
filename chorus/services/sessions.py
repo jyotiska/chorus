@@ -12,6 +12,7 @@ from chorus.services.generation import bounded, run_turn, run_review, review_mes
 from chorus.services.prompts import count
 from chorus.services.agent_state import apply_turn_state
 from chorus.storage import Store, now
+from chorus.services.telemetry import TrackedCall, CALL_RECORDER, CALL_OPERATION
 
 logger = logging.getLogger("chorus.sessions")
 
@@ -111,13 +112,16 @@ class SessionService:
                     op = str(uuid4())
                     session.pending = work
                     session = self.store.save(session, session.revision, operation=op)
+                    tracked = TrackedCall(self.call, session, work.speakerId or "judge")
+                    recorder_token = CALL_RECORDER.set(self.store.record_call)
+                    operation_token = CALL_OPERATION.set(op)
                     try:
                         journal = None
                         if work.kind == "turn":
                             speaker = next(a for a in session.agents if a.id == work.speakerId)
-                            result = await bounded(run_turn(session, speaker, self.call), OPERATION_TIMEOUT)
+                            result = await bounded(run_turn(session, speaker, tracked), OPERATION_TIMEOUT)
                             used = count(session) + 1
-                            turn = Turn(kind="skipped" if result.skipped else "agent", turnNumber=used, speakerId=speaker.id, speakerName=speaker.name, text=result.text, actions=["updated"] if result.updated and not result.skipped else [], tokenUsage=result.usage, latencySeconds=round(result.latency, 1))
+                            turn = Turn(kind="skipped" if result.skipped else "agent", turnNumber=used, speakerId=speaker.id, speakerName=speaker.name, text=result.text, actions=["updated"] if result.updated and not result.skipped else [], tokenUsage=result.usage, latencySeconds=round(result.latency, 1), usageDetails=result.usage_details)
                             session.turns.append(turn)
                             if not result.skipped:
                                 session.canvas = result.canvas
@@ -126,15 +130,16 @@ class SessionService:
                             if used >= session.config.maxTurns:
                                 session.status = "reviewing" if session.config.judgeEnabled else "completed"
                         else:
-                            review, usage, latency = await bounded(run_review(session, work.kind == "final", self.call), OPERATION_TIMEOUT)
+                            review, usage, latency = await bounded(run_review(session, work.kind == "final", tracked), OPERATION_TIMEOUT)
                             if isinstance(review, FinalJudgement):
                                 session.finalJudgement = review
+                                session.finalUsageDetails = tracked.details()
                                 session.status = "stopped" if session.endedEarly else "completed"
                             else:
                                 prior = next((t for t in reversed(session.turns) if t.kind == "judge"), None)
                                 unchanged = prior and all(f in prior.text for f in review.improvements + review.nextPriorities)
                                 text = ("Concerns unchanged after reviewing the current canvas.\n\n" if unchanged else "") + review_message(review)
-                                session.turns.append(Turn(kind="judge", turnNumber=count(session), speakerId="judge", speakerName="Judge", text=text, tokenUsage=usage, latencySeconds=round(latency, 1)))
+                                session.turns.append(Turn(kind="judge", turnNumber=count(session), speakerId="judge", speakerName="Judge", text=text, tokenUsage=usage, latencySeconds=round(latency, 1), usageDetails=tracked.details()))
                         session.pending = None
                         committed = self.store.save(session, session.revision, expected_operation=op, journal=journal)
                         if work.kind == "turn":
@@ -149,6 +154,9 @@ class SessionService:
                         session.status, session.error, session.errorCode = "paused", str(error), error.code
                         self.store.save(session, session.revision, expected_operation=op)
                         return
+                    finally:
+                        CALL_OPERATION.reset(operation_token)
+                        CALL_RECORDER.reset(recorder_token)
                 following = next_work(self.store.get(session_id))
                 if not following:
                     return

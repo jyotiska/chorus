@@ -191,7 +191,24 @@ API errors use `{ "error": "…", "code": "…", "requestId": "…" }`. See the 
 
 ## Execution and recovery
 
-- A participant slot attempts a validated canvas operation, a spoken contribution, and a separate journal. Successful public output and its journal entry commit atomically.
+### Token usage and prompt caching
+
+Every new agent reply carries `usageDetails`: the successful speech call's input, output, cached-input and cache-write counts, plus all calls for that turn. Existing `tokenUsage.input` and `.output` retain their whole-turn meaning. Both frontends display reply counts and context usage, with expandable canvas/speech/journal/retry details. Older records show unavailable values rather than invented zeros. Final judge usage is saved as `finalUsageDetails`; reviews assembled from several answers have call totals rather than a fictitious single response.
+
+A positive provider-reported cached-input count confirms a cache read. Zero means no read on that call, while an omitted field remains unavailable. Cached tokens are already included in input. Context usage uses the same reply's actual input when available, otherwise a labeled byte-based estimate. Structured-output schemas are included in preflight estimates. Model capacity and Chorus's current enforced 32,768 cap are shown separately; this release does not enlarge or compact context windows.
+
+GPT requests use OpenAI's automatic/implicit caching by default. `CHORUS_OPENAI_CACHE_MODE` may be `implicit`, `explicit`, or `disabled` for supported GPT-5.6+ models. Explicit mode marks the stable instruction prefix; disabled mode selects explicit-only behavior without a breakpoint. The configured TTL is 30 minutes. Unsupported cache options are not sent to earlier model families. Cache identities are opaque, stable per session/agent/phase/prompt version and fit OpenAI's 64-character key limit.
+
+OpenRouter requests use a stable `session_id` and explicitly disable whole-response caching with `X-OpenRouter-Cache: false`. Provider prompt caching remains available; a newly generated response can benefit from cached input. A serving provider change or eviction can cause a miss. Costs are shown only when the provider reports them; missing prices or usage are not treated as zero savings.
+
+`GET /api/v1/sessions/{session_id}/calls` returns the metadata-only attempt ledger, including failed and cancelled calls that never produced a public turn. It contains no prompt, draft, reasoning text or journal contents. SQLite migration 2 adds this ledger without rewriting existing sessions. Accepted flags are committed with public work under the existing revision/operation guards.
+
+The initial cache controls and UI metrics are Stage 1 of [the context plan](agent-context-and-caching-plan.md). Persistent per-agent message histories and explicit compaction remain subsequent work. The [isolated pilot record](cache-pilot-2026-11-01.json) confirms cache reads on direct GPT-6-Luna and DeepSeek through OpenRouter; it is not a full-session cost benchmark.
+
+### Publication and recovery rules
+
+- A participant slot attempts a validated canvas operation, a spoken contribution, and a separate journal. Successful public output and its journal entry commit atomically. For chorus-web scenarios, spoken contributions use one or two short sentences with a hard limit of 30 words and 180 characters. Overlong drafts are retried intact rather than truncated; three invalid attempts skip the slot without saving its pending edit or journal. Nanoville scenarios keep their existing speech format, and judge reviews are unaffected.
+- Rejected canvas and speech attempts include metadata-only validation reasons in Usage details and the call ledger. Brief-speech retries include measured character and word counts, with a shorter target to leave room below the hard limit. A validated canvas that is discarded with a skipped slot is labelled “Validated · not published”. Skipped slots show aggregate cached tokens and explicitly label context from the last attempted spoken response. Historical attempts retain their original unknown validation status; rejection reasons cannot be reconstructed from token counts.
 - If canvas edits repeatedly fail validation, Chorus preserves the previous document and continues with valid speech. Repeated invalid speech skips the slot without committing its proposed edit or journal. A journal failure preserves valid public work.
 - With judging enabled, every five participant slots trigger a checkpoint, except at the turn limit, which triggers only the final review. Skipped slots count toward the limit; judge feedback does not consume participant slots.
 - Pause cancels pending work. Stop cancels pending work and, when enabled, requests a final review of committed work. Late responses cannot commit after cancellation.
@@ -258,3 +275,6 @@ This version replaces the old personality-state, memory, YAML session, and CLI e
 - [Implementation sequence](chorus-architecture.md#9-implementation-sequence-and-completion-evidence): proposed research development stages and completion criteria.
 
 Research plans describe future work; the features and limitations above describe the implemented platform.
+
+
+Prompt revisions are logged as `promptVersion` independently of the persisted engine compatibility version. The brief chorus-web chat format with stable participant prefixes uses `discussion-v25-adversaries-brief-web-chat-cache-prefix-v2`; public call metrics carry a stable digest of that revision. Existing compatible sessions can continue after the backend restarts.

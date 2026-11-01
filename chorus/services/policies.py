@@ -19,9 +19,15 @@ def compact(text: str) -> str:
     return " ".join(sentences)
 
 
-def speech_error(text: str, conversation: list[Turn]) -> str | None:
+BRIEF_SPEECH_FORMAT = "Give only 1-2 short spoken sentences in one paragraph. Aim for 12-20 words and under 140 characters; the limit is 30 words and 180 characters. Focus on one useful point; the canvas carries the details."
+STANDARD_SPEECH_FORMAT = "Give only 2-4 short spoken sentences in one paragraph. Aim for 40-80 words; the limit is 120 words and 1800 characters."
+
+
+def speech_error(text: str, conversation: list[Turn], *, concise: bool = False) -> str | None:
+    if concise and (len(text) > 180 or len(text.split()) > 30 or len(re.findall(r'''[.!?]["”']?(?:\s+|$)''', text)) > 2):
+        return BRIEF_SPEECH_FORMAT
     if not text:
-        return "Give a concrete contribution of at most 120 words and 1800 characters."
+        return BRIEF_SPEECH_FORMAT if concise else "Give a concrete contribution of at most 120 words and 1800 characters."
     if not re.search(r"[.!?][\"”']?$", text.strip()):
         return "Finish your contribution with a complete sentence."
     def sentences(value: str) -> list[str]:

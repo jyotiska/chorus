@@ -656,6 +656,79 @@
         }
       }
     },
+    "/api/v1/sessions/{session_id}/calls": {
+      "get": {
+        "summary": "Calls",
+        "operationId": "calls_api_v1_sessions__session_id__calls_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CallMetrics"
+                  },
+                  "title": "Response Calls Api V1 Sessions  Session Id  Calls Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sessions/{session_id}/export": {
       "get": {
         "summary": "Export",
@@ -934,6 +1007,216 @@
           "collection"
         ],
         "title": "Agent"
+      },
+      "CallMetrics": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "promptVersion": {
+            "type": "string",
+            "title": "Promptversion",
+            "default": "prompt-c7b56622b3fcfcde"
+          },
+          "phase": {
+            "type": "string",
+            "title": "Phase"
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Attempt"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "route": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "openrouter",
+              "ollama",
+              "unknown"
+            ],
+            "title": "Route"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "requestId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requestid"
+          },
+          "input": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input"
+          },
+          "output": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output"
+          },
+          "cachedInput": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cachedinput"
+          },
+          "cacheWriteInput": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cachewriteinput"
+          },
+          "reasoningOutput": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reasoningoutput"
+          },
+          "costUSD": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Costusd"
+          },
+          "cacheStatus": {
+            "type": "string",
+            "enum": [
+              "hit",
+              "no_read",
+              "unknown"
+            ],
+            "title": "Cachestatus",
+            "default": "unknown"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome",
+            "default": "success"
+          },
+          "accepted": {
+            "type": "boolean",
+            "title": "Accepted",
+            "default": false
+          },
+          "validationPassed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validationpassed"
+          },
+          "rejectionReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejectionreason"
+          },
+          "durationMs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Durationms",
+            "default": 0
+          },
+          "context": {
+            "$ref": "#/components/schemas/ResponseContext"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "agentId",
+          "promptVersion",
+          "phase",
+          "attempt",
+          "model",
+          "route",
+          "provider",
+          "requestId",
+          "input",
+          "output",
+          "cachedInput",
+          "cacheWriteInput",
+          "reasoningOutput",
+          "costUSD",
+          "cacheStatus",
+          "outcome",
+          "accepted",
+          "durationMs",
+          "context"
+        ],
+        "title": "CallMetrics"
       },
       "Catalog": {
         "properties": {
@@ -1263,6 +1546,72 @@
         ],
         "title": "Requirement"
       },
+      "ResponseContext": {
+        "properties": {
+          "modelWindowTokens": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelwindowtokens"
+          },
+          "configuredWindowTokens": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Configuredwindowtokens"
+          },
+          "effectiveWindowTokens": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Effectivewindowtokens"
+          },
+          "inputTokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Inputtokens"
+          },
+          "inputSource": {
+            "type": "string",
+            "enum": [
+              "provider",
+              "estimated"
+            ],
+            "title": "Inputsource"
+          },
+          "completionReserveTokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Completionreservetokens"
+          },
+          "usableInputTokens": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Usableinputtokens"
+          },
+          "capabilityVersion": {
+            "type": "string",
+            "title": "Capabilityversion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "modelWindowTokens",
+          "configuredWindowTokens",
+          "effectiveWindowTokens",
+          "inputTokens",
+          "inputSource",
+          "completionReserveTokens",
+          "usableInputTokens",
+          "capabilityVersion"
+        ],
+        "title": "ResponseContext"
+      },
       "Scenario": {
         "properties": {
           "id": {
@@ -1491,6 +1840,16 @@
               }
             ]
           },
+          "finalUsageDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnTelemetry"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "pending": {
             "anyOf": [
               {
@@ -1689,6 +2048,16 @@
             },
             "type": "array",
             "title": "Statchanges"
+          },
+          "usageDetails": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnTelemetry"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -1705,6 +2074,34 @@
           "statChanges"
         ],
         "title": "Turn"
+      },
+      "TurnTelemetry": {
+        "properties": {
+          "response": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CallMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "calls": {
+            "items": {
+              "$ref": "#/components/schemas/CallMetrics"
+            },
+            "type": "array",
+            "title": "Calls"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "response",
+          "calls"
+        ],
+        "title": "TurnTelemetry"
       },
       "ValidationError": {
         "properties": {
