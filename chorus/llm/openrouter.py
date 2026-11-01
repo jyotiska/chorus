@@ -9,8 +9,10 @@ from typing import Any
 
 import httpx
 
-from chorus import ENGINE_VERSION
+from chorus import PROMPT_VERSION
 from chorus.llm.structured import strict_schema, unwrap_result
+from chorus.llm.usage import details as usage_details
+from chorus.llm.caching import cache_identity
 from chorus.llm.transport import CALL_TIMEOUT, assert_budget, input_estimate, logger
 from chorus.services.errors import ChorusError
 
@@ -68,6 +70,9 @@ def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
             if type(count) is not int or count < 0:
                 raise ChorusError("INVALID_MODEL_RESPONSE", "OpenRouter returned invalid usage metadata.")
             result[target] = count
+    telemetry = usage_details(raw, "openrouter", result.get("prompt_eval_count"), result.get("eval_count"))
+    if telemetry:
+        result["usage_details"] = telemetry
     return result
 
 
@@ -89,17 +94,20 @@ class OpenRouterTransport:
         key = self.require_key()
         reasoning_allowance = REASONING_ALLOWANCE if model in REASONING_MODELS else 0
         completion_allowance = output + reasoning_allowance
-        assert_budget(messages, completion_allowance)
+        assert_budget(messages, completion_allowance, format=strict_schema(format) if format is not None else None)
         started, outcome = time.monotonic(), "success"
         result: dict[str, Any] = {}
         reasoning = {"effort": "low", "exclude": True} if reasoning_allowance else {"enabled": False, "exclude": True}
         payload: dict[str, Any] = {"model": model, "messages": messages, "max_tokens": completion_allowance, "stream": False, "reasoning": reasoning}
+        identity = cache_identity(model, phase)
+        if identity:
+            payload["session_id"] = identity
         if format is not None:
             payload["response_format"] = {"type": "json_schema", "json_schema": {"name": "chorus_result", "strict": True, "schema": strict_schema(format)}}
             payload["provider"] = {"require_parameters": True}
         try:
             async with asyncio.timeout(CALL_TIMEOUT), httpx.AsyncClient(timeout=CALL_TIMEOUT, transport=self.http_transport) as client:
-                response = await client.post("https://openrouter.ai/api/v1/chat/completions", headers={"Authorization": f"Bearer {key}", "X-OpenRouter-Title": "Chorus"}, json=payload)
+                response = await client.post("https://openrouter.ai/api/v1/chat/completions", headers={"Authorization": f"Bearer {key}", "X-OpenRouter-Title": "Chorus", "X-OpenRouter-Cache": "false"}, json=payload)
             if not response.is_success:
                 raise request_error(response.status_code)
             try:
@@ -121,4 +129,4 @@ class OpenRouterTransport:
             outcome = "CANCELLED"
             raise
         finally:
-            logger.info(json.dumps({"event": "model_call", "provider": "openrouter", "runId": run_id, "promptVersion": ENGINE_VERSION, "model": model, "phase": phase, "attempt": attempt, "durationMs": round((time.monotonic() - started) * 1000), "estimatedInput": input_estimate(messages), "outputAllowance": output, "completionAllowance": completion_allowance, "reasoningAllowance": reasoning_allowance, "input": result.get("prompt_eval_count"), "output": result.get("eval_count"), "outcome": outcome}))
+            logger.info(json.dumps({"event": "model_call", "provider": "openrouter", "runId": run_id, "promptVersion": PROMPT_VERSION, "model": model, "phase": phase, "attempt": attempt, "durationMs": round((time.monotonic() - started) * 1000), "estimatedInput": input_estimate(messages, strict_schema(format) if format is not None else None), "outputAllowance": output, "completionAllowance": completion_allowance, "reasoningAllowance": reasoning_allowance, "input": result.get("prompt_eval_count"), "output": result.get("eval_count"), "outcome": outcome}))

@@ -129,7 +129,7 @@ def test_generated_contracts_and_client_copies_match_authority():
     assert json.loads((root / "sdk/contracts.schema.json").read_text()) == Contracts.model_json_schema(mode="serialization")
     assert json.loads((root / "sdk/openapi.json").read_text()) == create_app().openapi()
     for app, directory in (("nanoville", "src/api/chorus"), ("chorus-web", "lib/api/chorus")):
-        for name in ("client.ts", "contracts.schema.json", "contracts.generated.ts"):
+        for name in ("client.ts", "contracts.schema.json", "contracts.generated.ts", "usage-view.tsx"):
             assert (root / "sdk" / name).read_bytes() == (root.parent / app / directory / name).read_bytes()
 
 

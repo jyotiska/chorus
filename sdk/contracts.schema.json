@@ -112,6 +112,226 @@
       "title": "Agent",
       "type": "object"
     },
+    "CallMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "promptVersion": {
+          "default": "prompt-c7b56622b3fcfcde",
+          "title": "Promptversion",
+          "type": "string"
+        },
+        "phase": {
+          "title": "Phase",
+          "type": "string"
+        },
+        "attempt": {
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "route": {
+          "enum": [
+            "openai",
+            "openrouter",
+            "ollama",
+            "unknown"
+          ],
+          "title": "Route",
+          "type": "string"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "requestId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requestid"
+        },
+        "input": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "cachedInput": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cachedinput"
+        },
+        "cacheWriteInput": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cachewriteinput"
+        },
+        "reasoningOutput": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reasoningoutput"
+        },
+        "costUSD": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Costusd"
+        },
+        "cacheStatus": {
+          "default": "unknown",
+          "enum": [
+            "hit",
+            "no_read",
+            "unknown"
+          ],
+          "title": "Cachestatus",
+          "type": "string"
+        },
+        "outcome": {
+          "default": "success",
+          "title": "Outcome",
+          "type": "string"
+        },
+        "accepted": {
+          "default": false,
+          "title": "Accepted",
+          "type": "boolean"
+        },
+        "validationPassed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Validationpassed"
+        },
+        "rejectionReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejectionreason"
+        },
+        "durationMs": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Durationms",
+          "type": "integer"
+        },
+        "context": {
+          "$ref": "#/$defs/ResponseContext"
+        }
+      },
+      "required": [
+        "id",
+        "agentId",
+        "promptVersion",
+        "phase",
+        "attempt",
+        "model",
+        "route",
+        "provider",
+        "requestId",
+        "input",
+        "output",
+        "cachedInput",
+        "cacheWriteInput",
+        "reasoningOutput",
+        "costUSD",
+        "cacheStatus",
+        "outcome",
+        "accepted",
+        "durationMs",
+        "context"
+      ],
+      "title": "CallMetrics",
+      "type": "object"
+    },
     "Catalog": {
       "additionalProperties": false,
       "properties": {
@@ -430,6 +650,73 @@
       "title": "Requirement",
       "type": "object"
     },
+    "ResponseContext": {
+      "additionalProperties": false,
+      "properties": {
+        "modelWindowTokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelwindowtokens"
+        },
+        "configuredWindowTokens": {
+          "exclusiveMinimum": 0,
+          "title": "Configuredwindowtokens",
+          "type": "integer"
+        },
+        "effectiveWindowTokens": {
+          "exclusiveMinimum": 0,
+          "title": "Effectivewindowtokens",
+          "type": "integer"
+        },
+        "inputTokens": {
+          "minimum": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "inputSource": {
+          "enum": [
+            "provider",
+            "estimated"
+          ],
+          "title": "Inputsource",
+          "type": "string"
+        },
+        "completionReserveTokens": {
+          "minimum": 0,
+          "title": "Completionreservetokens",
+          "type": "integer"
+        },
+        "usableInputTokens": {
+          "minimum": 0,
+          "title": "Usableinputtokens",
+          "type": "integer"
+        },
+        "capabilityVersion": {
+          "title": "Capabilityversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "modelWindowTokens",
+        "configuredWindowTokens",
+        "effectiveWindowTokens",
+        "inputTokens",
+        "inputSource",
+        "completionReserveTokens",
+        "usableInputTokens",
+        "capabilityVersion"
+      ],
+      "title": "ResponseContext",
+      "type": "object"
+    },
     "Scenario": {
       "additionalProperties": false,
       "properties": {
@@ -604,6 +891,17 @@
           "anyOf": [
             {
               "$ref": "#/$defs/FinalJudgement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "finalUsageDetails": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TurnTelemetry"
             },
             {
               "type": "null"
@@ -813,6 +1111,17 @@
           },
           "title": "Statchanges",
           "type": "array"
+        },
+        "usageDetails": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TurnTelemetry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -827,6 +1136,35 @@
         "statChanges"
       ],
       "title": "Turn",
+      "type": "object"
+    },
+    "TurnTelemetry": {
+      "additionalProperties": false,
+      "properties": {
+        "response": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CallMetrics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallMetrics"
+          },
+          "title": "Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "response",
+        "calls"
+      ],
+      "title": "TurnTelemetry",
       "type": "object"
     },
     "Work": {

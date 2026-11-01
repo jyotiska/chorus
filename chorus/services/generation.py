@@ -9,12 +9,13 @@ from typing import Any, TypeVar, Awaitable, Callable
 from uuid import uuid4
 import regex as re
 from pydantic import ValidationError
-from chorus.contracts import Agent, Snapshot, Review, FinalJudgement, TokenUsage, Requirement, complete_sentence
+from chorus.contracts import Agent, Snapshot, Review, FinalJudgement, TokenUsage, Requirement, TurnTelemetry, complete_sentence
 from chorus.llm.transport import ModelCall, assert_budget, JOURNAL_TIMEOUT
 from chorus.services.canvas import apply_edit, edit_adapter, evidence_block
 from chorus.services.errors import ChorusError
-from chorus.services.policies import compact, speech_error, canvas_body, canvas_error, grounding_error
+from chorus.services.policies import BRIEF_SPEECH_FORMAT, compact, speech_error, canvas_body, canvas_error, grounding_error
 from chorus.services.prompts import canvas_messages, spoken_messages, journal_messages, judge_messages
+from chorus.services.telemetry import TrackedCall
 
 logger = logging.getLogger("chorus.generation")
 T = TypeVar("T")
@@ -84,6 +85,7 @@ class TurnResult:
     operation: str = "UNCHANGED"
     preserved_reason: str | None = None
     run_id: str = ""
+    usage_details: TurnTelemetry | None = None
 
 
 def check_cancelled() -> None:
@@ -101,6 +103,7 @@ def has_tools(result: dict[str, Any]) -> bool:
 
 
 async def run_turn(session: Snapshot, speaker: Agent, call: ModelCall) -> TurnResult:
+    call = call if isinstance(call, TrackedCall) else TrackedCall(call, session, speaker.id)
     started = time.monotonic()
     run_id = str(uuid4())
     usage = Usage()
@@ -136,33 +139,53 @@ async def run_turn(session: Snapshot, speaker: Agent, call: ModelCall) -> TurnRe
                 except ChorusError:
                     error = "The revised canvas leaves too little context space. Shorten a section or return UNCHANGED."
         if not error:
+            call.accept()
             updated = canvas_body(candidate) != canvas_body(session.canvas)
             if updated:
                 current, description = candidate, change
             operation = raw["op"]
             preserved_reason = "requested_unchanged" if operation == "UNCHANGED" else "no_substantive_change"
             break
-        logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": "canvas", "attempt": attempt + 1, "reason": "invalid_canvas"}))
+        call.reject(error)
+        logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": "canvas", "attempt": attempt + 1, "reason": error}))
         messages = canvas_messages(session, speaker, error)
     if not updated:
         logger.info(json.dumps({"event": "canvas_preserved", "runId": run_id, "reason": preserved_reason}))
     messages = spoken_messages(session, speaker, current, updated, description)
+    concise = session.scenario.collection == "chorus-web"
     text = ""
     for attempt in range(3):
         result = await call(session.config.model, messages, phase="spoken", attempt=attempt + 1, run_id=run_id)
         check_cancelled()
         usage.add(result)
-        candidate_text = compact(content(result))
-        error = "Return a shorter complete contribution." if result.get("done_reason") == "length" else "Give speech without tool calls." if has_tools(result) else "No canvas edit was saved. Do not claim an edit." if not updated and re.search(r"\bI\s+(?:added|edited|updated|inserted|removed|saved|rewrote|replaced|finalized)\b", candidate_text, re.I) else speech_error(candidate_text, session.turns) or grounding_error(candidate_text, session.scenario.problem)
+        candidate_text = " ".join(content(result).split()) if concise else compact(content(result))
+        error = "Return a shorter complete contribution." if result.get("done_reason") == "length" else "Give speech without tool calls." if has_tools(result) else "No canvas edit was saved. Do not claim an edit." if not updated and re.search(r"\bI\s+(?:added|edited|updated|inserted|removed|saved|rewrote|replaced|finalized)\b", candidate_text, re.I) else speech_error(candidate_text, session.turns, concise=concise) or grounding_error(candidate_text, session.scenario.problem)
         if not error:
             text = candidate_text
+            call.accept(primary=True)
             break
-        logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": "spoken", "attempt": attempt + 1, "reason": "invalid_contribution"}))
+        if concise:
+            if error == BRIEF_SPEECH_FORMAT:
+                limits = []
+                if not candidate_text:
+                    limits.append("empty reply")
+                if len(candidate_text) > 180:
+                    limits.append("character limit exceeded")
+                if len(candidate_text.split()) > 30:
+                    limits.append("word limit exceeded")
+                if len(re.findall(r'''[.!?]["”']?(?:\s+|$)''', candidate_text)) > 2:
+                    limits.append("sentence limit exceeded")
+                error += " Failed checks: " + ", ".join(limits) + "."
+            error += f" Previous attempt: {len(candidate_text)} characters and {len(candidate_text.split())} words."
+            if error.startswith(BRIEF_SPEECH_FORMAT):
+                error += " Use one complete sentence of 12-20 words and under 140 characters covering just one point."
+        call.reject(error)
+        logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": "spoken", "attempt": attempt + 1, "reason": error}))
         messages = messages[:2] + [{"role": "user", "content": f"Your unpublished contribution was rejected: {error} Return a fresh, complete contribution grounded in the original context above."}]
     if not text:
         check_cancelled()
         logger.info(json.dumps({"event": "slot_prepared_as_skipped", "runId": run_id, "reason": "invalid_contribution"}))
-        return TurnResult(skipped=True, usage=usage.total(), latency=time.monotonic() - started, run_id=run_id)
+        return TurnResult(skipped=True, usage=usage.total(), latency=time.monotonic() - started, run_id=run_id, usage_details=call.details(skipped=True))
     journal = None
     messages = journal_messages(session, speaker, current, text, updated=updated)
     try:
@@ -171,17 +194,19 @@ async def run_turn(session: Snapshot, speaker: Agent, call: ModelCall) -> TurnRe
             check_cancelled()
             usage.add(result)
             if result.get("done_reason") == "length":
+                call.reject("The journal was cut off.")
                 logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": "journal", "attempt": attempt + 1, "reason": "truncated"}))
                 messages.append({"role": "user", "content": "Your journal ran out of generation space. Write one short, complete sentence expressing your main feeling. Finish the thought naturally."})
                 continue
             journal = " ".join(content(result).split()) or None
+            call.accept()
             break
     except ChorusError as error:
         usage.complete = False
         logger.info(json.dumps({"event": "journal_unavailable", "runId": run_id, "code": error.code}))
     check_cancelled()
     logger.info(json.dumps({"event": "turn_prepared", "runId": run_id, "canvasOperation": operation if updated else "UNCHANGED", **({"preservedReason": preserved_reason} if not updated else {})}))
-    return TurnResult(skipped=False, text=text, canvas=current, journal=journal, updated=updated, usage=usage.total(), latency=time.monotonic() - started, operation=operation if updated else "UNCHANGED", preserved_reason=preserved_reason if not updated else None, run_id=run_id)
+    return TurnResult(skipped=False, text=text, canvas=current, journal=journal, updated=updated, usage=usage.total(), latency=time.monotonic() - started, operation=operation if updated else "UNCHANGED", preserved_reason=preserved_reason if not updated else None, run_id=run_id, usage_details=call.details())
 
 
 def proposed_canvas(canvas: str, evidence: str) -> str:
@@ -216,6 +241,7 @@ def review_message(review: Review) -> str:
 
 
 async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[Review, TokenUsage, float]:
+    call = call if isinstance(call, TrackedCall) else TrackedCall(call, session, "judge")
     started = time.monotonic()
     criteria, messages = judge_messages(session, final)
     assert_budget(messages, 3000 if final else 1200)
@@ -303,6 +329,7 @@ async def run_review(session: Snapshot, final: bool, call: ModelCall) -> tuple[R
             validation = review_evidence_error(review, session.canvas, session.scenario.problem) if has_plan else None
             if validation:
                 raise ValueError(validation)
+            call.accept(primary=True)
             return review, usage.total(), time.monotonic() - started
         except (ValueError, TypeError, KeyError, StopIteration) as failure:
             logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": "final" if final else "checkpoint", "attempt": attempt + 1, "reason": "invalid_review"}))
@@ -351,7 +378,9 @@ async def text_review(session: Snapshot, final: bool, call: ModelCall, usage: Us
                 if result.get("done_reason") == "length" or has_tools(result):
                     raise ValueError("Return a shorter complete answer without tool calls.")
                 answer = re.sub(r"^CHORUS_REVIEW_FIELD:\s*", "", content(result).strip(), flags=re.I)
-                return validate(answer)
+                accepted = validate(answer)
+                call.accept()
+                return accepted
             except ValueError as failure:
                 error = "Return the requested field with a complete short sentence." if isinstance(failure, ValidationError) else str(failure)
                 logger.info(json.dumps({"event": "generation_rejected", "runId": run_id, "phase": phase, "field": field, "attempt": attempt, "reason": "invalid_review_field"}))

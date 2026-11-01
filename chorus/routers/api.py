@@ -4,7 +4,7 @@ import json
 from typing import Annotated, AsyncIterator, Literal
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response, StreamingResponse
-from chorus.contracts import Catalog, Agent, Scenario, ModelInfo, SessionConfig, Snapshot, Command, Journal
+from chorus.contracts import Catalog, Agent, Scenario, ModelInfo, SessionConfig, Snapshot, Command, Journal, CallMetrics
 from chorus.llm.transport import OllamaTransport
 from chorus.services.errors import ChorusError
 from chorus.services.sessions import SessionService
@@ -67,6 +67,11 @@ async def command(session_id: str, body: Command, svc: Service) -> Snapshot:
 @router.get("/sessions/{session_id}/journals", response_model=list[Journal])
 async def journals(session_id: str, svc: Service) -> list[Journal]:
     return svc.store.journals(session_id)
+
+
+@router.get("/sessions/{session_id}/calls", response_model=list[CallMetrics])
+async def calls(session_id: str, svc: Service) -> list[CallMetrics]:
+    return svc.store.calls(session_id)
 
 
 @router.get("/sessions/{session_id}/export")

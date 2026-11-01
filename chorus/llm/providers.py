@@ -29,11 +29,11 @@ class ProviderRouter:
     async def __call__(self, model, messages, **options):
         return await self.transport(model)(model, messages, **options)
 
-    async def structured_output_support(self, model: str, run_id: str):
+    async def structured_output_support(self, model: str, run_id: str, *, probe_call=None):
         transport = self.transport(model)
         if transport is not self.ollama:
             return True, None
-        return await self.ollama.structured_output_support(model, run_id)
+        return await self.ollama.structured_output_support(model, run_id, probe_call=probe_call)
 
     async def model_infos(self) -> list[ModelInfo]:
         installed: set[str] = set()

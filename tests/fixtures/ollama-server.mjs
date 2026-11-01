@@ -25,7 +25,7 @@ const server = createServer(async (request, response) => {
   const field = /CHORUS_REVIEW_FIELD: (\w+)/.exec(system)?.[1];
   const phase = body.format?.properties?.proof || field || body.format?.properties?.summary ? "judge"
     : system.includes("private first-person journal") ? "journal"
-    : system.includes("Your canvas revision is already prepared") || system.includes("No canvas edit was saved") ? "spoken" : "canvas";
+    : body.format ? "canvas" : "spoken";
   state.assignmentCalls.push({ phase, speaker: /^You are ([^,]+),/.exec(system)?.[1] ?? "Judge", assigned: system.includes("PRIVATE ADVERSARY ASSIGNMENT:") });
   let content;
   if (body.format?.properties?.proof) {
@@ -50,13 +50,13 @@ const server = createServer(async (request, response) => {
   } else if (system.includes("private first-person journal")) {
     const turn = /Turn: (\d+)/.exec(body.messages[1].content)?.[1];
     content = `PRIVATE-E2E ${turn}: I feel cautiously hopeful about this trial.`;
-  } else if ((system.includes("Your canvas revision is already prepared") || system.includes("No canvas edit was saved"))) {
+  } else if (phase === "spoken") {
     state.spokenCalls++;
     const turn = /Turn: (\d+)/.exec(body.messages[1].content)?.[1];
-    content = Number(turn) === state.invalidSpeechTurn ? "I added proposed safeguard 1." : system.includes("No canvas edit was saved") ? `I propose a retention review for turn ${turn}.` : `I added proposed safeguard ${turn}.`;
+    content = Number(turn) === state.invalidSpeechTurn ? "I added proposed safeguard 1." : body.messages[1].content.includes("Unchanged shared canvas") ? `I propose a retention review for turn ${turn}.` : `I added proposed safeguard ${turn}.`;
   } else {
     state.canvasCalls++;
-    const turn = /Turn: (\d+)/.exec(system)?.[1];
+    const turn = /Turn: (\d+)/.exec(body.messages[1].content)?.[1] ?? /Turn: (\d+)/.exec(system)?.[1];
     const delay = state.canvasDelayMs;
     if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
     const document = `# Launch brief\n\n## Proposal\nPublic work after ${turn} turns: safeguard ${turn} requires human review.`;

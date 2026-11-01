@@ -86,7 +86,7 @@ def test_malformed_finish_reason_is_a_safe_protocol_error(reason):
 def test_truncation_reasoning_usage_and_malformed_model_json_remain_distinct():
     raw = response(choices=[{"finish_reason": "length", "message": {"role": "assistant", "content": None, "reasoning": "PRIVATE reasoning"}}], usage={"prompt_tokens": 12, "completion_tokens": 300, "completion_tokens_details": {"reasoning_tokens": 300}})
     result = normalize_response(raw, True)
-    assert result == {"message": {"content": ""}, "done_reason": "length", "prompt_eval_count": 12, "eval_count": 300}
+    assert result == {"message": {"content": ""}, "done_reason": "length", "prompt_eval_count": 12, "eval_count": 300, "usage_details": {"reasoningOutput": 300}}
     for text in ('{"result":', '{"op":"UNCHANGED"}', '{"result":{},"extra":true}'):
         assert normalize_response(response(text, usage=None), True)["message"]["content"] == text
     with pytest.raises(ChorusError) as error:

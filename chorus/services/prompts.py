@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 import math
 from importlib.resources import files
-from chorus import ENGINE_VERSION
+from chorus import PROMPT_VERSION
 from chorus.contracts import Snapshot, Agent, Turn
 from chorus.services.canvas import heading_paths
 from chorus.services.agent_state import apply_turn_state, state_instruction
+from chorus.services.policies import BRIEF_SPEECH_FORMAT, STANDARD_SPEECH_FORMAT
 
-PROMPT_VERSION = ENGINE_VERSION
 TEMPLATES = json.loads(files("chorus").joinpath("services/prompt-templates.json").read_text())
 CONSTANTS = json.loads(files("chorus").joinpath("services/prompt-constants.json").read_text())
 JUDGE = json.loads(files("chorus").joinpath("catalog/catalog.json").read_text())["judge"]
@@ -40,10 +40,16 @@ def closing(session: Snapshot) -> bool:
     return count(session) >= session.config.maxTurns - min(5, math.ceil(session.config.maxTurns / 3))
 
 
-def persona(agent: Agent, *, reflection: bool = False, adversarial: bool = False) -> list[str]:
+def persona(agent: Agent, *, reflection: bool = False, adversarial: bool = False, stable: bool = False) -> list[str]:
     description = "Baseline personality to act against: " + agent.description if adversarial else agent.description
     traits = ("Baseline traits to oppose: " if adversarial else "") + ", ".join(agent.traits)
-    return [agent.name, agent.role, description, traits, f"{agent.mood}. {state_instruction(agent, reflection=reflection, adversarial=adversarial)}"]
+    state = "Use the current participant-state notice supplied with this task" if stable else f"{agent.mood}. {state_instruction(agent, reflection=reflection, adversarial=adversarial)}"
+    return [agent.name, agent.role, description, traits, state]
+
+
+def current_notice(session: Snapshot, speaker: Agent) -> str:
+    return (f"\n\nCurrent turn notice — Turn: {count(session) + 1} of {session.config.maxTurns}.\n"
+            f"Mood: {speaker.mood}. " + state_instruction(speaker, adversarial=bool(private_assignment(session, speaker))))
 
 
 def private_assignment(session: Snapshot, speaker: Agent) -> str:
@@ -60,14 +66,14 @@ def canvas_messages(session: Snapshot, speaker: Agent, rejection: str | None = N
     assignment = private_assignment(session, speaker)
     behavior = CONSTANTS["adversary"]["canvas"] if assignment else CONSTANTS["cooperation"]["canvas"]
     history = transcript(session) or ("No contributions yet. Choose your initial proposed plan." if assignment else "No contributions yet. Start the requested deliverable with a concrete draft grounded in the scenario.")
-    feedback = "\n\nJudge feedback appears in the discussion history. Consider its strengths, concerns, and priorities. Address useful feedback in your canvas contribution; explain reasoned disagreements using available evidence." if not assignment and any(t.kind == "judge" for t in session.turns) else ""
-    instructions = render(3, *persona(speaker, adversarial=bool(assignment)), behavior, scenario.title, scenario.problem, "\n".join("- " + g for g in scenario.guidelines), scenario.deliverable, count(session) + 1, session.config.maxTurns, participants(session), feedback)
+    feedback = "\n\nIf judge feedback appears in the discussion history, consider its strengths, concerns, and priorities. Address useful feedback in your canvas contribution; explain reasoned disagreements using available evidence." if not assignment else ""
+    instructions = render(3, *persona(speaker, adversarial=bool(assignment), stable=True), behavior, scenario.title, scenario.problem, "\n".join("- " + g for g in scenario.guidelines), scenario.deliverable, "see current turn notice", session.config.maxTurns, participants(session), feedback)
     example = json.dumps({"op": "CREATE_DOCUMENT", "document": "# Trial brief\n\n## Proposal\nPropose a narrow trial with human review.\n\n## Open decisions\nIdentify the approval needed before starting."}, separators=(",", ":"))
     if assignment:
         example = json.dumps({"op": "CREATE_DOCUMENT", "document": "# Trial brief\n\n## Proposal\nPropose an unnecessarily broad initial scope.\n\n## Open decisions\nLeave approval owners unresolved."}, separators=(",", ":"))
     messages = [
         {"role": "system", "content": render(6, instructions, 6000, example) + ("\n\n" + assignment if assignment else "")},
-        {"role": "user", "content": render(7, render(2, history, session.canvas or "(empty)"), json.dumps(heading_paths(session.canvas, scenario.problem), ensure_ascii=False, separators=(",", ":")), CONSTANTS["adversary"]["focus"] if assignment else CONSTANTS["focus"]["yes" if closing(session) else "no"])},
+        {"role": "user", "content": render(7, render(2, history, session.canvas or "(empty)"), json.dumps(heading_paths(session.canvas, scenario.problem), ensure_ascii=False, separators=(",", ":")), CONSTANTS["adversary"]["focus"] if assignment else CONSTANTS["focus"]["yes" if closing(session) else "no"]) + current_notice(session, speaker)},
     ]
     if rejection:
         extra = "The supplied evidence does not verify a current API, integration, or training capability. For unsupported capabilities write: Unknown — requires Product and Engineering validation. Do not infer standard features or existing training resources from the fact that a product exists." if rejection == "Unsupported capability confirmation." else ""
@@ -83,11 +89,14 @@ def spoken_messages(session: Snapshot, speaker: Agent, canvas: str, updated: boo
     removed = "\n".join([line for line in before if line not in after][:3])[:500]
     change = render(9, description, removed or "(no unique lines removed)", added or "(existing content reorganized)") if updated else "No changed lines; the document is unchanged."
     final = "This is a closing turn: state a final conditional decision, fallback, or remaining blocker. Do not request another meeting or new external evidence; identify what must be validated outside this session." if closing(session) else "Advance one unresolved requirement using the supplied evidence."
-    behavior = CONSTANTS["adversary"]["spoken"] if assignment else CONSTANTS["cooperation"]["spoken"] + " " + final
-    contribution = (CONSTANTS["adversary"]["contribution"] if assignment else CONSTANTS["contribution"])["yes" if updated else "no"]
+    behavior = CONSTANTS["adversary"]["spoken"] if assignment else CONSTANTS["cooperation"]["spoken"]
+    if session.scenario.collection == "chorus-web" and not assignment:
+        behavior = "Focus on one useful change, concern, or decision. When evidence is missing, mention the most useful owner, validation check, or fallback. The canvas carries the remaining details."
+    contribution = "If an edit was prepared, describe only the document operation supported by the current changed-line evidence. If unchanged, contribute a proposal or concern without claiming an edit."
+    speech_format = BRIEF_SPEECH_FORMAT if session.scenario.collection == "chorus-web" else STANDARD_SPEECH_FORMAT
     return [
-        {"role": "system", "content": render(10, *persona(speaker, adversarial=bool(assignment)), contribution, behavior) + ("\n\n" + assignment if assignment else "")},
-        {"role": "user", "content": render(11, session.scenario.deliverable, count(session) + 1, session.config.maxTurns, session.scenario.problem, transcript(session) or "No contributions yet. Start the requested deliverable with a concrete draft grounded in the scenario.", "Your revised shared canvas" if updated else "Unchanged shared canvas", canvas or "(empty)", change, "Briefly explain your completed change" if updated else "State a fresh proposal, concern, or objection without claiming a document edit" if assignment else "State a concrete validation check, tradeoff, or conditional decision that advances the plan without claiming a document edit")},
+        {"role": "system", "content": render(10, *persona(speaker, adversarial=bool(assignment), stable=True), contribution, behavior, speech_format) + ("\n\n" + assignment if assignment else "")},
+        {"role": "user", "content": render(11, session.scenario.deliverable, count(session) + 1, session.config.maxTurns, session.scenario.problem, transcript(session) or "No contributions yet. Start the requested deliverable with a concrete draft grounded in the scenario.", "Your revised shared canvas" if updated else "Unchanged shared canvas", canvas or "(empty)", change, "Briefly explain your completed change" if updated else "State a fresh proposal, concern, or objection without claiming a document edit" if assignment else "State a concrete validation check, tradeoff, or conditional decision that advances the plan without claiming a document edit") + current_notice(session, speaker) + ("\n" + final if not assignment else "")},
     ]
 
 

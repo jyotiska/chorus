@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import JSON, Integer, String, ForeignKey, create_engine, select, update
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 from sqlalchemy.pool import StaticPool
-from chorus.contracts import Snapshot, Journal, Command
+from chorus.contracts import Snapshot, Journal, Command, CallMetrics
 from chorus.services.errors import ChorusError
 
 
@@ -54,6 +54,15 @@ class CommandRow(Base):
     result: Mapped[dict[str, Any]] = mapped_column(JSON)
 
 
+class CallRow(Base):
+    __tablename__ = "model_calls"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id"), index=True)
+    operation: Mapped[str] = mapped_column(String)
+    recorded_at: Mapped[str] = mapped_column(String)
+    metrics: Mapped[dict[str, Any]] = mapped_column(JSON)
+
+
 class Store:
     def __init__(self, path: str) -> None:
         self.lock: Any = None
@@ -78,11 +87,16 @@ class Store:
         SchemaVersion.__table__.create(self.engine, checkfirst=True)
         with Session(self.engine) as db:
             version = db.scalar(select(SchemaVersion.id).order_by(SchemaVersion.id.desc()))
-            if version not in (None, 1):
+            if version not in (None, 1, 2):
                 raise RuntimeError("Unsupported Chorus database version.")
             if version is None:
                 Base.metadata.create_all(self.engine)
                 db.add(SchemaVersion(id=1))
+                db.commit()
+                version = 1
+            if version == 1:
+                CallRow.__table__.create(self.engine, checkfirst=True)
+                db.add(SchemaVersion(id=2))
                 db.commit()
 
     def create(self, snapshot: Snapshot) -> Snapshot:
@@ -133,7 +147,29 @@ class Store:
                 db.add(JournalRow(session_id=candidate.id, turn_number=journal.turnNumber, entry=journal.model_dump()))
             if command:
                 db.add(CommandRow(session_id=candidate.id, command_id=command.commandId, command=command.model_dump(), result=data))
+            if expected_operation:
+                details = candidate.finalUsageDetails if snapshot.pending is None and candidate.finalUsageDetails else candidate.turns[-1].usageDetails if candidate.turns else None
+                if details:
+                    for call in details.calls:
+                        db.execute(update(CallRow).where(CallRow.id == call.id, CallRow.session_id == candidate.id, CallRow.operation == expected_operation).values(metrics=call.model_dump(mode="json")))
         return candidate
+
+    def record_call(self, session_id: str, operation: str, metrics: CallMetrics) -> None:
+        # Attempts survive a failed or cancelled operation, without publishing
+        # any draft text. Acceptance is updated only by the atomic turn commit.
+        with Session(self.engine) as db, db.begin():
+            row = db.get(CallRow, metrics.id)
+            if row is None:
+                db.add(CallRow(id=metrics.id, session_id=session_id, operation=operation,
+                               recorded_at=now(), metrics=metrics.model_dump(mode="json")))
+            elif row.session_id == session_id and row.operation == operation:
+                row.metrics = metrics.model_dump(mode="json")
+
+    def calls(self, session_id: str) -> list[CallMetrics]:
+        self.get(session_id)
+        with Session(self.engine) as db:
+            rows = db.scalars(select(CallRow).where(CallRow.session_id == session_id).order_by(CallRow.recorded_at, CallRow.id))
+            return [CallMetrics.model_validate(row.metrics) for row in rows]
 
     def journals(self, session_id: str) -> list[Journal]:
         self.get(session_id)

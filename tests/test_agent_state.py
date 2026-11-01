@@ -104,11 +104,13 @@ def test_old_snapshots_get_safe_defaults_and_external_values_are_validated(snaps
 def test_low_state_changes_generation_instructions_without_leaking_peers(snapshot):
     agent = snapshot.agents[0]
     agent.energy, agent.confidence = 10, 20
-    systems = [canvas_messages(snapshot, agent)[0]["content"], spoken_messages(snapshot, agent, "", False)[0]["content"]]
-    for system in systems:
-        assert "Current energy: 10/100; confidence: 20/100" in system
-        assert "Conserve energy" in system and "tentative phrasing" in system
-        assert "never factual certainty" in system
+    prompts = [canvas_messages(snapshot, agent), spoken_messages(snapshot, agent, "", False)]
+    for messages in prompts:
+        assert "Current energy:" not in messages[0]["content"]
+        current = messages[1]["content"]
+        assert "Current energy: 10/100; confidence: 20/100" in current
+        assert "Conserve energy" in current and "tentative phrasing" in current
+        assert "never factual certainty" in current
     assert "Current energy:" not in str(judge_messages(snapshot, False))
 
 

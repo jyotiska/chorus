@@ -54,6 +54,36 @@ export type Confidence1 = number;
  */
 export type Reasons = string[];
 export type Statchanges = StatChange[];
+export type Id3 = string;
+export type Agentid1 = string;
+export type Promptversion = string;
+export type Phase = string;
+export type Attempt = number;
+export type Model1 = string;
+export type Route = "openai" | "openrouter" | "ollama" | "unknown";
+export type Provider = string | null;
+export type Requestid = string | null;
+export type Input1 = number | null;
+export type Output1 = number | null;
+export type Cachedinput = number | null;
+export type Cachewriteinput = number | null;
+export type Reasoningoutput = number | null;
+export type Costusd = number | null;
+export type Cachestatus = "hit" | "no_read" | "unknown";
+export type Outcome = string;
+export type Accepted = boolean;
+export type Validationpassed = boolean | null;
+export type Rejectionreason = string | null;
+export type Durationms = number;
+export type Modelwindowtokens = number | null;
+export type Configuredwindowtokens = number;
+export type Effectivewindowtokens = number;
+export type Inputtokens = number;
+export type Inputsource = "provider" | "estimated";
+export type Completionreservetokens = number;
+export type Usableinputtokens = number;
+export type Capabilityversion = string;
+export type Calls = CallMetrics[];
 export type Turns = Turn[];
 export type Canvas = string;
 export type Endedearly = boolean;
@@ -113,15 +143,15 @@ export type Expectedrevision = number;
 export type Action = "start" | "pause" | "resume" | "stop";
 export type Agents1 = Agent[];
 export type Scenarios = Scenario[];
-export type Id3 = string;
+export type Id4 = string;
 export type Label = string;
-export type Provider = "ollama" | "openai" | "openrouter";
+export type Provider1 = "ollama" | "openai" | "openrouter";
 export type Installed = boolean | null;
 export type Available = boolean | null;
 export type Unavailablereason = string | null;
 export type Models = ModelInfo[];
 export type Defaultmodel = string;
-export type Agentid1 = string;
+export type Agentid2 = string;
 export type Turnnumber1 = number;
 export type Createdat1 = string;
 export type Text1 = string | null;
@@ -145,7 +175,7 @@ export type Code =
   | "VERSION_MISMATCH"
   | "FORBIDDEN"
   | "BACKEND_UNAVAILABLE";
-export type Requestid = string;
+export type Requestid1 = string;
 
 /**
  * Root for generating TypeScript declarations and runtime validators.
@@ -170,6 +200,7 @@ export interface Snapshot {
   canvas: Canvas;
   endedEarly: Endedearly;
   finalJudgement: FinalJudgement | null;
+  finalUsageDetails?: TurnTelemetry | null;
   pending: Work | null;
   error: Error;
   errorCode: Errorcode;
@@ -220,6 +251,7 @@ export interface Turn {
   tokenUsage: TokenUsage;
   latencySeconds: Latencyseconds;
   statChanges: Statchanges;
+  usageDetails?: TurnTelemetry | null;
 }
 export interface TokenUsage {
   input: Input;
@@ -230,6 +262,44 @@ export interface StatChange {
   energy: Energy1;
   confidence: Confidence1;
   reasons: Reasons;
+}
+export interface TurnTelemetry {
+  response: CallMetrics | null;
+  calls: Calls;
+}
+export interface CallMetrics {
+  id: Id3;
+  agentId: Agentid1;
+  promptVersion: Promptversion;
+  phase: Phase;
+  attempt: Attempt;
+  model: Model1;
+  route: Route;
+  provider: Provider;
+  requestId: Requestid;
+  input: Input1;
+  output: Output1;
+  cachedInput: Cachedinput;
+  cacheWriteInput: Cachewriteinput;
+  reasoningOutput: Reasoningoutput;
+  costUSD: Costusd;
+  cacheStatus: Cachestatus;
+  outcome: Outcome;
+  accepted: Accepted;
+  validationPassed?: Validationpassed;
+  rejectionReason?: Rejectionreason;
+  durationMs: Durationms;
+  context: ResponseContext;
+}
+export interface ResponseContext {
+  modelWindowTokens: Modelwindowtokens;
+  configuredWindowTokens: Configuredwindowtokens;
+  effectiveWindowTokens: Effectivewindowtokens;
+  inputTokens: Inputtokens;
+  inputSource: Inputsource;
+  completionReserveTokens: Completionreservetokens;
+  usableInputTokens: Usableinputtokens;
+  capabilityVersion: Capabilityversion;
 }
 export interface FinalJudgement {
   summary: Summary1;
@@ -261,15 +331,15 @@ export interface Catalog {
   defaultModel: Defaultmodel;
 }
 export interface ModelInfo {
-  id: Id3;
+  id: Id4;
   label: Label;
-  provider: Provider;
+  provider: Provider1;
   installed: Installed;
   available: Available;
   unavailableReason: Unavailablereason;
 }
 export interface Journal {
-  agentId: Agentid1;
+  agentId: Agentid2;
   turnNumber: Turnnumber1;
   createdAt: Createdat1;
   text: Text1;
@@ -277,5 +347,5 @@ export interface Journal {
 export interface APIError {
   error: Error1;
   code: Code;
-  requestId: Requestid;
+  requestId: Requestid1;
 }
