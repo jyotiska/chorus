@@ -19,7 +19,7 @@ const labels: Record<string, string> = { queued: "Ready", running: "Working", wa
 const money = (value: number) => `$${value.toFixed(6)}`;
 const number = (value: number) => value.toLocaleString();
 const time = (value: string) => new Date(value).toLocaleString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", day: "numeric", month: "short" });
-const text = (value: unknown) => typeof value === "string" ? value : JSON.stringify(value);
+const text = (value: unknown) => typeof value === "string" ? value : JSON.stringify(value) ?? "";
 const readableEvaluationText = (value: string) => value.replace(/\b(?:board|change|summary|call):[a-f0-9]{16,}\b/gi, "").replace(/\(\s*(?:[,;]\s*)*\)/g, "").replace(/\[\s*\]/g, "").replace(/\b(?:evidence|sources?)\s*:\s*(?=$|[).,;])/gi, "").replace(/[ \t]{2,}/g, " ").replace(/\s+([,.;])/g, "$1").replace(/\s+([)\]])/g, "$1").trim();
 const asset = (agent: Persona, kind = "portrait") => `${client.base}/assets/${encodeURIComponent(agent.id)}/${kind}.svg${kind === "portrait" ? "?v=mono-transparent-1" : ""}`;
 
@@ -60,8 +60,8 @@ function Metrics({ usage, compact = false }: { usage: Usage; compact?: boolean }
 }
 
 function useRecords(snapshot: HarnessSnapshot, kind: string, agent?: string) {
-  const [records, setRecords] = useState<HarnessRecord[]>([]);
-  const [error, setError] = useState("");
+  const [result, setResult] = useState<{ key: string; records: HarnessRecord[]; error: string }>({ key: "", records: [], error: "" });
+  const currentKey = `${snapshot.id}:${kind}:${agent || ""}`;
   const saved = useRef<{ key: string; cursor: number; records: HarnessRecord[] }>({ key: "", cursor: 0, records: [] });
   useEffect(() => {
     let active = true;
@@ -80,14 +80,13 @@ function useRecords(snapshot: HarnessSnapshot, kind: string, agent?: string) {
       if (active) {
         const merged = [...new Map([...previous.records, ...additions].map((r) => [r.id, r])).values()];
         saved.current = { key, cursor, records: merged };
-        setRecords(merged);
-        setError("");
+        setResult({ key, records: merged, error: "" });
       }
     }
-    void read().catch((error: unknown) => { if (active) setError(error instanceof Error ? error.message : "Could not load records."); });
+    void read().catch((error: unknown) => { if (active) setResult({ key, records: previous.records, error: error instanceof Error ? error.message : "Could not load records." }); });
     return () => { active = false; };
   }, [snapshot.id, snapshot.revision, kind, agent]);
-  return { records, error };
+  return result.key === currentKey ? result : { records: [], error: "" };
 }
 
 function RecordError({ message }: { message: string }) { return message ? <p role="alert">{message}</p> : null; }
