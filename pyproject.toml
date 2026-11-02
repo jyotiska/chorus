@@ -39,4 +39,4 @@ include = ["chorus*"]
 asyncio_mode = "auto"
 
 [tool.setuptools.package-data]
-chorus = ["catalog/*.json", "services/*.json"]
+chorus = ["catalog/*.json", "services/*.json", "harness/*.json", "harness/assets/*.svg"]

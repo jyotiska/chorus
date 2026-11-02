@@ -243,7 +243,7 @@ def test_schema_one_upgrade_preserves_old_sessions_and_missing_telemetry(tmp_pat
     store.close()
     with sqlite3.connect(path) as db:
         db.execute("DROP TABLE model_calls")
-        db.execute("DELETE FROM schema_version WHERE id = 2")
+        db.execute("DELETE FROM schema_version WHERE id >= 2")
     upgraded = Store(path)
     assert upgraded.get(snap.id).finalUsageDetails is None
     assert upgraded.calls(snap.id) == []

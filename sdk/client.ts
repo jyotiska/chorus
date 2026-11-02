@@ -38,6 +38,11 @@ export class ChorusClient {
     return parse(await this.request("/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "Snapshot");
   }
   async get(id: string): Promise<Snapshot> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}`), "Snapshot"); }
+  async list(): Promise<Snapshot[]> {
+    const value = await this.request("/sessions");
+    if (!Array.isArray(value)) throw new Error("Chorus returned invalid archived sessions.");
+    return value.map((entry) => parse<Snapshot>(entry, "Snapshot"));
+  }
   async journals(id: string): Promise<Journal[]> {
     const value = await this.request(`/sessions/${encodeURIComponent(id)}/journals`);
     if (!Array.isArray(value)) throw new Error("Chorus returned invalid journals.");

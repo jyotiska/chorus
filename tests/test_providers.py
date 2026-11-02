@@ -55,6 +55,28 @@ async def test_openai_request_normalizes_text_usage_and_strict_canvas_schema(cap
     assert "test-chorus-secret" not in caplog.text and "PRIVATE prompt" not in caplog.text
 
 
+async def test_native_function_calls_and_results_keep_call_identity():
+    from chorus.harness.tools import definitions
+    requests = []
+    async def handler(request):
+        body = json.loads(request.content)
+        requests.append(body)
+        if len(requests) == 1:
+            return httpx.Response(200, json=response(output=[{"type": "function_call", "call_id": "call_native", "name": "board_read", "arguments": '{"after":0,"limit":5}'}]))
+        assert {"type": "function_call_output", "call_id": "call_native", "output": '{"records":[]}'} in body["input"]
+        assert any(item.get("type") == "function_call" and item["call_id"] == "call_native" for item in body["input"])
+        return httpx.Response(200, json=response("Cycle complete."))
+    adapter = OpenAITransport(transport=httpx.MockTransport(handler))
+    messages = [{"role": "system", "content": "Use the board."}]
+    result = await adapter("gpt-6-luna", messages, tools=definitions())
+    call = result["message"]["tool_calls"][0]
+    assert call["id"] == "call_native"
+    messages += [{"role": "assistant", **result["message"]}, {"role": "tool", "tool_call_id": call["id"], "content": '{"records":[]}'}]
+    assert (await adapter("gpt-6-luna", messages, tools=definitions()))["message"]["content"] == "Cycle complete."
+    tool = next(t for t in requests[0]["tools"] if t["name"] == "board_read")
+    assert tool["strict"] is True and tool["parameters"]["properties"]["limit"]["maximum"] == 50
+
+
 @pytest.mark.parametrize("status,code", [(401, "MODEL_REQUEST_FAILED"), (403, "MODEL_REQUEST_FAILED"), (404, "MODEL_NOT_FOUND"), (429, "MODEL_REQUEST_FAILED"), (503, "MODEL_UNAVAILABLE"), (400, "MODEL_REQUEST_FAILED")])
 async def test_openai_errors_are_sanitized_without_fallback(status, code, caplog):
     async def handler(request):

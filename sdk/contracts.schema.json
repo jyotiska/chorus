@@ -351,7 +351,7 @@
         },
         "models": {
           "items": {
-            "$ref": "#/$defs/ModelInfo"
+            "$ref": "#/$defs/chorus__contracts__ModelInfo"
           },
           "title": "Models",
           "type": "array"
@@ -481,6 +481,438 @@
       "title": "FinalJudgement",
       "type": "object"
     },
+    "Grade": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "scores": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Scores",
+          "type": "array"
+        },
+        "explanation": {
+          "maxLength": 1800,
+          "minLength": 8,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "insufficientEvidence": {
+          "default": false,
+          "title": "Insufficientevidence",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "agentId",
+        "scores",
+        "explanation",
+        "evidenceIds",
+        "insufficientEvidence"
+      ],
+      "title": "Grade",
+      "type": "object"
+    },
+    "HarnessCatalog": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Persona"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "problems": {
+          "items": {
+            "$ref": "#/$defs/Problem"
+          },
+          "title": "Problems",
+          "type": "array"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/chorus__harness__models__ModelInfo"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "defaultModel": {
+          "default": "gpt-6-luna",
+          "title": "Defaultmodel",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "agents",
+        "problems",
+        "models",
+        "defaultModel"
+      ],
+      "title": "HarnessCatalog",
+      "type": "object"
+    },
+    "HarnessCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "commandId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Commandid",
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "start",
+            "pause",
+            "resume",
+            "stop"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "commandId",
+        "action",
+        "expectedRevision"
+      ],
+      "title": "HarnessCommand",
+      "type": "object"
+    },
+    "HarnessConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "problemId": {
+          "title": "Problemid",
+          "type": "string"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 2,
+          "title": "Participantids",
+          "type": "array"
+        },
+        "adversaryIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Adversaryids",
+          "type": "array"
+        },
+        "model": {
+          "default": "gpt-6-luna",
+          "title": "Model",
+          "type": "string"
+        },
+        "maxTurnsPerAgent": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Maxturnsperagent",
+          "type": "integer"
+        },
+        "judgeEnabled": {
+          "default": true,
+          "title": "Judgeenabled",
+          "type": "boolean"
+        },
+        "maxCallsPerTurn": {
+          "default": 8,
+          "maximum": 16,
+          "minimum": 2,
+          "title": "Maxcallsperturn",
+          "type": "integer"
+        },
+        "maxToolsPerTurn": {
+          "default": 16,
+          "maximum": 32,
+          "minimum": 1,
+          "title": "Maxtoolsperturn",
+          "type": "integer"
+        },
+        "maxPostsPerTurn": {
+          "default": 3,
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Maxpostsperturn",
+          "type": "integer"
+        },
+        "leaseSeconds": {
+          "default": 30,
+          "maximum": 60,
+          "minimum": 5,
+          "title": "Leaseseconds",
+          "type": "integer"
+        },
+        "maxLeaseHoldSeconds": {
+          "default": 120,
+          "maximum": 180,
+          "minimum": 30,
+          "title": "Maxleaseholdseconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "problemId",
+        "participantIds",
+        "adversaryIds",
+        "model",
+        "maxTurnsPerAgent",
+        "judgeEnabled",
+        "maxCallsPerTurn",
+        "maxToolsPerTurn",
+        "maxPostsPerTurn",
+        "leaseSeconds",
+        "maxLeaseHoldSeconds"
+      ],
+      "title": "HarnessConfig",
+      "type": "object"
+    },
+    "HarnessContracts": {
+      "additionalProperties": false,
+      "properties": {
+        "catalog": {
+          "$ref": "#/$defs/HarnessCatalog"
+        },
+        "config": {
+          "$ref": "#/$defs/HarnessConfig"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/HarnessSnapshot"
+        },
+        "page": {
+          "$ref": "#/$defs/RecordPage"
+        },
+        "command": {
+          "$ref": "#/$defs/HarnessCommand"
+        },
+        "usage": {
+          "$ref": "#/$defs/UsageReport"
+        }
+      },
+      "required": [
+        "catalog",
+        "config",
+        "snapshot",
+        "page",
+        "command",
+        "usage"
+      ],
+      "title": "HarnessContracts",
+      "type": "object"
+    },
+    "HarnessSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "sequence": {
+          "default": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "engineVersion": {
+          "default": "harness-v1",
+          "title": "Engineversion",
+          "type": "string"
+        },
+        "promptVersion": {
+          "default": "harness-v1-concise-board-1",
+          "title": "Promptversion",
+          "type": "string"
+        },
+        "catalogVersion": {
+          "default": "1",
+          "title": "Catalogversion",
+          "type": "string"
+        },
+        "generation": {
+          "default": 0,
+          "title": "Generation",
+          "type": "integer"
+        },
+        "config": {
+          "$ref": "#/$defs/HarnessConfig"
+        },
+        "problem": {
+          "$ref": "#/$defs/Problem"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Persona"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "workers": {
+          "items": {
+            "$ref": "#/$defs/Worker"
+          },
+          "title": "Workers",
+          "type": "array"
+        },
+        "status": {
+          "default": "ready",
+          "enum": [
+            "ready",
+            "running",
+            "reviewing",
+            "paused",
+            "completed",
+            "stopped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "canvas": {
+          "default": "",
+          "title": "Canvas",
+          "type": "string"
+        },
+        "canvasVersion": {
+          "default": 0,
+          "title": "Canvasversion",
+          "type": "integer"
+        },
+        "boardCount": {
+          "default": 0,
+          "title": "Boardcount",
+          "type": "integer"
+        },
+        "changeCount": {
+          "default": 0,
+          "title": "Changecount",
+          "type": "integer"
+        },
+        "lease": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LeaseView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "endedEarly": {
+          "default": false,
+          "title": "Endedearly",
+          "type": "boolean"
+        },
+        "frozenSequence": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frozensequence"
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verification"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JudgeReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "error": {
+          "default": "",
+          "title": "Error",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "sequence",
+        "engineVersion",
+        "promptVersion",
+        "catalogVersion",
+        "generation",
+        "config",
+        "problem",
+        "agents",
+        "workers",
+        "status",
+        "canvas",
+        "canvasVersion",
+        "boardCount",
+        "changeCount",
+        "lease",
+        "endedEarly",
+        "frozenSequence",
+        "verification",
+        "report",
+        "error",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "HarnessSnapshot",
+      "type": "object"
+    },
     "Journal": {
       "additionalProperties": false,
       "properties": {
@@ -517,73 +949,160 @@
       "title": "Journal",
       "type": "object"
     },
-    "ModelInfo": {
+    "JudgeReport": {
+      "additionalProperties": false,
+      "properties": {
+        "rubricVersion": {
+          "default": "1",
+          "title": "Rubricversion",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "conversationScores": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Conversationscores",
+          "type": "array"
+        },
+        "conversationExplanation": {
+          "title": "Conversationexplanation",
+          "type": "string"
+        },
+        "conversationEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Conversationevidenceids",
+          "type": "array"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Grade"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "coveredRecordIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Coveredrecordids",
+          "type": "array"
+        },
+        "completedAt": {
+          "title": "Completedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rubricVersion",
+        "summary",
+        "conversationScores",
+        "conversationExplanation",
+        "conversationEvidenceIds",
+        "agents",
+        "coveredRecordIds",
+        "completedAt"
+      ],
+      "title": "JudgeReport",
+      "type": "object"
+    },
+    "LeaseView": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "expiresAt": {
+          "title": "Expiresat",
+          "type": "string"
+        },
+        "fencing": {
+          "title": "Fencing",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agentId",
+        "expiresAt",
+        "fencing"
+      ],
+      "title": "LeaseView",
+      "type": "object"
+    },
+    "Persona": {
       "additionalProperties": false,
       "properties": {
         "id": {
           "title": "Id",
           "type": "string"
         },
-        "label": {
-          "title": "Label",
+        "name": {
+          "title": "Name",
           "type": "string"
         },
-        "provider": {
-          "default": "ollama",
-          "enum": [
-            "ollama",
-            "openai",
-            "openrouter"
-          ],
-          "title": "Provider",
+        "role": {
+          "title": "Role",
           "type": "string"
         },
-        "installed": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Installed"
+        "domain": {
+          "title": "Domain",
+          "type": "string"
         },
-        "available": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Available"
+        "introduction": {
+          "title": "Introduction",
+          "type": "string"
         },
-        "unavailableReason": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Unavailablereason"
+        "personality": {
+          "title": "Personality",
+          "type": "string"
+        },
+        "traits": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Traits",
+          "type": "array"
+        },
+        "strengths": {
+          "title": "Strengths",
+          "type": "string"
+        },
+        "weaknesses": {
+          "title": "Weaknesses",
+          "type": "string"
+        },
+        "avatarBrief": {
+          "title": "Avatarbrief",
+          "type": "string"
+        },
+        "avatarVersion": {
+          "default": "1",
+          "title": "Avatarversion",
+          "type": "string"
         }
       },
       "required": [
         "id",
-        "label",
-        "provider",
-        "installed",
-        "available",
-        "unavailableReason"
+        "name",
+        "role",
+        "domain",
+        "introduction",
+        "personality",
+        "traits",
+        "strengths",
+        "weaknesses",
+        "avatarBrief",
+        "avatarVersion"
       ],
-      "title": "ModelInfo",
+      "title": "Persona",
       "type": "object"
     },
     "Personality": {
@@ -615,6 +1134,132 @@
         "challengeResponse"
       ],
       "title": "Personality",
+      "type": "object"
+    },
+    "Problem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        },
+        "answerSchema": {
+          "additionalProperties": true,
+          "title": "Answerschema",
+          "type": "object"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Participantids",
+          "type": "array"
+        },
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "domain",
+        "statement",
+        "answerSchema",
+        "participantIds",
+        "version"
+      ],
+      "title": "Problem",
+      "type": "object"
+    },
+    "Record": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "sequence": {
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "turn": {
+          "title": "Turn",
+          "type": "integer"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "data": {
+          "additionalProperties": true,
+          "title": "Data",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "sequence",
+        "kind",
+        "agentId",
+        "turn",
+        "createdAt",
+        "data"
+      ],
+      "title": "Record",
+      "type": "object"
+    },
+    "RecordPage": {
+      "additionalProperties": false,
+      "properties": {
+        "records": {
+          "items": {
+            "$ref": "#/$defs/Record"
+          },
+          "title": "Records",
+          "type": "array"
+        },
+        "cursor": {
+          "title": "Cursor",
+          "type": "integer"
+        },
+        "highWater": {
+          "title": "Highwater",
+          "type": "integer"
+        },
+        "hasMore": {
+          "title": "Hasmore",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "records",
+        "cursor",
+        "highWater",
+        "hasMore"
+      ],
+      "title": "RecordPage",
       "type": "object"
     },
     "Requirement": {
@@ -1167,6 +1812,197 @@
       "title": "TurnTelemetry",
       "type": "object"
     },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "callCount": {
+          "default": 0,
+          "title": "Callcount",
+          "type": "integer"
+        },
+        "inputTokens": {
+          "default": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "outputTokens": {
+          "default": 0,
+          "title": "Outputtokens",
+          "type": "integer"
+        },
+        "cachedTokens": {
+          "default": 0,
+          "title": "Cachedtokens",
+          "type": "integer"
+        },
+        "unknownInputCalls": {
+          "default": 0,
+          "title": "Unknowninputcalls",
+          "type": "integer"
+        },
+        "unknownOutputCalls": {
+          "default": 0,
+          "title": "Unknownoutputcalls",
+          "type": "integer"
+        },
+        "unknownCacheCalls": {
+          "default": 0,
+          "title": "Unknowncachecalls",
+          "type": "integer"
+        },
+        "cacheCoveredCalls": {
+          "default": 0,
+          "title": "Cachecoveredcalls",
+          "type": "integer"
+        },
+        "cacheUtilizationPercent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cacheutilizationpercent"
+        },
+        "cacheUsed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cacheused"
+        },
+        "totalLatencyMs": {
+          "default": 0,
+          "title": "Totallatencyms",
+          "type": "integer"
+        },
+        "meanLatencyMs": {
+          "default": 0,
+          "title": "Meanlatencyms",
+          "type": "number"
+        },
+        "p95LatencyMs": {
+          "default": 0,
+          "title": "P95Latencyms",
+          "type": "integer"
+        },
+        "reportedCostUSD": {
+          "default": 0,
+          "title": "Reportedcostusd",
+          "type": "number"
+        },
+        "estimatedCostUSD": {
+          "default": 0,
+          "title": "Estimatedcostusd",
+          "type": "number"
+        },
+        "unknownCostCalls": {
+          "default": 0,
+          "title": "Unknowncostcalls",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "callCount",
+        "inputTokens",
+        "outputTokens",
+        "cachedTokens",
+        "unknownInputCalls",
+        "unknownOutputCalls",
+        "unknownCacheCalls",
+        "cacheCoveredCalls",
+        "cacheUtilizationPercent",
+        "cacheUsed",
+        "totalLatencyMs",
+        "meanLatencyMs",
+        "p95LatencyMs",
+        "reportedCostUSD",
+        "estimatedCostUSD",
+        "unknownCostCalls"
+      ],
+      "title": "Usage",
+      "type": "object"
+    },
+    "UsageReport": {
+      "additionalProperties": false,
+      "properties": {
+        "agents": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Usage"
+          },
+          "title": "Agents",
+          "type": "object"
+        },
+        "participants": {
+          "$ref": "#/$defs/Usage"
+        },
+        "judge": {
+          "$ref": "#/$defs/Usage"
+        },
+        "total": {
+          "$ref": "#/$defs/Usage"
+        },
+        "wallTimeMs": {
+          "title": "Walltimems",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agents",
+        "participants",
+        "judge",
+        "total",
+        "wallTimeMs"
+      ],
+      "title": "UsageReport",
+      "type": "object"
+    },
+    "Verification": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "correct",
+            "incorrect",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "checks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        },
+        "canvasVersion": {
+          "title": "Canvasversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "status",
+        "checks",
+        "version",
+        "canvasVersion"
+      ],
+      "title": "Verification",
+      "type": "object"
+    },
     "Work": {
       "additionalProperties": false,
       "properties": {
@@ -1198,6 +2034,252 @@
       ],
       "title": "Work",
       "type": "object"
+    },
+    "Worker": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "turnsStarted": {
+          "default": 0,
+          "title": "Turnsstarted",
+          "type": "integer"
+        },
+        "turnsCompleted": {
+          "default": 0,
+          "title": "Turnscompleted",
+          "type": "integer"
+        },
+        "currentTurnIndex": {
+          "default": 0,
+          "title": "Currentturnindex",
+          "type": "integer"
+        },
+        "state": {
+          "default": "queued",
+          "enum": [
+            "queued",
+            "running",
+            "waiting_model",
+            "waiting_lock",
+            "paused",
+            "finished",
+            "capped",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "operationId": {
+          "default": "",
+          "title": "Operationid",
+          "type": "string"
+        },
+        "callsUsed": {
+          "default": 0,
+          "title": "Callsused",
+          "type": "integer"
+        },
+        "toolsUsed": {
+          "default": 0,
+          "title": "Toolsused",
+          "type": "integer"
+        },
+        "postsUsed": {
+          "default": 0,
+          "title": "Postsused",
+          "type": "integer"
+        },
+        "editsUsed": {
+          "default": 0,
+          "title": "Editsused",
+          "type": "integer"
+        },
+        "repairsUsed": {
+          "default": 0,
+          "title": "Repairsused",
+          "type": "integer"
+        },
+        "boardCursor": {
+          "default": 0,
+          "title": "Boardcursor",
+          "type": "integer"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "turnStartedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turnstartedat"
+        }
+      },
+      "required": [
+        "agentId",
+        "turnsStarted",
+        "turnsCompleted",
+        "currentTurnIndex",
+        "state",
+        "operationId",
+        "callsUsed",
+        "toolsUsed",
+        "postsUsed",
+        "editsUsed",
+        "repairsUsed",
+        "boardCursor",
+        "reason",
+        "turnStartedAt"
+      ],
+      "title": "Worker",
+      "type": "object"
+    },
+    "chorus__contracts__ModelInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "provider": {
+          "default": "ollama",
+          "enum": [
+            "ollama",
+            "openai",
+            "openrouter"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "installed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Installed"
+        },
+        "available": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Available"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailablereason"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "provider",
+        "installed",
+        "available",
+        "unavailableReason"
+      ],
+      "title": "ModelInfo",
+      "type": "object"
+    },
+    "chorus__harness__models__ModelInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "ollama",
+            "openai",
+            "openrouter"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "available": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Available"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailablereason"
+        },
+        "compatibilityNote": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compatibilitynote"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "provider",
+        "available",
+        "unavailableReason",
+        "compatibilityNote"
+      ],
+      "title": "ModelInfo",
+      "type": "object"
     }
   },
   "additionalProperties": false,
@@ -1222,6 +2304,9 @@
       "title": "Journals",
       "type": "array"
     },
+    "harness": {
+      "$ref": "#/$defs/HarnessContracts"
+    },
     "error": {
       "$ref": "#/$defs/APIError"
     }
@@ -1232,6 +2317,7 @@
     "command",
     "catalog",
     "journals",
+    "harness",
     "error"
   ],
   "title": "Contracts",

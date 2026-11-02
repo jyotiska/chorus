@@ -1,0 +1,1404 @@
+{
+  "date": "2026-11-02",
+  "scope": "Isolated two-agent one-turn smoke checks; not a quality benchmark.",
+  "reports": [
+    {
+      "model": "gpt-6-luna",
+      "status": "paused",
+      "error": "The final judge did not return a valid complete assessment. Resume to retry.",
+      "verification": {
+        "status": "incorrect",
+        "checks": [
+          "answer: expected exactly x, y, contribution, machineHours, finishingHours."
+        ],
+        "version": "1",
+        "canvasVersion": 1
+      },
+      "reportComplete": false,
+      "boardPosts": 2,
+      "canvasChanges": 1,
+      "summaries": 2,
+      "usage": {
+        "agents": {
+          "drew": {
+            "callCount": 8,
+            "inputTokens": 11043,
+            "outputTokens": 524,
+            "cachedTokens": 7702,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 69.74554016118809,
+            "cacheUsed": true,
+            "totalLatencyMs": 16941,
+            "meanLatencyMs": 2117.625,
+            "p95LatencyMs": 3926,
+            "reportedCostUSD": 0,
+            "estimatedCostUSD": 0.000756045,
+            "unknownCostCalls": 0
+          },
+          "mika": {
+            "callCount": 8,
+            "inputTokens": 10918,
+            "outputTokens": 581,
+            "cachedTokens": 7588,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 69.49990840813335,
+            "cacheUsed": true,
+            "totalLatencyMs": 21026,
+            "meanLatencyMs": 2628.25,
+            "p95LatencyMs": 4533,
+            "reportedCostUSD": 0,
+            "estimatedCostUSD": 0.00078203,
+            "unknownCostCalls": 0
+          }
+        },
+        "participants": {
+          "callCount": 16,
+          "inputTokens": 21961,
+          "outputTokens": 1105,
+          "cachedTokens": 15290,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 16,
+          "cacheUtilizationPercent": 69.6234233413779,
+          "cacheUsed": true,
+          "totalLatencyMs": 37967,
+          "meanLatencyMs": 2372.9375,
+          "p95LatencyMs": 4533,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.0015380749999999999,
+          "unknownCostCalls": 0
+        },
+        "judge": {
+          "callCount": 4,
+          "inputTokens": 10307,
+          "outputTokens": 90,
+          "cachedTokens": 7149,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 4,
+          "cacheUtilizationPercent": 69.36062869894246,
+          "cacheUsed": true,
+          "totalLatencyMs": 7303,
+          "meanLatencyMs": 1825.75,
+          "p95LatencyMs": 3374,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.0005109400000000001,
+          "unknownCostCalls": 0
+        },
+        "total": {
+          "callCount": 20,
+          "inputTokens": 32268,
+          "outputTokens": 1195,
+          "cachedTokens": 22439,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 20,
+          "cacheUtilizationPercent": 69.5394818395934,
+          "cacheUsed": true,
+          "totalLatencyMs": 45270,
+          "meanLatencyMs": 2263.5,
+          "p95LatencyMs": 4367,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.002049015,
+          "unknownCostCalls": 0
+        },
+        "wallTimeMs": 29174
+      },
+      "callOutcomes": [
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1055,
+          "outputTokens": 22,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1057,
+          "outputTokens": 22,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1111,
+          "outputTokens": 18,
+          "cachedTokens": 1052,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1113,
+          "outputTokens": 18,
+          "cachedTokens": 1054,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1155,
+          "outputTokens": 129,
+          "cachedTokens": 1108,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1157,
+          "outputTokens": 22,
+          "cachedTokens": 1110,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1310,
+          "outputTokens": 89,
+          "cachedTokens": 1152,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1213,
+          "outputTokens": 16,
+          "cachedTokens": 1154,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1520,
+          "outputTokens": 16,
+          "cachedTokens": 1307,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1342,
+          "outputTokens": 339,
+          "cachedTokens": 1210,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1569,
+          "outputTokens": 106,
+          "cachedTokens": 1517,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1817,
+          "outputTokens": 16,
+          "cachedTokens": 1566,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1724,
+          "outputTokens": 16,
+          "cachedTokens": 1339,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 1506,
+          "outputTokens": 128,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1770,
+          "outputTokens": 16,
+          "cachedTokens": 1721,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 1542,
+          "outputTokens": 132,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2174,
+          "outputTokens": 27,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2234,
+          "outputTokens": 22,
+          "cachedTokens": 2171,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2750,
+          "outputTokens": 18,
+          "cachedTokens": 2231,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 3149,
+          "outputTokens": 23,
+          "cachedTokens": 2747,
+          "costSource": "estimated"
+        }
+      ]
+    },
+    {
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "status": "paused",
+      "error": "The final judge did not return a valid complete assessment. Resume to retry.",
+      "verification": {
+        "status": "correct",
+        "checks": [
+          "Answer format, constraints, and expected outcome passed."
+        ],
+        "version": "1",
+        "canvasVersion": 1
+      },
+      "reportComplete": false,
+      "boardPosts": 0,
+      "canvasChanges": 1,
+      "summaries": 2,
+      "usage": {
+        "agents": {
+          "drew": {
+            "callCount": 8,
+            "inputTokens": 13860,
+            "outputTokens": 596,
+            "cachedTokens": 7040,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 50.79365079365079,
+            "cacheUsed": true,
+            "totalLatencyMs": 9817,
+            "meanLatencyMs": 1227.125,
+            "p95LatencyMs": 2131,
+            "reportedCostUSD": 0.0017655,
+            "estimatedCostUSD": 0,
+            "unknownCostCalls": 0
+          },
+          "mika": {
+            "callCount": 8,
+            "inputTokens": 15134,
+            "outputTokens": 961,
+            "cachedTokens": 7168,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 47.36355226641998,
+            "cacheUsed": true,
+            "totalLatencyMs": 15971,
+            "meanLatencyMs": 1996.375,
+            "p95LatencyMs": 6102,
+            "reportedCostUSD": 0.002139948,
+            "estimatedCostUSD": 0,
+            "unknownCostCalls": 0
+          }
+        },
+        "participants": {
+          "callCount": 16,
+          "inputTokens": 28994,
+          "outputTokens": 1557,
+          "cachedTokens": 14208,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 16,
+          "cacheUtilizationPercent": 49.00324205007933,
+          "cacheUsed": true,
+          "totalLatencyMs": 25788,
+          "meanLatencyMs": 1611.75,
+          "p95LatencyMs": 6102,
+          "reportedCostUSD": 0.003905448,
+          "estimatedCostUSD": 0,
+          "unknownCostCalls": 0
+        },
+        "judge": {
+          "callCount": 6,
+          "inputTokens": 11575,
+          "outputTokens": 610,
+          "cachedTokens": 5120,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 6,
+          "cacheUtilizationPercent": 44.23326133909287,
+          "cacheUsed": true,
+          "totalLatencyMs": 7784,
+          "meanLatencyMs": 1297.3333333333333,
+          "p95LatencyMs": 2865,
+          "reportedCostUSD": 0.0016920449999999999,
+          "estimatedCostUSD": 0,
+          "unknownCostCalls": 0
+        },
+        "total": {
+          "callCount": 22,
+          "inputTokens": 40569,
+          "outputTokens": 2167,
+          "cachedTokens": 19328,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 22,
+          "cacheUtilizationPercent": 47.64228844684365,
+          "cacheUsed": true,
+          "totalLatencyMs": 33572,
+          "meanLatencyMs": 1526.0,
+          "p95LatencyMs": 2865,
+          "reportedCostUSD": 0.005597493,
+          "estimatedCostUSD": 0,
+          "unknownCostCalls": 0
+        },
+        "wallTimeMs": 24112
+      },
+      "callOutcomes": [
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1523,
+          "outputTokens": 64,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1526,
+          "outputTokens": 55,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1613,
+          "outputTokens": 54,
+          "cachedTokens": 1536,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1619,
+          "outputTokens": 55,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1706,
+          "outputTokens": 55,
+          "cachedTokens": 1408,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1700,
+          "outputTokens": 38,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1763,
+          "outputTokens": 25,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1901,
+          "outputTokens": 420,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1793,
+          "outputTokens": 54,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1880,
+          "outputTokens": 54,
+          "cachedTokens": 1792,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1967,
+          "outputTokens": 54,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 2363,
+          "outputTokens": 98,
+          "cachedTokens": 2304,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 2054,
+          "outputTokens": 54,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 1318,
+          "outputTokens": 206,
+          "cachedTokens": 512,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 2486,
+          "outputTokens": 94,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 1782,
+          "outputTokens": 177,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2244,
+          "outputTokens": 24,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2311,
+          "outputTokens": 349,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1626,
+          "outputTokens": 55,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1711,
+          "outputTokens": 55,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1798,
+          "outputTokens": 55,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1885,
+          "outputTokens": 72,
+          "cachedTokens": 1792,
+          "costSource": "reported"
+        }
+      ]
+    }
+  ],
+  "followupReports": [
+    {
+      "model": "gpt-6-luna",
+      "status": "completed",
+      "error": "",
+      "verification": {
+        "status": "incorrect",
+        "checks": [
+          "Totals or optimal contribution are incorrect."
+        ],
+        "version": "1",
+        "canvasVersion": 1
+      },
+      "reportComplete": true,
+      "boardPosts": 2,
+      "canvasChanges": 1,
+      "summaries": 2,
+      "usage": {
+        "agents": {
+          "drew": {
+            "callCount": 8,
+            "inputTokens": 12481,
+            "outputTokens": 762,
+            "cachedTokens": 8146,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 65.2672061533531,
+            "cacheUsed": true,
+            "totalLatencyMs": 17040,
+            "meanLatencyMs": 2130.0,
+            "p95LatencyMs": 5100,
+            "reportedCostUSD": 0,
+            "estimatedCostUSD": 0.001003735,
+            "unknownCostCalls": 0
+          },
+          "mika": {
+            "callCount": 8,
+            "inputTokens": 11313,
+            "outputTokens": 485,
+            "cachedTokens": 8105,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 71.6432422876337,
+            "cacheUsed": true,
+            "totalLatencyMs": 16786,
+            "meanLatencyMs": 2098.25,
+            "p95LatencyMs": 2725,
+            "reportedCostUSD": 0,
+            "estimatedCostUSD": 0.0007239500000000001,
+            "unknownCostCalls": 0
+          }
+        },
+        "participants": {
+          "callCount": 16,
+          "inputTokens": 23794,
+          "outputTokens": 1247,
+          "cachedTokens": 16251,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 16,
+          "cacheUtilizationPercent": 68.29873077246364,
+          "cacheUsed": true,
+          "totalLatencyMs": 33826,
+          "meanLatencyMs": 2114.125,
+          "p95LatencyMs": 5100,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.001727685,
+          "unknownCostCalls": 0
+        },
+        "judge": {
+          "callCount": 4,
+          "inputTokens": 7598,
+          "outputTokens": 954,
+          "cachedTokens": 0,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 4,
+          "cacheUtilizationPercent": 0.0,
+          "cacheUsed": false,
+          "totalLatencyMs": 14078,
+          "meanLatencyMs": 3519.5,
+          "p95LatencyMs": 4193,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.0014022750000000001,
+          "unknownCostCalls": 0
+        },
+        "total": {
+          "callCount": 20,
+          "inputTokens": 31392,
+          "outputTokens": 2201,
+          "cachedTokens": 16251,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 20,
+          "cacheUtilizationPercent": 51.76796636085627,
+          "cacheUsed": true,
+          "totalLatencyMs": 47904,
+          "meanLatencyMs": 2395.2,
+          "p95LatencyMs": 4193,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.00312996,
+          "unknownCostCalls": 0
+        },
+        "wallTimeMs": 31423
+      },
+      "callOutcomes": [
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1127,
+          "outputTokens": 22,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1129,
+          "outputTokens": 22,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1185,
+          "outputTokens": 18,
+          "cachedTokens": 1126,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1183,
+          "outputTokens": 18,
+          "cachedTokens": 1124,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1227,
+          "outputTokens": 93,
+          "cachedTokens": 1180,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1229,
+          "outputTokens": 122,
+          "cachedTokens": 1182,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1443,
+          "outputTokens": 16,
+          "cachedTokens": 1224,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1383,
+          "outputTokens": 93,
+          "cachedTokens": 1226,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1570,
+          "outputTokens": 18,
+          "cachedTokens": 1440,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1614,
+          "outputTokens": 446,
+          "cachedTokens": 1567,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1502,
+          "outputTokens": 78,
+          "cachedTokens": 1380,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1695,
+          "outputTokens": 16,
+          "cachedTokens": 1499,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1744,
+          "outputTokens": 108,
+          "cachedTokens": 1692,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 2103,
+          "outputTokens": 18,
+          "cachedTokens": 1611,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 1446,
+          "outputTokens": 28,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 2214,
+          "outputTokens": 131,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2393,
+          "outputTokens": 351,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2767,
+          "outputTokens": 212,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1468,
+          "outputTokens": 201,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 970,
+          "outputTokens": 190,
+          "cachedTokens": 0,
+          "costSource": "estimated"
+        }
+      ],
+      "diagnosticCategories": [
+        {
+          "assessment": null,
+          "reason": "Use one or two sentences, at most 60 words and 400 characters."
+        },
+        {
+          "assessment": null,
+          "reason": "Write one or two complete sentences ending in punctuation."
+        },
+        {
+          "assessment": null,
+          "reason": "Write one or two complete sentences ending in punctuation."
+        }
+      ]
+    },
+    {
+      "model": "deepseek/deepseek-v4.1-flash-1017",
+      "status": "completed",
+      "error": "",
+      "verification": {
+        "status": "correct",
+        "checks": [
+          "Answer format, constraints, and expected outcome passed."
+        ],
+        "version": "1",
+        "canvasVersion": 1
+      },
+      "reportComplete": true,
+      "boardPosts": 1,
+      "canvasChanges": 1,
+      "summaries": 2,
+      "usage": {
+        "agents": {
+          "drew": {
+            "callCount": 8,
+            "inputTokens": 14394,
+            "outputTokens": 640,
+            "cachedTokens": 8832,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 61.358899541475616,
+            "cacheUsed": true,
+            "totalLatencyMs": 11598,
+            "meanLatencyMs": 1449.75,
+            "p95LatencyMs": 3900,
+            "reportedCostUSD": 0.001374262,
+            "estimatedCostUSD": 0,
+            "unknownCostCalls": 0
+          },
+          "mika": {
+            "callCount": 8,
+            "inputTokens": 18102,
+            "outputTokens": 2186,
+            "cachedTokens": 10368,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 0,
+            "cacheCoveredCalls": 8,
+            "cacheUtilizationPercent": 57.27543917799138,
+            "cacheUsed": true,
+            "totalLatencyMs": 17195,
+            "meanLatencyMs": 2149.375,
+            "p95LatencyMs": 4230,
+            "reportedCostUSD": 0.004730508,
+            "estimatedCostUSD": 0,
+            "unknownCostCalls": 0
+          }
+        },
+        "participants": {
+          "callCount": 16,
+          "inputTokens": 32496,
+          "outputTokens": 2826,
+          "cachedTokens": 19200,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 16,
+          "cacheUtilizationPercent": 59.084194977843424,
+          "cacheUsed": true,
+          "totalLatencyMs": 28793,
+          "meanLatencyMs": 1799.5625,
+          "p95LatencyMs": 4230,
+          "reportedCostUSD": 0.00610477,
+          "estimatedCostUSD": 0,
+          "unknownCostCalls": 0
+        },
+        "judge": {
+          "callCount": 6,
+          "inputTokens": 13188,
+          "outputTokens": 1475,
+          "cachedTokens": 5504,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 6,
+          "cacheUtilizationPercent": 41.73491052471944,
+          "cacheUsed": true,
+          "totalLatencyMs": 13031,
+          "meanLatencyMs": 2171.8333333333335,
+          "p95LatencyMs": 3809,
+          "reportedCostUSD": 0.0036471840000000004,
+          "estimatedCostUSD": 0,
+          "unknownCostCalls": 0
+        },
+        "total": {
+          "callCount": 22,
+          "inputTokens": 45684,
+          "outputTokens": 4301,
+          "cachedTokens": 24704,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 0,
+          "cacheCoveredCalls": 22,
+          "cacheUtilizationPercent": 54.07582523421767,
+          "cacheUsed": true,
+          "totalLatencyMs": 41824,
+          "meanLatencyMs": 1901.090909090909,
+          "p95LatencyMs": 3900,
+          "reportedCostUSD": 0.009751954000000002,
+          "estimatedCostUSD": 0,
+          "unknownCostCalls": 0
+        },
+        "wallTimeMs": 30483
+      },
+      "callOutcomes": [
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1592,
+          "outputTokens": 55,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1595,
+          "outputTokens": 55,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1679,
+          "outputTokens": 54,
+          "cachedTokens": 1536,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1682,
+          "outputTokens": 54,
+          "cachedTokens": 1408,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1766,
+          "outputTokens": 54,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1853,
+          "outputTokens": 38,
+          "cachedTokens": 1792,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1769,
+          "outputTokens": 38,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1916,
+          "outputTokens": 25,
+          "cachedTokens": 1792,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1832,
+          "outputTokens": 25,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1969,
+          "outputTokens": 516,
+          "cachedTokens": 1664,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1973,
+          "outputTokens": 157,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 2155,
+          "outputTokens": 95,
+          "cachedTokens": 2048,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 2592,
+          "outputTokens": 816,
+          "cachedTokens": 1536,
+          "costSource": "reported"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 1460,
+          "outputTokens": 162,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 3514,
+          "outputTokens": 476,
+          "cachedTokens": 2432,
+          "costSource": "reported"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 3149,
+          "outputTokens": 206,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 2708,
+          "outputTokens": 383,
+          "cachedTokens": 0,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1892,
+          "outputTokens": 275,
+          "cachedTokens": 640,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 3055,
+          "outputTokens": 23,
+          "cachedTokens": 640,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 3142,
+          "outputTokens": 384,
+          "cachedTokens": 2944,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1041,
+          "outputTokens": 55,
+          "cachedTokens": 640,
+          "costSource": "reported"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1350,
+          "outputTokens": 355,
+          "cachedTokens": 640,
+          "costSource": "reported"
+        }
+      ],
+      "diagnosticCategories": [
+        {
+          "assessment": null,
+          "reason": "Write one or two complete sentences ending in punctuation."
+        },
+        {
+          "assessment": null,
+          "reason": "1 validation error for tagged-union[Unchanged,CreateDocument,ReplaceSection,AppendSection]\n  Unable to extract tag using discriminator 'op' [type=union_tag_not_"
+        },
+        {
+          "assessment": null,
+          "reason": "1 validation error for tagged-union[Unchanged,CreateDocument,ReplaceSection,AppendSection]\nCREATE_DOCUMENT.document\n  Input should be a valid string [type=strin"
+        }
+      ]
+    },
+    {
+      "model": "qwen3.5:0.8b-mlx",
+      "status": "paused",
+      "error": "The final judge did not return a valid complete assessment. Resume to retry.",
+      "verification": {
+        "status": "incorrect",
+        "checks": [
+          "Include exactly one fenced solution block containing the JSON answer."
+        ],
+        "version": "1",
+        "canvasVersion": 0
+      },
+      "reportComplete": false,
+      "boardPosts": 0,
+      "canvasChanges": 0,
+      "summaries": 2,
+      "usage": {
+        "agents": {
+          "drew": {
+            "callCount": 2,
+            "inputTokens": 2303,
+            "outputTokens": 159,
+            "cachedTokens": 0,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 2,
+            "cacheCoveredCalls": 0,
+            "cacheUtilizationPercent": null,
+            "cacheUsed": null,
+            "totalLatencyMs": 3239,
+            "meanLatencyMs": 1619.5,
+            "p95LatencyMs": 1999,
+            "reportedCostUSD": 0,
+            "estimatedCostUSD": 0.0,
+            "unknownCostCalls": 0
+          },
+          "mika": {
+            "callCount": 2,
+            "inputTokens": 2307,
+            "outputTokens": 163,
+            "cachedTokens": 0,
+            "unknownInputCalls": 0,
+            "unknownOutputCalls": 0,
+            "unknownCacheCalls": 2,
+            "cacheCoveredCalls": 0,
+            "cacheUtilizationPercent": null,
+            "cacheUsed": null,
+            "totalLatencyMs": 2052,
+            "meanLatencyMs": 1026.0,
+            "p95LatencyMs": 1197,
+            "reportedCostUSD": 0,
+            "estimatedCostUSD": 0.0,
+            "unknownCostCalls": 0
+          }
+        },
+        "participants": {
+          "callCount": 4,
+          "inputTokens": 4610,
+          "outputTokens": 322,
+          "cachedTokens": 0,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 4,
+          "cacheCoveredCalls": 0,
+          "cacheUtilizationPercent": null,
+          "cacheUsed": null,
+          "totalLatencyMs": 5291,
+          "meanLatencyMs": 1322.75,
+          "p95LatencyMs": 1999,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.0,
+          "unknownCostCalls": 0
+        },
+        "judge": {
+          "callCount": 8,
+          "inputTokens": 6911,
+          "outputTokens": 1371,
+          "cachedTokens": 0,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 8,
+          "cacheCoveredCalls": 0,
+          "cacheUtilizationPercent": null,
+          "cacheUsed": null,
+          "totalLatencyMs": 15059,
+          "meanLatencyMs": 1882.375,
+          "p95LatencyMs": 4239,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.0,
+          "unknownCostCalls": 0
+        },
+        "total": {
+          "callCount": 12,
+          "inputTokens": 11521,
+          "outputTokens": 1693,
+          "cachedTokens": 0,
+          "unknownInputCalls": 0,
+          "unknownOutputCalls": 0,
+          "unknownCacheCalls": 12,
+          "cacheCoveredCalls": 0,
+          "cacheUtilizationPercent": null,
+          "cacheUsed": null,
+          "totalLatencyMs": 20350,
+          "meanLatencyMs": 1695.8333333333333,
+          "p95LatencyMs": 4239,
+          "reportedCostUSD": 0,
+          "estimatedCostUSD": 0.0,
+          "unknownCostCalls": 0
+        },
+        "wallTimeMs": 21161
+      },
+      "callOutcomes": [
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1513,
+          "outputTokens": 65,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "agent",
+          "outcome": "success",
+          "inputTokens": 1518,
+          "outputTokens": 59,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 790,
+          "outputTokens": 94,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "summary",
+          "outcome": "success",
+          "inputTokens": 789,
+          "outputTokens": 104,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 998,
+          "outputTokens": 156,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1039,
+          "outputTokens": 33,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1032,
+          "outputTokens": 395,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 1073,
+          "outputTokens": 257,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 602,
+          "outputTokens": 85,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 666,
+          "outputTokens": 42,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 730,
+          "outputTokens": 221,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        },
+        {
+          "phase": "judge",
+          "outcome": "success",
+          "inputTokens": 771,
+          "outputTokens": 182,
+          "cachedTokens": null,
+          "costSource": "local_api_zero"
+        }
+      ],
+      "diagnosticCategories": [
+        {
+          "assessment": "evidence:0",
+          "reason": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "assessment": "agent:drew",
+          "reason": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "assessment": "agent:drew",
+          "reason": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "assessment": "agent:drew",
+          "reason": "agentId: Field required; scores: Field required; explanation: Field required; evidenceIds: Field required; status: Extra inputs are not permitted; reason: Extra"
+        },
+        {
+          "assessment": "agent:drew",
+          "reason": "agentId: Field required; scores: Field required; explanation: Field required; evidenceIds: Field required; status: Extra inputs are not permitted; reason: Extra"
+        },
+        {
+          "assessment": "agent:drew",
+          "reason": "Expecting value: line 1 column 1 (char 0)"
+        },
+        {
+          "assessment": "agent:drew",
+          "reason": "Expecting value: line 1 column 1 (char 0)"
+        }
+      ]
+    }
+  ]
+}
