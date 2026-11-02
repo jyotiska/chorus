@@ -156,7 +156,145 @@ export type Turnnumber1 = number;
 export type Createdat1 = string;
 export type Text1 = string | null;
 export type Journals = Journal[];
+export type Version = string;
+export type Id5 = string;
+export type Name1 = string;
+export type Role1 = string;
+export type Domain = string;
+export type Introduction = string;
+export type Personality1 = string;
+export type Traits1 = string[];
+export type Strengths1 = string;
+export type Weaknesses = string;
+export type Avatarbrief = string;
+export type Avatarversion = string;
+export type Agents2 = Persona[];
+export type Id6 = string;
+export type Title1 = string;
+export type Domain1 = string;
+export type Statement = string;
+export type Participantids1 = string[];
+export type Version1 = string;
+export type Problems = Problem1[];
+export type Id7 = string;
+export type Label1 = string;
+export type Provider2 = "ollama" | "openai" | "openrouter";
+export type Available1 = boolean | null;
+export type Unavailablereason1 = string | null;
+export type Compatibilitynote = string | null;
+export type Models1 = ModelInfo1[];
+export type Defaultmodel1 = string;
+export type Problemid = string;
+/**
+ * @minItems 2
+ * @maxItems 50
+ */
+export type Participantids2 = string[];
+/**
+ * @maxItems 50
+ */
+export type Adversaryids1 = string[];
+export type Model2 = string;
+export type Maxturnsperagent = number;
+export type Judgeenabled1 = boolean;
+export type Maxcallsperturn = number;
+export type Maxtoolsperturn = number;
+export type Maxpostsperturn = number;
+export type Leaseseconds = number;
+export type Maxleaseholdseconds = number;
+export type Id8 = string;
+export type Revision1 = number;
+export type Sequence = number;
+export type Engineversion1 = string;
+export type Promptversion1 = string;
+export type Catalogversion = string;
+export type Generation = number;
+export type Agents3 = Persona[];
+export type Agentid3 = string;
+export type Turnsstarted = number;
+export type Turnscompleted = number;
+export type Currentturnindex = number;
+export type State =
+  "queued" | "running" | "waiting_model" | "waiting_lock" | "paused" | "finished" | "capped" | "failed";
+export type Operationid = string;
+export type Callsused = number;
+export type Toolsused = number;
+export type Postsused = number;
+export type Editsused = number;
+export type Repairsused = number;
+export type Boardcursor = number;
+export type Reason = string;
+export type Turnstartedat = string | null;
+export type Workers = Worker[];
+export type Status2 = "ready" | "running" | "reviewing" | "paused" | "completed" | "stopped";
+export type Canvas1 = string;
+export type Canvasversion = number;
+export type Boardcount = number;
+export type Changecount = number;
+export type Agentid4 = string;
+export type Expiresat = string;
+export type Fencing = number;
+export type Endedearly1 = boolean;
+export type Frozensequence = number | null;
+export type Status3 = "correct" | "incorrect" | "unavailable";
+export type Checks = string[];
+export type Version2 = string;
+export type Canvasversion1 = number;
+export type Rubricversion = string;
+export type Summary2 = string;
+/**
+ * @minItems 5
+ * @maxItems 5
+ */
+export type Conversationscores = number[];
+export type Conversationexplanation = string;
+export type Conversationevidenceids = string[];
+export type Agentid5 = string;
+/**
+ * @minItems 5
+ * @maxItems 5
+ */
+export type Scores = number[];
+export type Explanation = string;
+export type Evidenceids = string[];
+export type Insufficientevidence = boolean;
+export type Agents4 = Grade[];
+export type Coveredrecordids = string[];
+export type Completedat = string;
 export type Error1 = string;
+export type Createdat2 = string;
+export type Updatedat1 = string;
+export type Id9 = string;
+export type Sequence1 = number;
+export type Kind2 = string;
+export type Agentid6 = string;
+export type Turn1 = number;
+export type Createdat3 = string;
+export type Records = Record[];
+export type Cursor = number;
+export type Highwater = number;
+export type Hasmore = boolean;
+export type Commandid1 = string;
+export type Action1 = "start" | "pause" | "resume" | "stop";
+export type Expectedrevision1 = number;
+export type Callcount = number;
+export type Inputtokens1 = number;
+export type Outputtokens = number;
+export type Cachedtokens = number;
+export type Unknowninputcalls = number;
+export type Unknownoutputcalls = number;
+export type Unknowncachecalls = number;
+export type Cachecoveredcalls = number;
+export type Cacheutilizationpercent = number | null;
+export type Cacheused = boolean | null;
+export type Totallatencyms = number;
+export type Meanlatencyms = number;
+export type P95Latencyms = number;
+export type Reportedcostusd = number;
+export type Estimatedcostusd = number;
+export type Unknowncostcalls = number;
+export type Walltimems = number;
+export type Error2 = string;
 export type Code =
   | "INVALID_REQUEST"
   | "INVALID_MODEL_RESPONSE"
@@ -186,6 +324,7 @@ export interface Contracts {
   command: Command;
   catalog: Catalog;
   journals: Journals;
+  harness: HarnessContracts;
   error: APIError;
 }
 export interface Snapshot {
@@ -344,8 +483,190 @@ export interface Journal {
   createdAt: Createdat1;
   text: Text1;
 }
-export interface APIError {
+export interface HarnessContracts {
+  catalog: HarnessCatalog;
+  config: HarnessConfig;
+  snapshot: HarnessSnapshot;
+  page: RecordPage;
+  command: HarnessCommand;
+  usage: UsageReport;
+}
+export interface HarnessCatalog {
+  version: Version;
+  agents: Agents2;
+  problems: Problems;
+  models: Models1;
+  defaultModel: Defaultmodel1;
+}
+export interface Persona {
+  id: Id5;
+  name: Name1;
+  role: Role1;
+  domain: Domain;
+  introduction: Introduction;
+  personality: Personality1;
+  traits: Traits1;
+  strengths: Strengths1;
+  weaknesses: Weaknesses;
+  avatarBrief: Avatarbrief;
+  avatarVersion: Avatarversion;
+}
+export interface Problem1 {
+  id: Id6;
+  title: Title1;
+  domain: Domain1;
+  statement: Statement;
+  answerSchema: Answerschema;
+  participantIds: Participantids1;
+  version: Version1;
+}
+export interface Answerschema {
+  [k: string]: unknown;
+}
+export interface ModelInfo1 {
+  id: Id7;
+  label: Label1;
+  provider: Provider2;
+  available: Available1;
+  unavailableReason: Unavailablereason1;
+  compatibilityNote: Compatibilitynote;
+}
+export interface HarnessConfig {
+  problemId: Problemid;
+  participantIds: Participantids2;
+  adversaryIds: Adversaryids1;
+  model: Model2;
+  maxTurnsPerAgent: Maxturnsperagent;
+  judgeEnabled: Judgeenabled1;
+  maxCallsPerTurn: Maxcallsperturn;
+  maxToolsPerTurn: Maxtoolsperturn;
+  maxPostsPerTurn: Maxpostsperturn;
+  leaseSeconds: Leaseseconds;
+  maxLeaseHoldSeconds: Maxleaseholdseconds;
+}
+export interface HarnessSnapshot {
+  id: Id8;
+  revision: Revision1;
+  sequence: Sequence;
+  engineVersion: Engineversion1;
+  promptVersion: Promptversion1;
+  catalogVersion: Catalogversion;
+  generation: Generation;
+  config: HarnessConfig;
+  problem: Problem1;
+  agents: Agents3;
+  workers: Workers;
+  status: Status2;
+  canvas: Canvas1;
+  canvasVersion: Canvasversion;
+  boardCount: Boardcount;
+  changeCount: Changecount;
+  lease: LeaseView | null;
+  endedEarly: Endedearly1;
+  frozenSequence: Frozensequence;
+  verification: Verification | null;
+  report: JudgeReport | null;
   error: Error1;
+  createdAt: Createdat2;
+  updatedAt: Updatedat1;
+}
+export interface Worker {
+  agentId: Agentid3;
+  turnsStarted: Turnsstarted;
+  turnsCompleted: Turnscompleted;
+  currentTurnIndex: Currentturnindex;
+  state: State;
+  operationId: Operationid;
+  callsUsed: Callsused;
+  toolsUsed: Toolsused;
+  postsUsed: Postsused;
+  editsUsed: Editsused;
+  repairsUsed: Repairsused;
+  boardCursor: Boardcursor;
+  reason: Reason;
+  turnStartedAt: Turnstartedat;
+}
+export interface LeaseView {
+  agentId: Agentid4;
+  expiresAt: Expiresat;
+  fencing: Fencing;
+}
+export interface Verification {
+  status: Status3;
+  checks: Checks;
+  version: Version2;
+  canvasVersion: Canvasversion1;
+}
+export interface JudgeReport {
+  rubricVersion: Rubricversion;
+  summary: Summary2;
+  conversationScores: Conversationscores;
+  conversationExplanation: Conversationexplanation;
+  conversationEvidenceIds: Conversationevidenceids;
+  agents: Agents4;
+  coveredRecordIds: Coveredrecordids;
+  completedAt: Completedat;
+}
+export interface Grade {
+  agentId: Agentid5;
+  scores: Scores;
+  explanation: Explanation;
+  evidenceIds: Evidenceids;
+  insufficientEvidence: Insufficientevidence;
+}
+export interface RecordPage {
+  records: Records;
+  cursor: Cursor;
+  highWater: Highwater;
+  hasMore: Hasmore;
+}
+export interface Record {
+  id: Id9;
+  sequence: Sequence1;
+  kind: Kind2;
+  agentId: Agentid6;
+  turn: Turn1;
+  createdAt: Createdat3;
+  data: Data;
+}
+export interface Data {
+  [k: string]: unknown;
+}
+export interface HarnessCommand {
+  commandId: Commandid1;
+  action: Action1;
+  expectedRevision: Expectedrevision1;
+}
+export interface UsageReport {
+  agents: Agents5;
+  participants: Usage;
+  judge: Usage;
+  total: Usage;
+  wallTimeMs: Walltimems;
+}
+export interface Agents5 {
+  [k: string]: Usage;
+}
+export interface Usage {
+  callCount: Callcount;
+  inputTokens: Inputtokens1;
+  outputTokens: Outputtokens;
+  cachedTokens: Cachedtokens;
+  unknownInputCalls: Unknowninputcalls;
+  unknownOutputCalls: Unknownoutputcalls;
+  unknownCacheCalls: Unknowncachecalls;
+  cacheCoveredCalls: Cachecoveredcalls;
+  cacheUtilizationPercent: Cacheutilizationpercent;
+  cacheUsed: Cacheused;
+  totalLatencyMs: Totallatencyms;
+  meanLatencyMs: Meanlatencyms;
+  p95LatencyMs: P95Latencyms;
+  reportedCostUSD: Reportedcostusd;
+  estimatedCostUSD: Estimatedcostusd;
+  unknownCostCalls: Unknowncostcalls;
+}
+export interface APIError {
+  error: Error2;
   code: Code;
   requestId: Requestid1;
 }

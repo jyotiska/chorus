@@ -240,6 +240,6 @@ def test_cli_forwards_adversary_ids_to_session_creation(monkeypatch):
 
     monkeypatch.setattr(cli, "request", request)
     monkeypatch.setattr(cli, "send_command", lambda *_: None)
-    result = CliRunner().invoke(cli.app, ["run", CONFIG["scenarioId"], "--participants", ",".join(CONFIG["participantIds"]), "--adversaries", ",".join(CONFIG["participantIds"])])
+    result = CliRunner().invoke(cli.app, ["legacy-run", CONFIG["scenarioId"], "--participants", ",".join(CONFIG["participantIds"]), "--adversaries", ",".join(CONFIG["participantIds"])])
     assert result.exit_code == 0, result.output
     assert calls[0][2]["adversaryIds"] == CONFIG["participantIds"]

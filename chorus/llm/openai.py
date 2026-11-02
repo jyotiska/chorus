@@ -17,17 +17,22 @@ from chorus.llm.transport import CALL_TIMEOUT, assert_budget, input_estimate, lo
 from chorus.services.errors import ChorusError
 
 
-def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
+def normalize_response(raw: Any, structured: bool, allow_tools: bool = False) -> dict[str, Any]:
     if not isinstance(raw, dict) or raw.get("status") not in {"completed", "incomplete"} or not isinstance(raw.get("output"), list):
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned an invalid response.")
     incomplete = raw["status"] == "incomplete"
     details = raw.get("incomplete_details")
     if incomplete and (not isinstance(details, dict) or details.get("reason") != "max_output_tokens"):
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI could not complete this response.")
-    parts = []
+    parts, calls = [], []
     for item in raw["output"]:
         if not isinstance(item, dict):
             raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned invalid output.")
+        if item.get("type") == "function_call" and allow_tools:
+            if not all(isinstance(item.get(k), str) and item[k] for k in ("call_id", "name", "arguments")):
+                raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned an invalid function call.")
+            calls.append({"id": item["call_id"], "type": "function", "function": {"name": item["name"], "arguments": item["arguments"]}})
+            continue
         if item.get("type") != "message":
             continue
         if item.get("role") != "assistant" or not isinstance(item.get("content"), list):
@@ -41,11 +46,13 @@ def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
                 raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned invalid text.")
             parts.append(part["text"])
     text = "".join(parts)
-    if not text.strip() and not incomplete:
+    if not text.strip() and not incomplete and not calls:
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned an empty response.")
     if structured and not incomplete:
         text = unwrap_result(text)
     result: dict[str, Any] = {"message": {"content": text}, "done_reason": "length" if incomplete else "stop"}
+    if calls:
+        result["message"]["tool_calls"] = calls
     usage = raw.get("usage")
     if usage is not None:
         if not isinstance(usage, dict):
@@ -74,14 +81,29 @@ class OpenAITransport:
             raise ChorusError("MODEL_UNAVAILABLE", "Set CHORUS_API_KEY in the Chorus backend environment and restart Chorus to use OpenAI.")
         return self.api_key
 
-    async def __call__(self, model: str, messages: list[dict[str, str]], *, output: int = 300, format: dict[str, Any] | None = None, phase: str = "", attempt: int = 1, run_id: str = "") -> dict[str, Any]:
+    async def __call__(self, model: str, messages: list[dict[str, str]], *, output: int = 300, format: dict[str, Any] | None = None, phase: str = "", attempt: int = 1, run_id: str = "", tools: list[dict] | None = None) -> dict[str, Any]:
         key = self.require_key()
-        assert_budget(messages, output, format=strict_schema(format) if format is not None else None)
+        budget_schema = {"tools": tools, "format": format} if tools else strict_schema(format) if format is not None else None
+        assert_budget(messages, output, format=budget_schema)
         started = time.monotonic()
         outcome = "success"
         result: dict[str, Any] = {}
-        inputs, cache_options = openai_options(model, messages, phase)
+        converted = []
+        for message in messages:
+            if message.get("role") == "tool":
+                converted.append({"type": "function_call_output", "call_id": message["tool_call_id"], "output": message["content"]})
+            elif message.get("tool_calls"):
+                if message.get("content"):
+                    converted.append({"role": "assistant", "content": message["content"]})
+                for call in message["tool_calls"]:
+                    converted.append({"type": "function_call", "call_id": call["id"], "name": call["function"]["name"], "arguments": call["function"]["arguments"]})
+            else:
+                converted.append(message)
+        inputs, cache_options = openai_options(model, converted, phase)
         payload: dict[str, Any] = {"model": model, "input": inputs, "max_output_tokens": output, "reasoning": {"effort": "none"}, "store": False, "stream": False, **cache_options}
+        if tools:
+            payload["tools"] = [{"type": "function", "name": t["function"]["name"], "description": t["function"]["description"], "parameters": t["function"]["parameters"], "strict": True} for t in tools]
+            payload["parallel_tool_calls"] = False
         if format is not None:
             payload["text"] = {"format": {"type": "json_schema", "name": "chorus_result", "strict": True, "schema": strict_schema(format)}}
         try:
@@ -99,7 +121,7 @@ class OpenAITransport:
                 raw = response.json()
             except ValueError as error:
                 raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned unreadable JSON.") from error
-            result = normalize_response(raw, format is not None)
+            result = normalize_response(raw, format is not None, bool(tools))
             return result
         except (TimeoutError, httpx.TimeoutException) as error:
             outcome = "TIMEOUT"

@@ -39,7 +39,7 @@ def embedded_error(value: Any) -> ChorusError:
     return request_error(status if type(status) is int and 400 <= status <= 599 else 502)
 
 
-def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
+def normalize_response(raw: Any, structured: bool, allow_tools: bool = False) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenRouter returned an invalid response.")
     if raw.get("error") is not None:
@@ -51,16 +51,21 @@ def normalize_response(raw: Any, structured: bool) -> dict[str, Any]:
     if choice.get("error") is not None:
         raise embedded_error(choice["error"])
     reason, message = choice.get("finish_reason"), choice.get("message")
-    if not isinstance(reason, str) or reason not in {"stop", "length"} or not isinstance(message, dict) or message.get("role") != "assistant":
+    if not isinstance(reason, str) or reason not in ({"stop", "length", "tool_calls"} if allow_tools else {"stop", "length"}) or not isinstance(message, dict) or message.get("role") != "assistant":
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenRouter could not complete a valid text response.")
-    if message.get("refusal") or message.get("tool_calls"):
+    if message.get("refusal") or message.get("tool_calls") and not allow_tools:
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenRouter returned a refusal or unexpected tool call. Saved work is preserved.")
     content = message.get("content")
-    if content is None and reason == "length":
+    if content is None and (reason == "length" or allow_tools and message.get("tool_calls")):
         content = ""
-    if not isinstance(content, str) or not content.strip() and reason != "length":
+    if not isinstance(content, str) or not content.strip() and reason != "length" and not (allow_tools and message.get("tool_calls")):
         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenRouter returned invalid or empty text.")
     result: dict[str, Any] = {"message": {"content": unwrap_result(content) if structured and reason != "length" else content}, "done_reason": reason}
+    if allow_tools and message.get("tool_calls"):
+        calls = message["tool_calls"]
+        if not isinstance(calls, list) or len(calls) > 16 or any(not isinstance(c, dict) or not isinstance(c.get("id"), str) or not isinstance(c.get("function"), dict) or not isinstance(c["function"].get("name"), str) or not isinstance(c["function"].get("arguments"), str) for c in calls):
+            raise ChorusError("INVALID_MODEL_RESPONSE", "OpenRouter returned invalid tool calls.")
+        result["message"]["tool_calls"] = [{"id": c["id"], "type": "function", "function": {"name": c["function"]["name"], "arguments": c["function"]["arguments"]}} for c in calls]
     usage = raw.get("usage")
     if usage is not None:
         if not isinstance(usage, dict):
@@ -90,15 +95,18 @@ class OpenRouterTransport:
             raise ChorusError("MODEL_UNAVAILABLE", "Set OPENROUTER_API_KEY in the Chorus backend environment and restart Chorus to use OpenRouter.")
         return key
 
-    async def __call__(self, model: str, messages: list[dict[str, str]], *, output: int = 300, format: dict[str, Any] | None = None, phase: str = "", attempt: int = 1, run_id: str = "") -> dict[str, Any]:
+    async def __call__(self, model: str, messages: list[dict[str, str]], *, output: int = 300, format: dict[str, Any] | None = None, phase: str = "", attempt: int = 1, run_id: str = "", tools: list[dict] | None = None) -> dict[str, Any]:
         key = self.require_key()
         reasoning_allowance = REASONING_ALLOWANCE if model in REASONING_MODELS else 0
         completion_allowance = output + reasoning_allowance
-        assert_budget(messages, completion_allowance, format=strict_schema(format) if format is not None else None)
+        assert_budget(messages, completion_allowance, format={"tools": tools, "format": format} if tools else strict_schema(format) if format is not None else None)
         started, outcome = time.monotonic(), "success"
         result: dict[str, Any] = {}
         reasoning = {"effort": "low", "exclude": True} if reasoning_allowance else {"enabled": False, "exclude": True}
         payload: dict[str, Any] = {"model": model, "messages": messages, "max_tokens": completion_allowance, "stream": False, "reasoning": reasoning}
+        if tools:
+            payload["tools"], payload["parallel_tool_calls"] = tools, False
+            payload["provider"] = {"require_parameters": True}
         identity = cache_identity(model, phase)
         if identity:
             payload["session_id"] = identity
@@ -114,7 +122,7 @@ class OpenRouterTransport:
                 raw = response.json()
             except ValueError as error:
                 raise ChorusError("INVALID_MODEL_RESPONSE", "OpenRouter returned unreadable JSON.") from error
-            result = normalize_response(raw, format is not None)
+            result = normalize_response(raw, format is not None, bool(tools))
             return result
         except (TimeoutError, httpx.TimeoutException) as error:
             outcome = "TIMEOUT"

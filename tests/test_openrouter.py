@@ -22,6 +22,26 @@ from tests.test_platform import command, settle
 MODELS = ["deepseek/deepseek-v4.1-flash-1017", "minimax/minimax-m3.1-flash", "z-ai/glm-5.3-flash"]
 
 
+@pytest.mark.parametrize("model", MODELS)
+async def test_native_tools_preserve_calls_results_and_usage(model):
+    from chorus.harness.tools import definitions
+    requests = []
+    async def handler(request):
+        body = json.loads(request.content)
+        requests.append(body)
+        if len(requests) == 1:
+            return httpx.Response(200, json={"choices": [{"finish_reason": "tool_calls", "message": {"role": "assistant", "content": None, "tool_calls": [{"id": "call_router", "type": "function", "function": {"name": "board_read", "arguments": '{"after":0,"limit":5}'}}]}}], "usage": {"prompt_tokens": 100, "completion_tokens": 20, "prompt_tokens_details": {"cached_tokens": 40}}})
+        assert body["messages"][-1]["tool_call_id"] == "call_router"
+        assert body["provider"]["require_parameters"] and not body["parallel_tool_calls"]
+        return httpx.Response(200, json=response("Cycle complete."))
+    adapter = OpenRouterTransport(transport=httpx.MockTransport(handler))
+    messages = [{"role": "system", "content": "Use the board."}]
+    result = await adapter(model, messages, tools=definitions())
+    assert result["usage_details"]["cachedInput"] == 40
+    messages += [{"role": "assistant", **result["message"]}, {"role": "tool", "tool_call_id": "call_router", "content": '{"records":[]}'}]
+    assert (await adapter(model, messages, tools=definitions()))["message"]["content"] == "Cycle complete."
+
+
 def response(text="A complete response.", **overrides):
     return {"choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": text}}], "usage": {"prompt_tokens": 20, "completion_tokens": 10}, **overrides}
 

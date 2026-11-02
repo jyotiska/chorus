@@ -45,7 +45,9 @@ async def models(svc: Service) -> list[ModelInfo]:
 
 
 @router.post("/sessions", response_model=Snapshot, status_code=201)
-async def create(config: SessionConfig, svc: Service) -> Snapshot:
+async def create(request: Request, config: SessionConfig, svc: Service) -> Snapshot:
+    if not request.app.state.legacy_writes:
+        raise ChorusError("VERSION_MISMATCH", "New sessions use the independent harness at /api/v2/sessions. Legacy sessions remain readable and exportable.", 409)
     return svc.create(config)
 
 
@@ -60,7 +62,9 @@ async def session(session_id: str, svc: Service) -> Snapshot:
 
 
 @router.post("/sessions/{session_id}/commands", response_model=Snapshot)
-async def command(session_id: str, body: Command, svc: Service) -> Snapshot:
+async def command(request: Request, session_id: str, body: Command, svc: Service) -> Snapshot:
+    if not request.app.state.legacy_writes:
+        raise ChorusError("VERSION_MISMATCH", "Legacy sessions are read-only. Start a new harness session.", 409)
     return svc.command(session_id, body)
 
 

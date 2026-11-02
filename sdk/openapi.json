@@ -276,7 +276,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/ModelInfo"
+                    "$ref": "#/components/schemas/chorus__contracts__ModelInfo"
                   },
                   "type": "array",
                   "title": "Response Models Api V1 Models Get"
@@ -892,6 +892,832 @@
           }
         }
       }
+    },
+    "/api/v2/catalog": {
+      "get": {
+        "summary": "Catalog",
+        "operationId": "catalog_api_v2_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarnessCatalog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/assets/{agent_id}/{asset}": {
+      "get": {
+        "summary": "Asset",
+        "operationId": "asset_api_v2_assets__agent_id___asset__get",
+        "parameters": [
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          },
+          {
+            "name": "asset",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "portrait.svg",
+                "sprite.svg"
+              ],
+              "type": "string",
+              "title": "Asset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions": {
+      "get": {
+        "summary": "Sessions",
+        "operationId": "sessions_api_v2_sessions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/HarnessSnapshot"
+                  },
+                  "type": "array",
+                  "title": "Response Sessions Api V2 Sessions Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create",
+        "operationId": "create_api_v2_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HarnessConfig-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarnessSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}": {
+      "get": {
+        "summary": "Get",
+        "operationId": "get_api_v2_sessions__sid__get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarnessSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/commands": {
+      "post": {
+        "summary": "Command",
+        "operationId": "command_api_v2_sessions__sid__commands_post",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HarnessCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarnessSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/records": {
+      "get": {
+        "summary": "Records",
+        "operationId": "records_api_v2_sessions__sid__records_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "board",
+                "summary",
+                "change",
+                "conversation",
+                "call",
+                "version",
+                "activity",
+                "diagnostic",
+                "assessment",
+                "tool",
+                "request",
+                "output"
+              ],
+              "type": "string",
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "After"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "agent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Agent"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/records/{record_id}": {
+      "get": {
+        "summary": "Record",
+        "operationId": "record_api_v2_sessions__sid__records__record_id__get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Record"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/usage": {
+      "get": {
+        "summary": "Usage",
+        "operationId": "usage_api_v2_sessions__sid__usage_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/export": {
+      "get": {
+        "summary": "Export",
+        "operationId": "export_api_v2_sessions__sid__export_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "markdown"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/events": {
+      "get": {
+        "summary": "Events",
+        "operationId": "events_api_v2_sessions__sid__events_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -1,
+              "default": -1,
+              "title": "After"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1236,7 +2062,7 @@
           },
           "models": {
             "items": {
-              "$ref": "#/components/schemas/ModelInfo"
+              "$ref": "#/components/schemas/chorus__contracts__ModelInfo"
             },
             "type": "array",
             "title": "Models"
@@ -1367,6 +2193,51 @@
         ],
         "title": "FinalJudgement"
       },
+      "Grade": {
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "scores": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 5,
+            "title": "Scores"
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 1800,
+            "minLength": 8,
+            "title": "Explanation"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidenceids"
+          },
+          "insufficientEvidence": {
+            "type": "boolean",
+            "title": "Insufficientevidence",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agentId",
+          "scores",
+          "explanation",
+          "evidenceIds",
+          "insufficientEvidence"
+        ],
+        "title": "Grade"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1379,6 +2250,440 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HarnessCatalog": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1"
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/Persona"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/Problem"
+            },
+            "type": "array",
+            "title": "Problems"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/chorus__harness__models__ModelInfo"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "defaultModel": {
+            "type": "string",
+            "title": "Defaultmodel",
+            "default": "gpt-6-luna"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "agents",
+          "problems",
+          "models",
+          "defaultModel"
+        ],
+        "title": "HarnessCatalog"
+      },
+      "HarnessCommand": {
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Commandid"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "start",
+              "pause",
+              "resume",
+              "stop"
+            ],
+            "title": "Action"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expectedrevision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "commandId",
+          "action",
+          "expectedRevision"
+        ],
+        "title": "HarnessCommand"
+      },
+      "HarnessConfig-Input": {
+        "properties": {
+          "problemId": {
+            "type": "string",
+            "title": "Problemid"
+          },
+          "participantIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 2,
+            "title": "Participantids"
+          },
+          "adversaryIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Adversaryids"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "default": "gpt-6-luna"
+          },
+          "maxTurnsPerAgent": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Maxturnsperagent",
+            "default": 10
+          },
+          "judgeEnabled": {
+            "type": "boolean",
+            "title": "Judgeenabled",
+            "default": true
+          },
+          "maxCallsPerTurn": {
+            "type": "integer",
+            "maximum": 16.0,
+            "minimum": 2.0,
+            "title": "Maxcallsperturn",
+            "default": 8
+          },
+          "maxToolsPerTurn": {
+            "type": "integer",
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Maxtoolsperturn",
+            "default": 16
+          },
+          "maxPostsPerTurn": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Maxpostsperturn",
+            "default": 3
+          },
+          "leaseSeconds": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 5.0,
+            "title": "Leaseseconds",
+            "default": 30
+          },
+          "maxLeaseHoldSeconds": {
+            "type": "integer",
+            "maximum": 180.0,
+            "minimum": 30.0,
+            "title": "Maxleaseholdseconds",
+            "default": 120
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "problemId",
+          "participantIds"
+        ],
+        "title": "HarnessConfig"
+      },
+      "HarnessConfig-Output": {
+        "properties": {
+          "problemId": {
+            "type": "string",
+            "title": "Problemid"
+          },
+          "participantIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 2,
+            "title": "Participantids"
+          },
+          "adversaryIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "title": "Adversaryids"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "default": "gpt-6-luna"
+          },
+          "maxTurnsPerAgent": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Maxturnsperagent",
+            "default": 10
+          },
+          "judgeEnabled": {
+            "type": "boolean",
+            "title": "Judgeenabled",
+            "default": true
+          },
+          "maxCallsPerTurn": {
+            "type": "integer",
+            "maximum": 16.0,
+            "minimum": 2.0,
+            "title": "Maxcallsperturn",
+            "default": 8
+          },
+          "maxToolsPerTurn": {
+            "type": "integer",
+            "maximum": 32.0,
+            "minimum": 1.0,
+            "title": "Maxtoolsperturn",
+            "default": 16
+          },
+          "maxPostsPerTurn": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Maxpostsperturn",
+            "default": 3
+          },
+          "leaseSeconds": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 5.0,
+            "title": "Leaseseconds",
+            "default": 30
+          },
+          "maxLeaseHoldSeconds": {
+            "type": "integer",
+            "maximum": 180.0,
+            "minimum": 30.0,
+            "title": "Maxleaseholdseconds",
+            "default": 120
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "problemId",
+          "participantIds",
+          "adversaryIds",
+          "model",
+          "maxTurnsPerAgent",
+          "judgeEnabled",
+          "maxCallsPerTurn",
+          "maxToolsPerTurn",
+          "maxPostsPerTurn",
+          "leaseSeconds",
+          "maxLeaseHoldSeconds"
+        ],
+        "title": "HarnessConfig"
+      },
+      "HarnessSnapshot": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision",
+            "default": 0
+          },
+          "sequence": {
+            "type": "integer",
+            "title": "Sequence",
+            "default": 0
+          },
+          "engineVersion": {
+            "type": "string",
+            "title": "Engineversion",
+            "default": "harness-v1"
+          },
+          "promptVersion": {
+            "type": "string",
+            "title": "Promptversion",
+            "default": "harness-v1-concise-board-1"
+          },
+          "catalogVersion": {
+            "type": "string",
+            "title": "Catalogversion",
+            "default": "1"
+          },
+          "generation": {
+            "type": "integer",
+            "title": "Generation",
+            "default": 0
+          },
+          "config": {
+            "$ref": "#/components/schemas/HarnessConfig-Output"
+          },
+          "problem": {
+            "$ref": "#/components/schemas/Problem"
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/Persona"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "workers": {
+            "items": {
+              "$ref": "#/components/schemas/Worker"
+            },
+            "type": "array",
+            "title": "Workers"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "running",
+              "reviewing",
+              "paused",
+              "completed",
+              "stopped"
+            ],
+            "title": "Status",
+            "default": "ready"
+          },
+          "canvas": {
+            "type": "string",
+            "title": "Canvas",
+            "default": ""
+          },
+          "canvasVersion": {
+            "type": "integer",
+            "title": "Canvasversion",
+            "default": 0
+          },
+          "boardCount": {
+            "type": "integer",
+            "title": "Boardcount",
+            "default": 0
+          },
+          "changeCount": {
+            "type": "integer",
+            "title": "Changecount",
+            "default": 0
+          },
+          "lease": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LeaseView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "endedEarly": {
+            "type": "boolean",
+            "title": "Endedearly",
+            "default": false
+          },
+          "frozenSequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frozensequence"
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Verification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JudgeReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "default": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "Updatedat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "sequence",
+          "engineVersion",
+          "promptVersion",
+          "catalogVersion",
+          "generation",
+          "config",
+          "problem",
+          "agents",
+          "workers",
+          "status",
+          "canvas",
+          "canvasVersion",
+          "boardCount",
+          "changeCount",
+          "lease",
+          "endedEarly",
+          "frozenSequence",
+          "verification",
+          "report",
+          "error",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "HarnessSnapshot"
       },
       "Journal": {
         "properties": {
@@ -1416,71 +2721,161 @@
         ],
         "title": "Journal"
       },
-      "ModelInfo": {
+      "JudgeReport": {
+        "properties": {
+          "rubricVersion": {
+            "type": "string",
+            "title": "Rubricversion",
+            "default": "1"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "conversationScores": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 5,
+            "title": "Conversationscores"
+          },
+          "conversationExplanation": {
+            "type": "string",
+            "title": "Conversationexplanation"
+          },
+          "conversationEvidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Conversationevidenceids"
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/Grade"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "coveredRecordIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Coveredrecordids"
+          },
+          "completedAt": {
+            "type": "string",
+            "title": "Completedat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rubricVersion",
+          "summary",
+          "conversationScores",
+          "conversationExplanation",
+          "conversationEvidenceIds",
+          "agents",
+          "coveredRecordIds",
+          "completedAt"
+        ],
+        "title": "JudgeReport"
+      },
+      "LeaseView": {
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "expiresAt": {
+            "type": "string",
+            "title": "Expiresat"
+          },
+          "fencing": {
+            "type": "integer",
+            "title": "Fencing"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agentId",
+          "expiresAt",
+          "fencing"
+        ],
+        "title": "LeaseView"
+      },
+      "Persona": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "label": {
+          "name": {
             "type": "string",
-            "title": "Label"
+            "title": "Name"
           },
-          "provider": {
+          "role": {
             "type": "string",
-            "enum": [
-              "ollama",
-              "openai",
-              "openrouter"
-            ],
-            "title": "Provider",
-            "default": "ollama"
+            "title": "Role"
           },
-          "installed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Installed"
+          "domain": {
+            "type": "string",
+            "title": "Domain"
           },
-          "available": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Available"
+          "introduction": {
+            "type": "string",
+            "title": "Introduction"
           },
-          "unavailableReason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Unavailablereason"
+          "personality": {
+            "type": "string",
+            "title": "Personality"
+          },
+          "traits": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Traits"
+          },
+          "strengths": {
+            "type": "string",
+            "title": "Strengths"
+          },
+          "weaknesses": {
+            "type": "string",
+            "title": "Weaknesses"
+          },
+          "avatarBrief": {
+            "type": "string",
+            "title": "Avatarbrief"
+          },
+          "avatarVersion": {
+            "type": "string",
+            "title": "Avatarversion",
+            "default": "1"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "id",
-          "label",
-          "provider",
-          "installed",
-          "available",
-          "unavailableReason"
+          "name",
+          "role",
+          "domain",
+          "introduction",
+          "personality",
+          "traits",
+          "strengths",
+          "weaknesses",
+          "avatarBrief",
+          "avatarVersion"
         ],
-        "title": "ModelInfo"
+        "title": "Persona"
       },
       "Personality": {
         "properties": {
@@ -1512,6 +2907,132 @@
           "challengeResponse"
         ],
         "title": "Personality"
+      },
+      "Problem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "statement": {
+            "type": "string",
+            "title": "Statement"
+          },
+          "answerSchema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Answerschema"
+          },
+          "participantIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Participantids"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "domain",
+          "statement",
+          "answerSchema",
+          "participantIds",
+          "version"
+        ],
+        "title": "Problem"
+      },
+      "Record": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "sequence": {
+            "type": "integer",
+            "title": "Sequence"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "turn": {
+            "type": "integer",
+            "title": "Turn"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Data"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "sequence",
+          "kind",
+          "agentId",
+          "turn",
+          "createdAt",
+          "data"
+        ],
+        "title": "Record"
+      },
+      "RecordPage": {
+        "properties": {
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "cursor": {
+            "type": "integer",
+            "title": "Cursor"
+          },
+          "highWater": {
+            "type": "integer",
+            "title": "Highwater"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "title": "Hasmore"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "records",
+          "cursor",
+          "highWater",
+          "hasMore"
+        ],
+        "title": "RecordPage"
       },
       "Requirement": {
         "properties": {
@@ -2103,6 +3624,157 @@
         ],
         "title": "TurnTelemetry"
       },
+      "Usage": {
+        "properties": {
+          "callCount": {
+            "type": "integer",
+            "title": "Callcount",
+            "default": 0
+          },
+          "inputTokens": {
+            "type": "integer",
+            "title": "Inputtokens",
+            "default": 0
+          },
+          "outputTokens": {
+            "type": "integer",
+            "title": "Outputtokens",
+            "default": 0
+          },
+          "cachedTokens": {
+            "type": "integer",
+            "title": "Cachedtokens",
+            "default": 0
+          },
+          "unknownInputCalls": {
+            "type": "integer",
+            "title": "Unknowninputcalls",
+            "default": 0
+          },
+          "unknownOutputCalls": {
+            "type": "integer",
+            "title": "Unknownoutputcalls",
+            "default": 0
+          },
+          "unknownCacheCalls": {
+            "type": "integer",
+            "title": "Unknowncachecalls",
+            "default": 0
+          },
+          "cacheCoveredCalls": {
+            "type": "integer",
+            "title": "Cachecoveredcalls",
+            "default": 0
+          },
+          "cacheUtilizationPercent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cacheutilizationpercent"
+          },
+          "cacheUsed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cacheused"
+          },
+          "totalLatencyMs": {
+            "type": "integer",
+            "title": "Totallatencyms",
+            "default": 0
+          },
+          "meanLatencyMs": {
+            "type": "number",
+            "title": "Meanlatencyms",
+            "default": 0
+          },
+          "p95LatencyMs": {
+            "type": "integer",
+            "title": "P95Latencyms",
+            "default": 0
+          },
+          "reportedCostUSD": {
+            "type": "number",
+            "title": "Reportedcostusd",
+            "default": 0
+          },
+          "estimatedCostUSD": {
+            "type": "number",
+            "title": "Estimatedcostusd",
+            "default": 0
+          },
+          "unknownCostCalls": {
+            "type": "integer",
+            "title": "Unknowncostcalls",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "callCount",
+          "inputTokens",
+          "outputTokens",
+          "cachedTokens",
+          "unknownInputCalls",
+          "unknownOutputCalls",
+          "unknownCacheCalls",
+          "cacheCoveredCalls",
+          "cacheUtilizationPercent",
+          "cacheUsed",
+          "totalLatencyMs",
+          "meanLatencyMs",
+          "p95LatencyMs",
+          "reportedCostUSD",
+          "estimatedCostUSD",
+          "unknownCostCalls"
+        ],
+        "title": "Usage"
+      },
+      "UsageReport": {
+        "properties": {
+          "agents": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Usage"
+            },
+            "type": "object",
+            "title": "Agents"
+          },
+          "participants": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "judge": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "total": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "wallTimeMs": {
+            "type": "integer",
+            "title": "Walltimems"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agents",
+          "participants",
+          "judge",
+          "total",
+          "wallTimeMs"
+        ],
+        "title": "UsageReport"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -2143,6 +3815,44 @@
         ],
         "title": "ValidationError"
       },
+      "Verification": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "correct",
+              "incorrect",
+              "unavailable"
+            ],
+            "title": "Status"
+          },
+          "checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1"
+          },
+          "canvasVersion": {
+            "type": "integer",
+            "title": "Canvasversion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "checks",
+          "version",
+          "canvasVersion"
+        ],
+        "title": "Verification"
+      },
       "Work": {
         "properties": {
           "kind": {
@@ -2173,6 +3883,245 @@
           "speakerId"
         ],
         "title": "Work"
+      },
+      "Worker": {
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "turnsStarted": {
+            "type": "integer",
+            "title": "Turnsstarted",
+            "default": 0
+          },
+          "turnsCompleted": {
+            "type": "integer",
+            "title": "Turnscompleted",
+            "default": 0
+          },
+          "currentTurnIndex": {
+            "type": "integer",
+            "title": "Currentturnindex",
+            "default": 0
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "waiting_model",
+              "waiting_lock",
+              "paused",
+              "finished",
+              "capped",
+              "failed"
+            ],
+            "title": "State",
+            "default": "queued"
+          },
+          "operationId": {
+            "type": "string",
+            "title": "Operationid",
+            "default": ""
+          },
+          "callsUsed": {
+            "type": "integer",
+            "title": "Callsused",
+            "default": 0
+          },
+          "toolsUsed": {
+            "type": "integer",
+            "title": "Toolsused",
+            "default": 0
+          },
+          "postsUsed": {
+            "type": "integer",
+            "title": "Postsused",
+            "default": 0
+          },
+          "editsUsed": {
+            "type": "integer",
+            "title": "Editsused",
+            "default": 0
+          },
+          "repairsUsed": {
+            "type": "integer",
+            "title": "Repairsused",
+            "default": 0
+          },
+          "boardCursor": {
+            "type": "integer",
+            "title": "Boardcursor",
+            "default": 0
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          },
+          "turnStartedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnstartedat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agentId",
+          "turnsStarted",
+          "turnsCompleted",
+          "currentTurnIndex",
+          "state",
+          "operationId",
+          "callsUsed",
+          "toolsUsed",
+          "postsUsed",
+          "editsUsed",
+          "repairsUsed",
+          "boardCursor",
+          "reason",
+          "turnStartedAt"
+        ],
+        "title": "Worker"
+      },
+      "chorus__contracts__ModelInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "ollama",
+              "openai",
+              "openrouter"
+            ],
+            "title": "Provider",
+            "default": "ollama"
+          },
+          "installed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed"
+          },
+          "available": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "provider",
+          "installed",
+          "available",
+          "unavailableReason"
+        ],
+        "title": "ModelInfo"
+      },
+      "chorus__harness__models__ModelInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "ollama",
+              "openai",
+              "openrouter"
+            ],
+            "title": "Provider"
+          },
+          "available": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
+          },
+          "compatibilityNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compatibilitynote"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "provider",
+          "available",
+          "unavailableReason",
+          "compatibilityNote"
+        ],
+        "title": "ModelInfo"
       }
     }
   }
