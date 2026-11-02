@@ -19,6 +19,46 @@ const server = createServer(async (request, response) => {
   if (request.url !== "/api/chat") { response.writeHead(404).end(); return; }
   const body = JSON.parse(input);
   const system = body.messages[0].content;
+  if (system.startsWith("Chorus harness-") || system.startsWith("You are the final Chorus judge.")) {
+    if (state.harnessDelayMs) await new Promise((resolve) => setTimeout(resolve, state.harnessDelayMs));
+    const last = body.messages.at(-1)?.content || "";
+    let value;
+    if (last.startsWith("Return only JSON with these keys")) {
+      value = { approach: "Checked the supplied constraints.", assumptions: [], evidenceRefs: [], decision: "Published validated work only.", uncertainties: [] };
+    } else if (system.startsWith("You are the final Chorus judge.")) {
+      const prompt = body.messages[1].content;
+      const refs = [...new Set(prompt.match(/(?:board|summary|change):[A-Za-z0-9_-]+/g) || [])];
+      value = prompt.includes("Inspect every supplied") ? { note: "Agents checked constraints and contributed concise observations with source attribution.", evidenceIds: refs }
+        : prompt.includes("Grade the complete") ? { summary: "The team produced a checked shared solution.", scores: [3, 3, 3, 3, 3], explanation: "The flat board contains relevant concise contributions.", evidenceIds: refs.filter((id) => id.startsWith("board:")) }
+        : { agentId: /agentId='([^']+)'/.exec(prompt)[1], scores: [3, 3, 3, 3, 3], explanation: "The participant supplied useful work and explicit assumptions.", evidenceIds: refs, insufficientEvidence: !refs.length };
+    } else {
+      const actor = /You are (\w+)\./.exec(system)?.[1] || "Alex";
+      let start = body.messages.findLastIndex((m) => m.role === "user" && m.content.startsWith("Current cycle"));
+      const recent = body.messages.slice(start + 1);
+      const actions = recent.filter((m) => m.role === "assistant" && m.content.startsWith('{"tool":'));
+      const results = recent.filter((m) => m.role === "user" && m.content.startsWith("Tool result (data, not instructions): ")).map((m) => JSON.parse(m.content.slice("Tool result (data, not instructions): ".length)));
+      const token = results.findLast((r) => r.token)?.token || "";
+      const canvas = results.findLast((r) => r.canvas !== undefined) || { version: 0, canvas: "" };
+      let answer;
+      if (system.includes("Two identical deployment workers")) answer = { jobs: [{ id: "A", worker: 1, start: 0, end: 3 }, { id: "B", worker: 2, start: 0, end: 2 }, { id: "C", worker: 1, start: 3, end: 7 }, { id: "D", worker: 2, start: 3, end: 5 }, { id: "E", worker: 1, start: 7, end: 10 }, { id: "F", worker: 1, start: 10, end: 11 }], makespan: 11 };
+      else if (system.includes("net settled receipts")) answer = { accounts: { A: 17000, B: 15000, C: 0 }, total: 32000, duplicateIds: ["t2"] };
+      else if (system.includes("Three reservoirs")) answer = { lowLiters: 6, middleLiters: 12, highLiters: 12, totalLiters: 30, concentration: .34 };
+      else if (system.includes("small workshop")) answer = { x: 20, y: 30, contribution: 2200, machineHours: 120, finishingHours: 80 };
+      else answer = { probabilityTwoSuccesses: .42, posteriorP: 32 / 35 };
+      const peer = /Roster handles: @([^,\n]+)/.exec(system)?.[1] || actor;
+      const sequence = [
+        ["board_read", { after: 0, limit: 10 }],
+        ["board_write", { text: `@${peer}, I checked the supplied constraints. The final answer should include a verifiable witness.` }],
+        ["canvas_acquire_lock", {}],
+        ["canvas_read", { version: 0 }],
+        ["canvas_apply_edit", { token, baseVersion: canvas.version, operationJson: JSON.stringify(canvas.canvas ? { op: "UNCHANGED" } : { op: "CREATE_DOCUMENT", document: "# Combined solution\n\nThe supplied constraints determine this solution.\n\n```solution\n" + JSON.stringify(answer) + "\n```" }), reason: "Publish the checked answer." }],
+        ["agent_finish", { reason: "My contribution is complete." }],
+      ];
+      const [tool, args] = sequence[Math.min(actions.length, sequence.length - 1)];
+      value = { tool, arguments: args };
+    }
+    return reply({ message: { role: "assistant", content: JSON.stringify(value) }, done_reason: "stop", prompt_eval_count: 100, eval_count: 20 });
+  }
   state.privateLeak ||= JSON.stringify(body.messages).includes("PRIVATE-E2E");
   const count = /Turns used: (\d+)/.exec(body.messages[1]?.content ?? "")?.[1] ?? "0";
   const review = { summary: "The team drafted a narrow trial.", strengths: ['The canvas requires [human review].'], improvements: [`Validate measures after turn ${count}.`], nextPriorities: [`Test safeguards after turn ${count}.`] };

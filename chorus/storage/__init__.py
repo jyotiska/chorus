@@ -82,12 +82,13 @@ class Store:
             raise
 
     def migrate(self) -> None:
+        from chorus.harness.storage import TABLES
         # Migration 1 is the initial schema. Later versions must supply an explicit
         # ordered upgrade here rather than changing existing tables via create_all.
         SchemaVersion.__table__.create(self.engine, checkfirst=True)
         with Session(self.engine) as db:
             version = db.scalar(select(SchemaVersion.id).order_by(SchemaVersion.id.desc()))
-            if version not in (None, 1, 2):
+            if version not in (None, 1, 2, 3):
                 raise RuntimeError("Unsupported Chorus database version.")
             if version is None:
                 Base.metadata.create_all(self.engine)
@@ -97,6 +98,12 @@ class Store:
             if version == 1:
                 CallRow.__table__.create(self.engine, checkfirst=True)
                 db.add(SchemaVersion(id=2))
+                db.commit()
+                version = 2
+            if version == 2:
+                for table in TABLES:
+                    table.__table__.create(self.engine, checkfirst=True)
+                db.add(SchemaVersion(id=3))
                 db.commit()
 
     def create(self, snapshot: Snapshot) -> Snapshot:

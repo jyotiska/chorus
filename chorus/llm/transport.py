@@ -18,7 +18,9 @@ JOURNAL_TIMEOUT = 30
 
 def input_estimate(messages: list[dict[str, str]], format: dict[str, Any] | None = None) -> int:
     schema = json.dumps(format, ensure_ascii=False, separators=(",", ":")) if format is not None else "{}"
-    return len(("".join(m.get("content", "") for m in messages) + schema).encode("utf-8")) + len(messages) * 128
+    # Tool arguments/results and non-text content are part of the actual input.
+    text = "".join(m.get("content", "") if isinstance(m.get("content", ""), str) and not m.get("tool_calls") and m.get("role") != "tool" else json.dumps(m, ensure_ascii=False) for m in messages)
+    return len((text + schema).encode("utf-8")) + len(messages) * 128
 
 
 def assert_budget(messages: list[dict[str, str]], output: int = 300, *, format: dict[str, Any] | None = None) -> None:
