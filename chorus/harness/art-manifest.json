@@ -1,0 +1,552 @@
+{
+  "alex": {
+    "portrait": "alex-portrait.svg",
+    "sprite": "alex-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "avery": {
+    "portrait": "avery-portrait.svg",
+    "sprite": "avery-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "jordan": {
+    "portrait": "jordan-portrait.svg",
+    "sprite": "jordan-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "riley": {
+    "portrait": "riley-portrait.svg",
+    "sprite": "riley-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "morgan": {
+    "portrait": "morgan-portrait.svg",
+    "sprite": "morgan-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "casey": {
+    "portrait": "casey-portrait.svg",
+    "sprite": "casey-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "quinn": {
+    "portrait": "quinn-portrait.svg",
+    "sprite": "quinn-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "taylor": {
+    "portrait": "taylor-portrait.svg",
+    "sprite": "taylor-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "cameron": {
+    "portrait": "cameron-portrait.svg",
+    "sprite": "cameron-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "rowan": {
+    "portrait": "rowan-portrait.svg",
+    "sprite": "rowan-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "parker": {
+    "portrait": "parker-portrait.svg",
+    "sprite": "parker-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "sage": {
+    "portrait": "sage-portrait.svg",
+    "sprite": "sage-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "river": {
+    "portrait": "river-portrait.svg",
+    "sprite": "river-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "skyler": {
+    "portrait": "skyler-portrait.svg",
+    "sprite": "skyler-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "reese": {
+    "portrait": "reese-portrait.svg",
+    "sprite": "reese-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "finley": {
+    "portrait": "finley-portrait.svg",
+    "sprite": "finley-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "hayden": {
+    "portrait": "hayden-portrait.svg",
+    "sprite": "hayden-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "emerson": {
+    "portrait": "emerson-portrait.svg",
+    "sprite": "emerson-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "ellis": {
+    "portrait": "ellis-portrait.svg",
+    "sprite": "ellis-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "arden": {
+    "portrait": "arden-portrait.svg",
+    "sprite": "arden-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "remy": {
+    "portrait": "remy-portrait.svg",
+    "sprite": "remy-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "blake": {
+    "portrait": "blake-portrait.svg",
+    "sprite": "blake-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "drew": {
+    "portrait": "drew-portrait.svg",
+    "sprite": "drew-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "robin": {
+    "portrait": "robin-portrait.svg",
+    "sprite": "robin-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "jamie": {
+    "portrait": "jamie-portrait.svg",
+    "sprite": "jamie-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "sam": {
+    "portrait": "sam-portrait.svg",
+    "sprite": "sam-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "charlie": {
+    "portrait": "charlie-portrait.svg",
+    "sprite": "charlie-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "devon": {
+    "portrait": "devon-portrait.svg",
+    "sprite": "devon-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "lee": {
+    "portrait": "lee-portrait.svg",
+    "sprite": "lee-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "frankie": {
+    "portrait": "frankie-portrait.svg",
+    "sprite": "frankie-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "sidney": {
+    "portrait": "sidney-portrait.svg",
+    "sprite": "sidney-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "sasha": {
+    "portrait": "sasha-portrait.svg",
+    "sprite": "sasha-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "ash": {
+    "portrait": "ash-portrait.svg",
+    "sprite": "ash-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "jules": {
+    "portrait": "jules-portrait.svg",
+    "sprite": "jules-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "ren": {
+    "portrait": "ren-portrait.svg",
+    "sprite": "ren-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "kit": {
+    "portrait": "kit-portrait.svg",
+    "sprite": "kit-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "mika": {
+    "portrait": "mika-portrait.svg",
+    "sprite": "mika-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "ari": {
+    "portrait": "ari-portrait.svg",
+    "sprite": "ari-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "shiloh": {
+    "portrait": "shiloh-portrait.svg",
+    "sprite": "shiloh-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "marlowe": {
+    "portrait": "marlowe-portrait.svg",
+    "sprite": "marlowe-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "lane": {
+    "portrait": "lane-portrait.svg",
+    "sprite": "lane-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "blair": {
+    "portrait": "blair-portrait.svg",
+    "sprite": "blair-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "dallas": {
+    "portrait": "dallas-portrait.svg",
+    "sprite": "dallas-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "peyton": {
+    "portrait": "peyton-portrait.svg",
+    "sprite": "peyton-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "scout": {
+    "portrait": "scout-portrait.svg",
+    "sprite": "scout-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "winter": {
+    "portrait": "winter-portrait.svg",
+    "sprite": "winter-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "phoenix": {
+    "portrait": "phoenix-portrait.svg",
+    "sprite": "phoenix-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "justice": {
+    "portrait": "justice-portrait.svg",
+    "sprite": "justice-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "indigo": {
+    "portrait": "indigo-portrait.svg",
+    "sprite": "indigo-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  },
+  "oakley": {
+    "portrait": "oakley-portrait.svg",
+    "sprite": "oakley-sprite.svg",
+    "frames": 16,
+    "states": [
+      "idle",
+      "working",
+      "posting",
+      "editing"
+    ]
+  }
+}

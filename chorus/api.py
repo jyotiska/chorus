@@ -22,6 +22,8 @@ from chorus.services.catalog import load_catalog
 from chorus.services.errors import ChorusError
 from chorus.services.sessions import SessionService
 from chorus.storage import Store
+from chorus.harness.service import HarnessService
+from chorus.harness.routes import router as harness_router
 
 
 def create_app(database: str | None = None, call: ModelCall | None = None, *, pacing: float | None = None) -> FastAPI:
@@ -30,9 +32,12 @@ def create_app(database: str | None = None, call: ModelCall | None = None, *, pa
         store = Store(database or os.getenv("CHORUS_DB", str(Path.home() / ".local/share/chorus/sessions.sqlite3")))
         catalog = load_catalog()
         app.state.service = SessionService(store, catalog, call or ProviderRouter(catalog), pacing=pacing if pacing is not None else float(os.getenv("CHORUS_PACING", "1.8")))
+        app.state.legacy_writes = call is not None or os.getenv("CHORUS_ENABLE_LEGACY_WRITES") == "1"
+        app.state.harness = HarnessService(store, call)
         try:
             yield
         finally:
+            await app.state.harness.close()
             await app.state.service.close()
             store.close()
     app = FastAPI(title="Chorus Platform", version="1.0.0", lifespan=lifespan, responses={400: {"model": APIError}, 409: {"model": APIError}, 502: {"model": APIError}})
@@ -64,6 +69,7 @@ def create_app(database: str | None = None, call: ModelCall | None = None, *, pa
     async def health() -> dict[str, str]:
         return {"status": "ok", "service": "chorus"}
     app.include_router(router)
+    app.include_router(harness_router)
     return app
 
 

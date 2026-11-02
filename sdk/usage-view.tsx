@@ -5,7 +5,6 @@ type Turn = Contracts["snapshot"]["turns"][number];
 type Telemetry = NonNullable<Turn["usageDetails"]>;
 const number = (value: number | null | undefined) => value == null ? "—" : value.toLocaleString("en-US");
 const percent = (part: number, total: number) => `${(100 * part / total).toFixed(1)}%`;
-const cost = (value: number | null | undefined) => value == null ? "—" : `$${value.toFixed(6)}`;
 
 export function UsageDetails({ details, totals, latencySeconds, className }: {
   details?: Telemetry | null;
@@ -45,10 +44,10 @@ export function UsageDetails({ details, totals, latencySeconds, className }: {
       <p>Cache reads are part of input. Reasoning tokens are part of output. Counts marked ~ are estimates; — means unavailable.</p>
       <div style={{ overflowX: "auto" }}><table>
         <caption>Model calls for this turn</caption>
-        <thead><tr>{["Phase / attempt", "Input", "Output", "Cached", "Cache writes", "Reasoning", "Cost", "Status"].map((label) => <th key={label} scope="col">{label}</th>)}</tr></thead>
+        <thead><tr>{["Phase / attempt", "Input", "Output", "Cached", "Cache writes", "Reasoning", "Status"].map((label) => <th key={label} scope="col">{label}</th>)}</tr></thead>
         <tbody>{calls.map((call) => <tr key={call.id}>
           <th scope="row" title={`${call.model} · ${call.route} · ${call.provider ?? "provider unavailable"} · ${call.requestId ?? "request ID unavailable"}`}>{call.phase} / {call.attempt}</th>
-          <td>{number(call.input)}</td><td>{number(call.output)}</td><td>{number(call.cachedInput)}</td><td>{number(call.cacheWriteInput)}</td><td>{number(call.reasoningOutput)}</td><td>{cost(call.costUSD)}</td>
+          <td>{number(call.input)}</td><td>{number(call.output)}</td><td>{number(call.cachedInput)}</td><td>{number(call.cacheWriteInput)}</td><td>{number(call.reasoningOutput)}</td>
           <td>{call.outcome === "success" ? call.accepted ? "Accepted" : call.rejectionReason ? `Rejected: ${call.rejectionReason}` : call.validationPassed ? "Validated · not published" : "Unpublished" : call.outcome}</td>
         </tr>)}</tbody>
       </table></div>

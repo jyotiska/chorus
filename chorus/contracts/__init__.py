@@ -276,6 +276,9 @@ class AppendSection(Contract):
 CanvasEdit = Annotated[Unchanged | CreateDocument | ReplaceSection | AppendSection, Field(discriminator="op")]
 
 
+from chorus.harness.models import HarnessContracts
+
+
 class Contracts(Contract):
     """Root for generating TypeScript declarations and runtime validators."""
     snapshot: Snapshot
@@ -283,4 +286,5 @@ class Contracts(Contract):
     command: Command
     catalog: Catalog
     journals: list[Journal]
+    harness: HarnessContracts
     error: APIError

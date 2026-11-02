@@ -218,7 +218,7 @@ def test_cli_uses_the_same_http_service_for_run_and_exports(tmp_path, model, mon
             assert response.is_success, response.text
             return response.json()
         monkeypatch.setattr(cli, "request", request)
-        result = CliRunner().invoke(cli.app, ["run", "ai-feature-launch", "--participants", "software-engineer,product-manager", "--turns", "1"])
+        result = CliRunner().invoke(cli.app, ["legacy-run", "ai-feature-launch", "--participants", "software-engineer,product-manager", "--turns", "1"])
         assert result.exit_code == 0, result.output
         assert "Proposed safeguards require human review." in result.output
         assert "PRIVATE-JOURNAL" not in result.output

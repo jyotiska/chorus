@@ -49,85 +49,102 @@ These questions connect the project to AI safety through evidence use, truthful 
 Chorus owns the execution rules, prompts, API contracts, model calls, validation, and persistent session records. Keeping these together gives the research a common foundation across different interfaces and problem settings.
 
 - **Chorus:** the Python framework and execution core, with an HTTP API and CLI.
-- **Nanoville:** a visual application for setting up scenarios, observing agent discussions, inspecting journals, and following a shared document.
-- **chorus-web:** an application for exploring scenarios, running discussions, and inspecting their outputs.
+- **chorus-web:** the primary interface for selecting problems and agents, running experiments, and inspecting their records and evaluation.
+- **Nanoville:** the same experiment workspace with an animated scene for up to fifty participants.
 
 Both applications are built on Chorus. The CLI provides another way to use the same core. Interface changes should preserve the execution rules and records needed to interpret a session.
 
-### What is implemented today
+### Independent agent harness
 
-The current engine incorporates the latest execution logic developed in Nanoville:
+The default harness has 50 first-name personas, five objectively checked problems, and GPT-6-Luna as its default model. Selecting a problem chooses five relevant agents; edit that roster before starting. Each agent has an independent turn cap and works through a flat, concise message board and a locked shared canvas.
 
-- Scenario and participant catalogs, with role descriptions and personality traits.
-- Agent discussions with shared public history and turn limits.
-- Session-specific private adversary assignments: selected participants receive an opposing goal for edits, speech, and journals; peers and all judge paths receive no assignment metadata. Assignments persist across reload/recovery and are visible to the human observer. Model behavior may still reveal the role or fail to follow it.
-- Persistent energy/confidence with explicit social style and challenge response. Completed public turns update bounded stats and record per-agent deltas/reasons; the agent's own state influences its next contribution. See Nanoville's README for the game rules. Observer journals never drive these values.
-- Private reflections are aware of post-turn state and recent changes, without having to narrate them. State is previewed without mutation before the atomic commit, so cancelled journals cannot spend energy or expose private reflections to public prompts.
-- A shared Markdown canvas with validated edits and preservation of supplied scenario evidence.
-- Separate observer journals, excluded from participant and judge context.
-- Optional judge checkpoints and a final assessment of the written deliverable.
-- Durable SQLite sessions, revisioned events, pause/resume/stop controls, and recovery after restart.
-- A FastAPI API, generated TypeScript contracts, a shared client, and a terminal CLI.
-- Per-response input/output/cache counts and context usage in both applications, with separate turn totals and a durable metadata-only model-call ledger. GPT uses direct OpenAI; other external models use OpenRouter with stable agent/phase cache identities.
-- Usage details distinguish rejected canvas/speech attempts from validated work discarded with a skipped slot. New rejections include safe validation feedback; skipped turns show aggregate cache reads and explicitly label the last attempted response context.
+Each technology, science, or business persona has a background introduction, personality, traits, strengths, weaknesses, and an original portrait. These details form part of its system prompt. A session supports 2–50 selected agents and 1–100 turns per agent, defaulting to ten. Agents run independently; provider request capacity limits simultaneous model calls without imposing a speaking order.
 
-These are the current building blocks for the research. Saved sessions and API event replay do not yet provide complete experimental reconstruction or deterministic model replay.
+Board posts are one or two sentences, at most 60 words and 400 characters. Agents can address another selected participant with @Name. A canvas edit requires an exclusive expiring lockfile lease and produces an attributed version/diff. Energy and confidence are removed from new runs.
 
-### What comes next
+SQLite stores session configuration, persona snapshots, conversations, structured reasoning summaries, tool traces, board messages, canvas history, model requests/outputs, per-call accounting, and final evaluation. Summaries describe stated decisions and assumptions; they do not expose private internal reasoning. The final judge can read new summaries; peers cannot. Historical observer journals retain their original visibility.
 
-Research development is organized around four priorities:
+Every model call records input/output/cached tokens, cache use and utilization, latency, outcome, and reported or estimated cost. Aggregates come from the unique call ledger and distinguish unknown metadata from zero. The final judge starts after all participants stop. Deterministic checks establish answer correctness; the judge separately grades board collaboration and each agent's observable work.
 
-1. **Trustworthy records:** exact model inputs and outputs, resolved configurations, usage accounting, and independent outcome checks.
-2. **Controlled differences:** separate mandates, private evidence, authority, incentives, and model assignments for individual agents.
-3. **Interventions and branches:** checkpoints, scheduled changes, human participation, and comparisons from a common recorded history.
-4. **Repeated studies:** condition assignment, repeated runs, budget controls, analysis exports, and research reports.
+### Five verifiable problems
 
-Human judging, enforced reward and penalty systems, private evidence assignments, experimental branching, and automated study batches remain planned work. The [research architecture](docs/chorus-architecture.md#9-implementation-sequence-and-completion-evidence) describes the development priorities and completion criteria.
+- `deployment-schedule`: schedule jobs under dependency and worker constraints, reaching the optimal completion time.
+- `transaction-ledger`: deduplicate transactions and reconcile account balances and net receipts.
+- `reservoir-mixture`: solve volume, ratio, and concentration constraints for three reservoirs.
+- `production-mix`: find an optimal integer production plan within resource and demand limits.
+- `process-inference`: calculate evidence probability and a Bayesian posterior from supplied observations.
+
+Each problem supplies its answer schema. The final canvas must contain exactly one fenced `solution` block holding the JSON answer. The checker evaluates format, constraints, and outcome independently of the narrative judge.
 
 ## Run Chorus
 
-Requirements: Python 3.11 or newer, a Unix-like environment for the current file locking, and either a running Ollama-compatible server with a supported model installed or a configured cloud API key (`CHORUS_API_KEY` for OpenAI or `OPENROUTER_API_KEY` for OpenRouter).
-
-From the repository root:
+Use Python 3.11+ and Node 24 for the frontends. From this repository:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
 cp -n .env.example .env
+```
+
+Preserve any existing `.env`. Configure `CHORUS_API_KEY` for Luna, `OPENROUTER_API_KEY` for OpenRouter, or `OLLAMA_HOST` for installed local models, then start the backend:
+
+```bash
 chorus serve
 ```
 
-The local API runs on **http://127.0.0.1:43187**, with interactive documentation at **http://127.0.0.1:43187/docs**.
+Keep credentials in Chorus's backend environment. Missing Luna access requires an explicit alternative selection. Ollama is needed only for local models.
 
-In another terminal, activate the environment and inspect the available configuration:
+The local API runs at **http://127.0.0.1:43187**. chorus-web runs at **43189** and Nanoville at **43188**. Both home pages use the new harness; Nanoville includes 50 custom animated sprites and a zoomable large-cast scene.
+
+In either sibling frontend, copy `.env.example` to `.env.local` if needed, run `npm ci`, then `npm run dev`. The server-side `CHORUS_API_URL` points to the backend. For production mode, run `npm run build` followed by `npm run start`. The backend health endpoint is `/health`, and interactive API documentation is at `/docs`.
 
 ```bash
-source .venv/bin/activate
 chorus catalog scenarios
 chorus catalog agents
 chorus catalog models
+chorus run production-mix --turns-per-agent 3
+chorus run transaction-ledger --participants quinn,reese,blair --turns-per-agent 2
+chorus inspect SESSION_ID --records summary --agent quinn
+chorus control SESSION_ID pause
+chorus control SESSION_ID resume
+chorus export SESSION_ID session.json --format json
+chorus export SESSION_ID solution.md --format markdown
 ```
 
-If `qwen3.5:4b-mlx` is reported as installed, a short exploratory session can be run with:
+The default CLI run uses the problem's relevant agents, Luna, and final judging. Use `--no-judge` to disable narrative grading while retaining deterministic verification, or `--model` to choose another configured model. `--turns` is rejected with a migration hint.
+
+## Session controls, records, and limits
+
+Pause cancels pending work and keeps committed posts, edits, summaries, and consumed budgets. Resume continues within those budgets. Stop ends participant work early and evaluates the saved result. Closing the browser leaves execution running; Back to setup pauses active work. Reload or `?session=SESSION_ID` restores a saved session. Stop the backend with Ctrl-C in its terminal; interrupted active sessions recover as paused on the next start.
+
+By default, each participant cycle permits eight model calls, sixteen tool actions, three board posts, and one accepted canvas edit. The canvas lock lease lasts thirty seconds, with a two-minute maximum hold. Failed or cancelled calls remain in accounting, and published work survives later cycle failures. Context overflow pauses the session while preserving its history.
+
+The judge reads the final canvas, board, changelog, and structured reasoning summaries after participant work finishes. It scores conversation and individual performance across five dimensions, each from zero to four, with source references. Failed or incomplete evaluation stays visible and can be resumed within its saved budget. The judge cannot edit participant work or override deterministic correctness.
+
+The default database is `~/.local/share/chorus/sessions.sqlite3`; set `CHORUS_DB` to use another path. Run one backend per database. SQLite records UTC timestamps and ordered sequences, including the problem and selected persona snapshots, final solution, all committed contributions, tool traces, and call accounting. JSON exports contain the complete session record, including reasoning summaries and stored model requests/outputs; Markdown exports contain the canvas.
+
+Set `CHORUS_CLOUD_CONCURRENCY` or `CHORUS_LOCAL_CONCURRENCY` to change provider request capacity (defaults: four and one). `CHORUS_RATES_JSON` configures exact-route cost estimates. Cached tokens are part of input tokens; aggregate cache utilization is token-weighted over calls with known metadata. Provider-call latency excludes capacity/lock waits. Reported charges, estimates, unknown values, and session wall time remain distinct.
+
+### Observed model limits
+
+The [live pilot](docs/live-harness-pilot-2026-11-02.json) records two-agent checks, not reliability at fifty paid agents. Luna and DeepSeek completed their runs and final reports; Luna's production answer failed deterministic verification, while DeepSeek's passed. Local Qwen 0.8B produced no board/canvas contributions and paused on invalid judge output. Its selector includes that compatibility caveat. The harness preserves failures and does not substitute models automatically.
+
+## Architecture and development
+
+The new API is `/api/v2`; its implementation is in `chorus/harness/`. Model execution, tool authorization, scheduling, accounting, and persistence remain backend responsibilities. A single Chorus process owns SQLite; model requests run outside database transactions. Concurrent workers serialize short commits and acquire the document lock only for canvas work.
+
+The canonical shared UI/client lives under `sdk/harness-*`; `scripts/export_contracts.py` regenerates contracts and copies shared files into both frontends. Modify the source, never generated frontend copies. Install Nanoville's locked dependencies first: the exporter uses its `json-schema-to-typescript` package and Node 24. From this repository, regenerate with:
 
 ```bash
-chorus run ai-feature-launch \
-  --participants software-engineer,product-manager \
-  --model qwen3.5:4b-mlx \
-  --turns 5
+.venv/bin/python scripts/export_contracts.py
+.venv/bin/python scripts/generate_harness_art.py
 ```
 
-This example runs an exploratory discussion. The proposed controlled study remains planned work. The default model is `qwen3.5:4b-mlx`, which must already be installed in Ollama. The catalog also offers `qwen3.5:0.8b-mlx`, OpenAI `gpt-6-luna`, and OpenRouter models `deepseek/deepseek-v4.1-flash-1017`, `minimax/minimax-m3.1-flash`, and `z-ai/glm-5.3-flash`. Set `CHORUS_API_KEY` in the backend environment or `.env` and restart Chorus to enable OpenAI. Set `OPENROUTER_API_KEY` in the backend environment or `.env` and restart Chorus to enable the OpenRouter group. The same selected model powers all participant and judge calls. All catalog models support judging, including MLX runners without structured-output enforcement. Chorus uses validated individual answers when a runner cannot generate a reliable structured review.
+The artwork generator creates the original portraits and sixteen-frame sprite sheets from stable persona identities.
 
-See [Running and developing Chorus](docs/running-chorus.md) for the full model list, configuration, CLI commands, API examples, frontend connections, project layout, and contract generation.
+Historical sessions remain accessible through `/archive`, `?session=SESSION_ID`, and `/api/v1` read/export endpoints. V1 writes are disabled in production. Old catalogs, generation code, and components remain solely for archive decoding and explicit regression compatibility; they are not selectable on the new home pages. Migration 3 adds harness tables without rewriting old session snapshots.
 
-## Explore and contribute
+Run `.venv/bin/python -m pytest` for backend verification, then `npm run check` in each frontend using Node 24. Browser suites run sequentially with fake providers and isolated databases. Do not run tests against saved user sessions.
 
-Chorus is being prepared for an open-source release so that others can inspect the framework, challenge the methods, reproduce experiments, and build on the work.
-
-Contributions are especially useful when they improve experimental validity: checkable scenarios, informative controls, independent evaluators, reliable recording, failure analysis, and clear documentation. Reports of surprising behavior are most useful with the scenario, model and settings, relevant session records, and steps to reproduce it.
-
-The intended research outputs are runnable experiments, documented measurements, and reports that distinguish observation from interpretation. The project welcomes interest from people working on AI agents, swarms, coordination, multi-agent systems, and AI safety.
-
-Model availability includes provider, local installation status, and configuration errors. An Ollama outage does not disable OpenAI. Credentials remain in Chorus; neither frontend receives them. Retired-model sessions remain readable/exportable and require a new session to continue. See [model setup](docs/running-chorus.md#model-catalog).
+See [running Chorus](docs/running-chorus.md), [implementation plan](docs/real-world-harness-plan.md), [release notes](docs/harness-release-notes.md), and [research architecture](docs/chorus-architecture.md).

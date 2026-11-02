@@ -1,5 +1,19 @@
 # Chorus test plan
 
+## Independent harness release on 2 November 2026
+
+The default engine is `/api/v2`, implemented in `chorus/harness/`. Verification passed 268 Python tests, plus the complete checks in both frontends: 27 Nanoville unit/component/client tests, 25 chorus-web browser journeys, and 17 Nanoville browser journeys. Lint, generated contracts, strict TypeScript, and both production builds passed. Frontend browser suites ran sequentially against fake providers and isolated databases.
+
+New backend cases cover five positive/negative verifiers, exact catalog fields, sentence/@mention validation, native OpenAI and all three OpenRouter model tool envelopes, independent workers, ledger reconciliation, weighted cache coverage, unknown explicit cache-write charges, idempotent partial publication, lock expiry/fencing, read-only judging, summary isolation, frozen reads, shutdown fencing, CLI defaults, retired production writes, all fifty artwork identities, and a fifty-worker restart stress case. Generated SDK/client/UI copies match their authoritative sources.
+
+Live isolated two-agent, one-turn runs completed final reports through direct Luna and OpenRouter/DeepSeek. The checker rejected Luna's non-optimal answer and accepted DeepSeek's answer. A local Qwen 0.8B run produced no public contributions and paused on invalid judge output; this observed limitation is displayed with that model. See `docs/live-harness-pilot-2026-11-02.json` and `docs/harness-release-notes.md`. These are compatibility observations, not a reliability benchmark.
+
+Before live migration, backed up the SQLite database with restricted permissions. Restarted idle services and confirmed all 22 historical session snapshots were unchanged, the active catalog has fifty agents/five problems with Luna default, and both applications and read-only archives return successfully. V1 write access and old UI interactions below are exercised only in explicit regression mode.
+
+## Historical engine verification
+
+The older records below describe v1 behavior and its regression cases; their energy/confidence, round-robin turns, isolated journals, and checkpoints are not current v2 requirements.
+
 The Python backend is the execution and contract authority. Run deterministic tests without a live model; use an injected model adapter or the fake Ollama server.
 
 ## Required coverage
@@ -116,3 +130,8 @@ Session `6afefa20-469b-4bd6-8ff9-c3e4c71dffed` used the first challenge, its fiv
 - Verification: 243 backend tests; Nanoville lint/types, 27 unit/component tests, production build and 14 browser tests; chorus-web lint/types, production build and 22 browser tests. Browser suites ran sequentially. Restarted the idle local backend and both frontends; saved completed sessions remain available and all three service health checks return 200.
 - Restarted the idle local Chorus backend after a restricted-permission SQLite backup. Migration 2 added the metadata-only call ledger; all 20 existing sessions remained readable with unchanged statuses.
 - Stage 1 only: the current enforced context cap remains 32,768. Durable per-agent message histories, compaction and broader cost reconciliation remain in the implementation plan.
+
+
+## PR validation follow-up — 2 November 2026
+
+All 268 Python tests passed again before PR creation. Shared SDK record inspection now scopes asynchronous results to the session, record kind, and agent, preventing conversation records from being rendered as reasoning summaries during tab changes. Optional missing text renders safely. Both generated frontends carry the same fix and browser regression coverage.
