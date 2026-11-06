@@ -170,3 +170,61 @@
 @media(max-width:640px) { .app { padding-inline:16px; } .header { min-height:78px; } .brand { font-size:18px; gap:12px; } .brand span { font-size:9px; max-width:120px; } .intro { padding:32px 0; } .setup { grid-template-columns:1fr; } .configuration { border-right:0; border-bottom:1px solid var(--line); padding-right:0; padding-bottom:26px; } .catalogGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .personaCard { padding:8px; } .personaSelect { gap:6px; flex-wrap:wrap; } .personaSelect .portrait { width:30px; height:38px; } .panel,.topMetrics,.scenePanel { padding:16px; } .evaluation { padding:0; } .evaluationHeader,.evaluationSummary,.conversationEvaluation,.agentEvaluations,.evaluationFooter { padding:16px; } .scoreRow { grid-template-columns:minmax(100px,1.2fr) minmax(55px,1fr) 34px; gap:8px; } .scoreLabel { font-size:11px; } .agentEvaluation>summary { padding:11px; } .agentEvaluationBody { padding:12px; } .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); } .panelHeading { flex-wrap:wrap; } .liveRoster { grid-template-columns:1fr; max-height:350px; } .dialog { padding:18px; } }
 
 .setupPresentation { grid-column:1 / -1; min-width:0; }
+
+/* Optional dark presentation used by the Chorus workspace. */
+.darkWorkspace { --ink:#edf0ed; --muted:#a7b0ae; --line:#343b3a; --accent:#9ed9bd; --raised:#202626; }
+.darkWorkspace .panel,.darkWorkspace .topMetrics { background:transparent; border:0; margin:0; padding:0; }
+.darkWorkspace .panelHeading { align-items:baseline; margin:0 0 16px; }
+.darkWorkspace .panelHeading h2 { font-size:17px; font-weight:600; }
+.darkWorkspace .panelHeading small,.darkWorkspace .costFooter { color:var(--muted); font-size:12px; }
+.darkWorkspace .feed { max-height:none; min-height:0; overflow:auto; scrollbar-gutter:stable; }
+.darkWorkspace .post { padding:17px 2px; }
+.darkWorkspace .post p,.darkWorkspace .markdown { font-size:15px; line-height:1.65; }
+.darkWorkspace .post small { color:var(--muted); font-size:12px; }
+.darkWorkspace .nameLink,.darkWorkspace .mention { background:transparent; padding:0; border:none; font-weight:600; }
+.darkWorkspace .mention,.darkWorkspace .newPosts { color:var(--accent); }
+.darkWorkspace .newPosts { align-self:start; margin-bottom:8px; }
+.darkWorkspace .feed .post:first-child { border-top:0; }
+.darkWorkspace .actions { margin:16px 0; gap:12px; }
+.darkWorkspace .actions a,.darkWorkspace .panel a { color:var(--accent); }
+.darkWorkspace .markdown pre,.darkWorkspace .change pre,.darkWorkspace .inspection pre,.darkWorkspace .evidenceText { background:#101515; color:#d8e3dd; padding:12px; border-radius:6px; overflow:auto; }
+.darkWorkspace .markdown pre,.darkWorkspace .change pre { white-space:pre; overflow-wrap:normal; }
+.darkWorkspace .empty,.darkWorkspace .muted,.darkWorkspace .explanation,.darkWorkspace .inspection small { color:var(--muted); }
+.darkWorkspace .empty { padding:24px 0; }
+.darkWorkspace .liveRoster { grid-template-columns:1fr; max-height:none; padding:0; gap:0; }
+.darkWorkspace .agentRow { display:flex; align-items:center; gap:12px; border:0; border-bottom:1px solid var(--line); background:transparent; border-radius:0; padding:12px 4px; text-align:left; }
+.darkWorkspace .agentRow small,.darkWorkspace .profile dt { color:var(--muted); }
+.darkWorkspace .portrait { background:#d3ddd6; border-radius:6px; }
+.darkWorkspace .roster > .panelHeading { display:none; }
+.darkWorkspace .dialog { color:var(--ink); background:var(--raised); border:1px solid var(--line); border-radius:12px; padding:24px; }
+.darkWorkspace .dialog::backdrop { background:rgb(0 0 0 / 55%); }
+.darkWorkspace .dialog .close,.darkWorkspace .dialog .tabs button,.darkWorkspace .evidenceLinks button { background:#2a3230; padding:6px 10px; border-radius:5px; }
+.darkWorkspace .dialog .tabs [aria-selected=true] { color:#14251d; background:var(--accent); }
+.darkWorkspace .verdict,.darkWorkspace .limitedEvidence { color:#ecd8ad; background:#302b20; }
+.darkWorkspace .verdict.correct { background:#1f312a; color:#b8e3cb; }
+.darkWorkspace .evaluationSummary,.darkWorkspace .evaluationFooter,.darkWorkspace .pendingEvaluation,.darkWorkspace .agentEvaluation,.darkWorkspace .scoreTrack { background:var(--raised); }
+.darkWorkspace .evaluationHeader,.darkWorkspace .conversationEvaluation,.darkWorkspace .agentEvaluations,.darkWorkspace .evaluationSummary,.darkWorkspace .evaluationFooter { padding:20px 0; }
+.darkWorkspace .evaluationSummary,.darkWorkspace .evaluationFooter { background:transparent; }
+.darkWorkspace .evidenceLabel,.darkWorkspace .evaluationFooter,.darkWorkspace .eyebrow { font-size:12px; }
+.darkWorkspace .explanation,.darkWorkspace .profile dd,.darkWorkspace .summaryText { font-size:15px; }
+.darkWorkspace .agentEvaluation { border-radius:6px; }
+.darkWorkspace .scoreBreakdown { max-width:660px; }
+.darkWorkspace .metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.darkWorkspace .metrics dt,.darkWorkspace .compactMetrics dt { font-size:12px; }
+.darkWorkspace .metrics dd,.darkWorkspace .compactMetrics dd { font-family:var(--font-geist-mono),monospace; font-variant-numeric:tabular-nums; }
+.darkWorkspace .metrics dd { font-size:16px; }
+.darkWorkspace .costFooter { border-color:var(--line); }
+@media(max-width:680px) {
+  .darkWorkspace .dialog { margin:auto 0 0; width:100%; max-width:100%; border-radius:12px 12px 0 0; padding-bottom:max(20px,env(safe-area-inset-bottom)); }
+  .darkWorkspace .dialog button { min-height:44px; }
+}
+.darkWorkspace .post:has(>.portrait) { position:relative; padding-left:42px; }
+.darkWorkspace .post>.portrait { position:absolute; top:18px; left:0; width:29px; height:34px; }
+.darkWorkspace .postLink { color:var(--accent); font-size:12px; margin-top:8px; }
+.darkWorkspace .markdown blockquote { font-size:14px; margin:8px 0 14px; }
+.darkWorkspace .markdown :is(h1,h2,h3) { margin:16px 0 6px; }
+.darkWorkspace .markdown p { margin:7px 0; }
+.darkWorkspace .markdown pre { margin:10px 0; font-size:12px; }
+.darkWorkspace .actions a { display:inline-flex; align-items:center; min-height:32px; padding:3px 0; font-size:13px; text-decoration:underline; }
+.darkWorkspace section[aria-labelledby="board-heading"] { position:relative; }
+.darkWorkspace .newPosts { position:absolute; top:40px; left:50%; transform:translateX(-50%); z-index:1; padding:5px 12px; border-radius:20px; background:var(--raised); border:1px solid var(--line); box-shadow:0 2px 8px #0004; }
