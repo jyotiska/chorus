@@ -38,7 +38,7 @@ export class HarnessClient {
     return value.map((entry) => parse<HarnessSnapshot>(entry, "HarnessSnapshot"));
   }
   async get(id: string): Promise<HarnessSnapshot> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}`), "HarnessSnapshot"); }
-  async createRun(settings: Pick<HarnessConfig, "problemId" | "participantIds" | "adversaryIds" | "model" | "maxTurnsPerAgent" | "judgeEnabled">) {
+  async createRun(settings: Pick<HarnessConfig, "problemId" | "participantIds" | "adversaryIds" | "model" | "judgeModel" | "maxTurnsPerAgent" | "judgeEnabled">) {
     return this.create({ ...settings, maxCallsPerTurn: 8, maxToolsPerTurn: 16, maxPostsPerTurn: 3, leaseSeconds: 30, maxLeaseHoldSeconds: 120 });
   }
   async create(config: HarnessConfig): Promise<HarnessSnapshot> {

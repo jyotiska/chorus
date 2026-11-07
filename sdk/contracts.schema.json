@@ -633,6 +633,18 @@
           "title": "Model",
           "type": "string"
         },
+        "judgeModel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judgemodel"
+        },
         "maxTurnsPerAgent": {
           "default": 10,
           "maximum": 100,
@@ -641,7 +653,7 @@
           "type": "integer"
         },
         "judgeEnabled": {
-          "default": true,
+          "default": false,
           "title": "Judgeenabled",
           "type": "boolean"
         },
@@ -686,6 +698,7 @@
         "participantIds",
         "adversaryIds",
         "model",
+        "judgeModel",
         "maxTurnsPerAgent",
         "judgeEnabled",
         "maxCallsPerTurn",

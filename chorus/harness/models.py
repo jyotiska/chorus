@@ -56,8 +56,9 @@ class HarnessConfig(Model):
     participantIds: list[str] = Field(min_length=2, max_length=50)
     adversaryIds: list[str] = Field(default_factory=list, max_length=50)
     model: str = "gpt-6-luna"
+    judgeModel: str | None = None
     maxTurnsPerAgent: int = Field(default=10, ge=1, le=100)
-    judgeEnabled: bool = True
+    judgeEnabled: bool = False
     maxCallsPerTurn: int = Field(default=8, ge=2, le=16)
     maxToolsPerTurn: int = Field(default=16, ge=1, le=32)
     maxPostsPerTurn: int = Field(default=3, ge=1, le=3)

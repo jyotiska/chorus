@@ -53,6 +53,8 @@ class HarnessService:
         if problem is None or not set(config.participantIds) <= set(lookup):
             raise ChorusError("INVALID_REQUEST", "Choose a current problem and known participants.", 400)
         self.validate_model(config.model)
+        if config.judgeEnabled and config.judgeModel:
+            self.validate_model(config.judgeModel)
         return self.repo.create(HarnessSnapshot(id=str(uuid4()), config=config, problem=problem, agents=[lookup[i] for i in config.participantIds], workers=[Worker(agentId=i) for i in config.participantIds], createdAt=now(), updatedAt=now()))
 
     def validate_model(self, model):
@@ -75,6 +77,8 @@ class HarnessService:
             if len(self.tasks) >= 64 and sid not in self.tasks:
                 raise ChorusError("CAPACITY", "The local execution queue is full. Wait for another session to finish.", 429)
             self.validate_model(state.config.model)
+            if state.config.judgeEnabled and state.config.judgeModel:
+                self.validate_model(state.config.judgeModel)
             if state.engineVersion != ENGINE_VERSION:
                 raise ChorusError("VERSION_MISMATCH", "This engine cannot resume that session version.", 409)
             if state.status != ("ready" if action == "start" else "paused"):
@@ -333,7 +337,7 @@ class HarnessService:
         for iteration in range(6):
             if len(self.repo.all(sid, "call", "judge")) >= budget:
                 raise ValueError("Final judging call budget exhausted; review remains incomplete.")
-            result = await self.meter.invoke(sid, "judge", generation, messages, phase="judge", tools=definitions(True) if iteration < 2 else None, output=1600)
+            result = await self.meter.invoke(sid, "judge", generation, messages, phase="judge", tools=definitions(True) if iteration < 2 else None, output=1600, model=state.config.judgeModel)
             message = result["message"]
             calls = message.get("tool_calls", [])
             if result.get("done_reason") == "length":

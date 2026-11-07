@@ -176,6 +176,7 @@
 .darkWorkspace .panel,.darkWorkspace .topMetrics { background:transparent; border:0; margin:0; padding:0; }
 .darkWorkspace .panelHeading { align-items:baseline; margin:0 0 16px; }
 .darkWorkspace .panelHeading h2 { font-size:17px; font-weight:600; }
+.darkWorkspace .canvasHeading h2 { font-family:inherit; font-size:17px; font-weight:600; line-height:1.25; letter-spacing:-.025em; }
 .darkWorkspace .panelHeading small,.darkWorkspace .costFooter { color:var(--muted); font-size:12px; }
 .darkWorkspace .feed { max-height:none; min-height:0; overflow:auto; scrollbar-gutter:stable; }
 .darkWorkspace .post { padding:17px 2px; }
@@ -192,8 +193,13 @@
 .darkWorkspace .empty,.darkWorkspace .muted,.darkWorkspace .explanation,.darkWorkspace .inspection small { color:var(--muted); }
 .darkWorkspace .empty { padding:24px 0; }
 .darkWorkspace .liveRoster { grid-template-columns:1fr; max-height:none; padding:0; gap:0; }
-.darkWorkspace .agentRow { display:flex; align-items:center; gap:12px; border:0; border-bottom:1px solid var(--line); background:transparent; border-radius:0; padding:12px 4px; text-align:left; }
+.darkWorkspace .agentRow { display:flex; align-items:flex-start; gap:12px; border:0; border-bottom:1px solid var(--line); background:transparent; border-radius:0; padding:12px 4px; text-align:left; }
 .darkWorkspace .agentRow small,.darkWorkspace .profile dt { color:var(--muted); }
+.workerHeading { display:flex; align-items:center; gap:6px; }
+.workerStatusDot { display:inline-block; width:7px; height:7px; flex:none; border-radius:50%; background:#8b9398; }
+.workerStatusDot[data-state="running"],.workerStatusDot[data-state="finished"] { background:#83d6b5; }
+.workerStatusDot[data-state="waiting_model"],.workerStatusDot[data-state="waiting_lock"],.workerStatusDot[data-state="paused"] { background:#e4bd70; }
+.workerStatusDot[data-state="failed"] { background:#ef7777; }
 .darkWorkspace .portrait { background:#d3ddd6; border-radius:6px; }
 .darkWorkspace .roster > .panelHeading { display:none; }
 .darkWorkspace .dialog { color:var(--ink); background:var(--raised); border:1px solid var(--line); border-radius:12px; padding:24px; }
