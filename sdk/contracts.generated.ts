@@ -195,6 +195,7 @@ export type Participantids2 = string[];
  */
 export type Adversaryids1 = string[];
 export type Model2 = string;
+export type Judgemodel = string | null;
 export type Maxturnsperagent = number;
 export type Judgeenabled1 = boolean;
 export type Maxcallsperturn = number;
@@ -536,6 +537,7 @@ export interface HarnessConfig {
   participantIds: Participantids2;
   adversaryIds: Adversaryids1;
   model: Model2;
+  judgeModel: Judgemodel;
   maxTurnsPerAgent: Maxturnsperagent;
   judgeEnabled: Judgeenabled1;
   maxCallsPerTurn: Maxcallsperturn;

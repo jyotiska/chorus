@@ -81,9 +81,10 @@ class Meter:
         self.active = set()
         self.closed = False
 
-    async def invoke(self, sid, actor, generation, messages, *, phase="agent", tools=None, output=2400):
+    async def invoke(self, sid, actor, generation, messages, *, phase="agent", tools=None, output=2400, model=None):
         state = self.repo.get(sid)
-        info = next(m for m in self.call.catalog.models if m.id == state.config.model) if hasattr(self.call, "catalog") else None
+        model = model or state.config.model
+        info = next(m for m in self.call.catalog.models if m.id == model) if hasattr(self.call, "catalog") else None
         route = info.provider if info else "unknown"
         worker = next((w for w in state.workers if w.agentId == actor), None)
         if worker and worker.callsUsed >= state.config.maxCallsPerTurn:
@@ -95,10 +96,10 @@ class Meter:
                 w.state = "waiting_model" if w.state not in {"finished", "capped"} else w.state
             self.repo.change(sid, reserve, generation=generation)
         rid = str(uuid4())
-        data = {"id": rid, "phase": phase, "model": state.config.model, "route": route, "promptVersion": PROMPT_VERSION,
+        data = {"id": rid, "phase": phase, "model": model, "route": route, "promptVersion": PROMPT_VERSION,
                 "startedAt": None, "queuedAt": now(), "endedAt": None, "latencyMs": None, "inputTokens": None,
                 "outputTokens": None, "cachedTokens": None, "cacheUsed": None, "cacheUtilizationPercent": None,
-                "costUSD": None, "costSource": "unknown", "outcome": "queued", "rateSnapshot": rates(route, state.config.model)}
+                "costUSD": None, "costSource": "unknown", "outcome": "queued", "rateSnapshot": rates(route, model)}
         data["cacheMode"] = os.getenv("CHORUS_OPENAI_CACHE_MODE", "implicit") if route == "openai" else None
         record = self.repo.append(sid, "call", actor, worker.currentTurnIndex if worker else 0, data, record_id=rid)
         started = None
@@ -125,7 +126,7 @@ class Meter:
                 request = self.repo.append(sid, "request", actor, worker.currentTurnIndex if worker else 0, {"callId": rid, "messages": sent, "tools": tools, "outputAllowance": output}, generation=generation)
                 data["requestRecordId"] = request.id
                 data["requestHash"] = hashlib.sha256(json.dumps({"messages": sent, "tools": tools}, sort_keys=True).encode()).hexdigest()
-                result = await self.call(state.config.model, sent, **options)
+                result = await self.call(model, sent, **options)
                 if self.closed:
                     raise asyncio.CancelledError
                 output_record = self.repo.append(sid, "output", actor, worker.currentTurnIndex if worker else 0, {"callId": rid, "message": result.get("message", {}), "doneReason": result.get("done_reason")})
