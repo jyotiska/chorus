@@ -24,15 +24,25 @@ For production, run `npm run build --prefix web`, then `chorus launch --producti
 
 Nanoville remains a separate repository on port 43188. Configure its server-side `CHORUS_API_URL` if the engine uses a nondefault port, then use its own `npm ci` and `npm run dev`.
 
-## Start an experiment
+## Start an app experiment
 
-Select one of five problems. The interface automatically checks its five relevant participants. Add or remove agents from the catalog before starting, within a 2–50 roster. Choose a per-agent turn cap and model; final judging is enabled by default.
+The web home page offers four briefs: build an app like Todoist, Linear, Notion, or Typeform. Choose one or more agents from ten roles; six are selected by default. Choose the participant model and the judge model, then select **Start experiment**. These experiments always include a final judge.
 
-Agents run independently, with bounded provider request capacity. A cycle permits at most eight model calls, sixteen tool actions, three board posts, and one accepted canvas edit. Every board message is one or two sentences, at most sixty words/four hundred characters. @Name mentions keep responses in a flat feed.
+Agents first discuss the brief and write a shared plan and task lists in `SPEC.md`. Once every agent finishes planning, they build in separate working copies and combine their changes through local pull requests. The judge then reviews a fixed copy of the final code and records.
 
-Canvas editing requires an expiring exclusive lockfile lease. The backend validates lease ownership and document version at commit. Board posts and canvas edits are independently durable; a later failure does not roll them back. Pause cancels active work, Resume retains consumed budgets, and Stop freezes an early result for evaluation. Browser closure leaves execution running.
+These experiments require Git and a `starter-repos/` folder beside Chorus, containing frontend and backend starter files. These files are not included in this repository. Set `CHORUS_EXPERIMENT_SCAFFOLD` in `.env` to use another location. Generated projects are saved beside the database in `experiments/`, unless `CHORUS_EXPERIMENT_ROOT` is set.
 
-The final canvas contains one fenced `solution` block holding JSON matching the displayed problem's answer schema. Deterministic verification checks the submitted answer. The final judge separately assesses collaboration and each participant's contributions using the board, structured reasoning summaries, and changelog. It has read-only tools.
+Use **Kill experiment** to stop work while keeping its files and records. Use **Retry judge** if the final review fails. Switching sessions or closing the browser leaves the experiment running.
+
+The current experiment tools support writing and reading code. Running application commands, starting the generated app, and browser verification are not implemented yet. A judge report does not establish that the generated app works.
+
+## Run a benchmark
+
+The engine also has five smaller problems with checked answers. Use the CLI or API to start these runs. They use fifty agent profiles, with 2–50 agents per run and a separate turn cap for each agent. The CLI enables the final model judge by default; `--no-judge` skips it without disabling the answer checks.
+
+Agents discuss the problem on a shared board and edit a shared answer. Pause keeps saved work, Resume continues the same run, and Stop ends participant work and evaluates the saved answer. Closing the browser does not stop execution.
+
+The final answer must contain one fenced `solution` block with JSON matching the problem’s answer format. Code checks correctness; the model judge separately reviews collaboration. The judge cannot edit the answer or override those checks.
 
 ## CLI
 
@@ -53,24 +63,26 @@ chorus export SESSION_ID session.json --format json
 chorus export SESSION_ID solution.md --format markdown
 ```
 
-The CLI defaults to Luna, the problem's relevant roster, ten turns per agent, and final judging. `--adversaries` accepts comma-separated selected IDs; assignments are observer-visible and hidden from peers/judge. `--turns` is deliberately rejected. Ctrl-C pauses a watched run. `--archive` on inspect/control selects the legacy API; production archives permit reads and exports only.
+For benchmark runs, the CLI defaults to Luna, the problem's relevant roster, ten turns per agent, and final judging. `--adversaries` accepts comma-separated selected IDs; assignments are observer-visible and hidden from peers/judge. `--turns` is deliberately rejected. Ctrl-C pauses a watched run. `--archive` on inspect/control selects the legacy API; production archives permit reads and exports only.
 
 ## API and records
 
 The active API is `/api/v2`:
 
+- `GET /experiments/catalog` returns the four app briefs and ten agent roles.
+- `POST /experiments` creates an app experiment with selected participants and model choices.
 - `GET /catalog` returns the 50 personas, five problems, model availability, and Luna default.
 - `POST /sessions` accepts `problemId`, `participantIds`, `model`, `maxTurnsPerAgent`, `judgeEnabled`, optional `adversaryIds`, and bounded execution settings.
 - `GET /sessions` lists new sessions; `GET /sessions/{id}` returns authoritative state.
-- `POST /sessions/{id}/commands` accepts a unique command ID, expected revision, and start/pause/resume/stop action.
+- `POST /sessions/{id}/commands` accepts a unique command ID, expected revision, and an action. Benchmark runs use start/pause/resume/stop; app experiments also use kill and retry_judge.
 - `GET /sessions/{id}/events` streams revisioned snapshots; reconnect retrieves the latest state.
 - `GET /sessions/{id}/records?kind=board&after=0&limit=100` reads an ordered record page. Kinds also include summary, conversation, change, version, call, request, output, tool, activity, diagnostic, and assessment. An `agent` filter narrows inspection.
 - `GET /sessions/{id}/records/{recordId}` retrieves a cited record.
 - `GET /sessions/{id}/usage` returns ledger-derived agent, participant, judge, and session totals.
-- `GET /sessions/{id}/export?format=json` exports the complete local record; `format=markdown` exports the final canvas.
+- `GET /sessions/{id}/export?format=json` exports the session and currently visible records; `format=markdown` exports the final canvas.
 - `GET /assets/{agentId}/portrait.svg` and `/assets/{agentId}/sprite.svg` serve packaged artwork.
 
-Board/canvas tools are server-authorized model capabilities, not browser mutation endpoints. Actor identity and session context come from the host, never model-supplied arguments. Participants can read only their own reasoning summaries. The observer and final judge can inspect all new summaries; provider-private reasoning is not recorded. Logs remain metadata-only.
+Board/canvas tools are server-authorized model capabilities, not browser mutation endpoints. Actor identity and session context come from the host, never model-supplied arguments. Participants can read only their own reasoning summaries. For app experiments, private reflections become visible to the observer after completion or kill; the final judge can read them during review. Benchmark summaries are visible to the observer and final judge; provider-private reasoning is not recorded. Logs remain metadata-only.
 
 SQLite migration 3 creates harness tables alongside historical sessions. UTC timestamps accompany monotonic sequences; sequences define ordering. The store's existing process lock prevents multiple owners, while separate per-canvas lockfiles protect edits. Restart pauses interrupted sessions and invalidates prior publication authority.
 
