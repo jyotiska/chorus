@@ -77,6 +77,31 @@ async def test_native_function_calls_and_results_keep_call_identity():
     assert tool["strict"] is True and tool["parameters"]["properties"]["limit"]["maximum"] == 50
 
 
+@pytest.mark.parametrize("input_tokens", [250_000, 250_001])
+async def test_luna_checks_provider_token_count_near_ceiling(monkeypatch, input_tokens):
+    monkeypatch.setattr("chorus.llm.openai.LUNA_VERIFY_THRESHOLD", 1)
+    requests = []
+
+    async def handler(request):
+        requests.append((request.url.path, json.loads(request.content)))
+        if request.url.path.endswith("/input_tokens"):
+            return httpx.Response(200, json={"input_tokens": input_tokens})
+        return httpx.Response(200, json=response())
+
+    adapter = OpenAITransport(transport=httpx.MockTransport(handler))
+    messages = [{"role": "user", "content": "Check this request."}]
+    if input_tokens > 250_000:
+        with pytest.raises(ChorusError) as error:
+            await adapter("gpt-6-luna", messages)
+        assert error.value.code == "CONTEXT_LIMIT"
+        assert len(requests) == 1
+    else:
+        await adapter("gpt-6-luna", messages)
+        assert requests[1][0] == "/v1/responses"
+        assert requests[1][1]["input"] == requests[0][1]["input"]
+    assert requests[0][0] == "/v1/responses/input_tokens"
+
+
 @pytest.mark.parametrize("status,code", [(401, "MODEL_REQUEST_FAILED"), (403, "MODEL_REQUEST_FAILED"), (404, "MODEL_NOT_FOUND"), (429, "MODEL_REQUEST_FAILED"), (503, "MODEL_UNAVAILABLE"), (400, "MODEL_REQUEST_FAILED")])
 async def test_openai_errors_are_sanitized_without_fallback(status, code, caplog):
     async def handler(request):

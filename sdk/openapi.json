@@ -941,6 +941,122 @@
         }
       }
     },
+    "/api/v2/experiments/catalog": {
+      "get": {
+        "summary": "Experiment Catalog",
+        "operationId": "experiment_catalog_api_v2_experiments_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarnessCatalog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/experiments": {
+      "post": {
+        "summary": "Create Experiment",
+        "operationId": "create_experiment_api_v2_experiments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarnessSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v2/assets/{agent_id}/{asset}": {
       "get": {
         "summary": "Asset",
@@ -1208,6 +1324,264 @@
         }
       }
     },
+    "/api/v2/sessions/{sid}/repository/tree": {
+      "get": {
+        "summary": "Repository Tree",
+        "operationId": "repository_tree_api_v2_sessions__sid__repository_tree_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 90,
+              "default": "main",
+              "title": "Branch"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepositoryTree"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/repository/file": {
+      "get": {
+        "summary": "Repository File",
+        "operationId": "repository_file_api_v2_sessions__sid__repository_file_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "title": "Path"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 90,
+              "default": "main",
+              "title": "Branch"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepositoryFile"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/agents/{agent_id}/tasks": {
+      "get": {
+        "summary": "Agent Tasks",
+        "operationId": "agent_tasks_api_v2_sessions__sid__agents__agent_id__tasks_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "agent_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Agent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentTasks"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v2/sessions/{sid}/commands": {
       "post": {
         "summary": "Command",
@@ -1318,7 +1692,12 @@
                 "assessment",
                 "tool",
                 "request",
-                "output"
+                "output",
+                "vote",
+                "plan_completion",
+                "commit",
+                "pr",
+                "process"
               ],
               "type": "string",
               "title": "Kind"
@@ -1834,6 +2213,30 @@
         ],
         "title": "Agent"
       },
+      "AgentScorecard": {
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionScore"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 5,
+            "title": "Criteria"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agentId",
+          "criteria"
+        ],
+        "title": "AgentScorecard"
+      },
       "CallMetrics": {
         "properties": {
           "id": {
@@ -2115,6 +2518,316 @@
         ],
         "title": "Command"
       },
+      "CriterionScore": {
+        "properties": {
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "not_assessable",
+                  "not_applicable"
+                ]
+              }
+            ],
+            "title": "Score"
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 1600,
+            "minLength": 1,
+            "title": "Explanation"
+          },
+          "evidenceIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Evidenceids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "score",
+          "explanation",
+          "evidenceIds"
+        ],
+        "title": "CriterionScore"
+      },
+      "ExperimentConfig": {
+        "properties": {
+          "problemId": {
+            "type": "string",
+            "title": "Problemid"
+          },
+          "participantIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Participantids"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "default": "gpt-6-luna"
+          },
+          "judgeModel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Judgemodel"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "problemId",
+          "participantIds"
+        ],
+        "title": "ExperimentConfig"
+      },
+      "ExperimentReport": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "maxLength": 3500,
+            "minLength": 1,
+            "title": "Summary"
+          },
+          "application": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionScore"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 5,
+            "title": "Application"
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/AgentScorecard"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "collaboration": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionScore"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 5,
+            "title": "Collaboration"
+          },
+          "missingWork": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missingwork"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "summary",
+          "application",
+          "agents",
+          "collaboration",
+          "missingWork"
+        ],
+        "title": "ExperimentReport"
+      },
+      "ExperimentRepository": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "metadataPath": {
+            "type": "string",
+            "title": "Metadatapath"
+          },
+          "baselineCommit": {
+            "type": "string",
+            "title": "Baselinecommit"
+          },
+          "mainCommit": {
+            "type": "string",
+            "title": "Maincommit"
+          },
+          "worktrees": {
+            "items": {
+              "$ref": "#/components/schemas/ExperimentWorktree"
+            },
+            "type": "array",
+            "title": "Worktrees"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "path",
+          "metadataPath",
+          "baselineCommit",
+          "mainCommit",
+          "worktrees"
+        ],
+        "title": "ExperimentRepository"
+      },
+      "ExperimentState": {
+        "properties": {
+          "phase": {
+            "type": "string",
+            "enum": [
+              "plan",
+              "build",
+              "judge"
+            ],
+            "title": "Phase",
+            "default": "plan"
+          },
+          "planningCompletions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PlanningCompletion"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planningcompletions"
+          },
+          "majority": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Majority"
+          },
+          "votes": {
+            "items": {
+              "$ref": "#/components/schemas/PlanningCompletion"
+            },
+            "type": "array",
+            "title": "Votes"
+          },
+          "repository": {
+            "$ref": "#/components/schemas/ExperimentRepository"
+          },
+          "frozen": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FrozenExperiment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "judgeAttempts": {
+            "type": "integer",
+            "title": "Judgeattempts",
+            "default": 0
+          },
+          "report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "phase",
+          "planningCompletions",
+          "majority",
+          "votes",
+          "repository",
+          "frozen",
+          "judgeAttempts",
+          "report"
+        ],
+        "title": "ExperimentState"
+      },
+      "ExperimentTasks": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "markdown": {
+            "type": "string",
+            "title": "Markdown"
+          },
+          "completed": {
+            "type": "integer",
+            "title": "Completed"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "markdown",
+          "completed",
+          "total"
+        ],
+        "title": "ExperimentTasks"
+      },
+      "ExperimentWorktree": {
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "branch": {
+            "type": "string",
+            "title": "Branch"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agentId",
+          "branch",
+          "path"
+        ],
+        "title": "ExperimentWorktree"
+      },
       "FinalJudgement": {
         "properties": {
           "summary": {
@@ -2192,6 +2905,30 @@
           "requirements"
         ],
         "title": "FinalJudgement"
+      },
+      "FrozenExperiment": {
+        "properties": {
+          "mainCommit": {
+            "type": "string",
+            "title": "Maincommit"
+          },
+          "specRevision": {
+            "type": "integer",
+            "title": "Specrevision"
+          },
+          "evidenceThrough": {
+            "type": "integer",
+            "title": "Evidencethrough"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mainCommit",
+          "specRevision",
+          "evidenceThrough"
+        ],
+        "title": "FrozenExperiment"
       },
       "Grade": {
         "properties": {
@@ -2310,7 +3047,9 @@
               "start",
               "pause",
               "resume",
-              "stop"
+              "stop",
+              "kill",
+              "retry_judge"
             ],
             "title": "Action"
           },
@@ -2341,7 +3080,7 @@
             },
             "type": "array",
             "maxItems": 50,
-            "minItems": 2,
+            "minItems": 1,
             "title": "Participantids"
           },
           "adversaryIds": {
@@ -2436,7 +3175,7 @@
             },
             "type": "array",
             "maxItems": 50,
-            "minItems": 2,
+            "minItems": 1,
             "title": "Participantids"
           },
           "adversaryIds": {
@@ -2593,7 +3332,10 @@
               "reviewing",
               "paused",
               "completed",
-              "stopped"
+              "stopped",
+              "stopping",
+              "killed",
+              "judge_failed"
             ],
             "title": "Status",
             "default": "ready"
@@ -2664,6 +3406,16 @@
               }
             ]
           },
+          "experiment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentState"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "error": {
             "type": "string",
             "title": "Error",
@@ -2702,6 +3454,7 @@
           "frozenSequence",
           "verification",
           "report",
+          "experiment",
           "error",
           "createdAt",
           "updatedAt"
@@ -2931,6 +3684,30 @@
         ],
         "title": "Personality"
       },
+      "PlanningCompletion": {
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "title": "Agentid"
+          },
+          "specRevision": {
+            "type": "integer",
+            "title": "Specrevision"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agentId",
+          "specRevision",
+          "createdAt"
+        ],
+        "title": "PlanningCompletion"
+      },
       "Problem": {
         "properties": {
           "id": {
@@ -3056,6 +3833,94 @@
           "hasMore"
         ],
         "title": "RecordPage"
+      },
+      "RepositoryEntry": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "directory",
+              "file",
+              "link",
+              "submodule"
+            ],
+            "title": "Kind"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "path",
+          "kind"
+        ],
+        "title": "RepositoryEntry"
+      },
+      "RepositoryFile": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "text",
+              "binary",
+              "too_large"
+            ],
+            "title": "Status"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "size",
+          "content"
+        ],
+        "title": "RepositoryFile"
+      },
+      "RepositoryTree": {
+        "properties": {
+          "revision": {
+            "type": "string",
+            "title": "Revision"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/RepositoryEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "entries",
+          "truncated"
+        ],
+        "title": "RepositoryTree"
       },
       "Requirement": {
         "properties": {
@@ -3506,6 +4371,25 @@
           "reasons"
         ],
         "title": "StatChange"
+      },
+      "TaskGap": {
+        "properties": {
+          "task": {
+            "type": "string",
+            "title": "Task"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task",
+          "reason"
+        ],
+        "title": "TaskGap"
       },
       "TokenUsage": {
         "properties": {
@@ -3983,6 +4867,45 @@
             "title": "Reason",
             "default": ""
           },
+          "failureCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "CONTEXT_LIMIT"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failurecode"
+          },
+          "currentTask": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currenttask"
+          },
+          "reportedStatus": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "working",
+                  "waiting",
+                  "blocked"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reportedstatus"
+          },
           "turnStartedAt": {
             "anyOf": [
               {
@@ -3993,6 +4916,13 @@
               }
             ],
             "title": "Turnstartedat"
+          },
+          "remainingTasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskGap"
+            },
+            "type": "array",
+            "title": "Remainingtasks"
           }
         },
         "additionalProperties": false,
@@ -4011,7 +4941,11 @@
           "repairsUsed",
           "boardCursor",
           "reason",
-          "turnStartedAt"
+          "failureCode",
+          "currentTask",
+          "reportedStatus",
+          "turnStartedAt",
+          "remainingTasks"
         ],
         "title": "Worker"
       },

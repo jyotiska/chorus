@@ -54,9 +54,21 @@ Chorus owns the execution rules, prompts, API contracts, model calls, validation
 
 Both applications are built on Chorus. The CLI provides another way to use the same core. Interface changes should preserve the execution rules and records needed to interpret a session.
 
-### Independent agent harness
+### Repository experiments
 
-The default harness has 50 first-name personas, five objectively checked problems, and GPT-6-Luna as its default model. Selecting a problem chooses five relevant agents; edit that roster before starting. Each agent has an independent turn cap and works through a flat, concise message board and a locked shared canvas.
+Chorus Web offers Todoist, Linear, Notion, and Typeform application briefs. Select any of the ten participants, the participant model, and the judge model. Chorus creates a Git repository from the frontend and backend starters and assigns each agent a linked worktree. Set `CHORUS_EXPERIMENT_SCAFFOLD` to override the default sibling `starter-repos/` directory or `CHORUS_EXPERIMENT_ROOT` to override the `experiments/` directory beside the database.
+
+- **Plan:** Agents use the shared board, their own private reflections, and SPEC.md. A prepared SPEC.md edit names the expected revision and section. Chorus acquires the lock, checks the revision and the actor's authority, records the edit and releases the lock. Each agent declares when it is done contributing. Build starts after every selected agent has finished planning.
+- **Build:** Agents update their task sections and application files, synchronize and commit in their worktrees, and open, review, and merge local PRs. Only the PR author can initiate its merge. Chorus returns stale and conflict feedback to the author and accepts an agent’s completion only after its PR commits are integrated into main.
+- **Judge:** Chorus freezes main, the SPEC.md revision, and the evidence cutoff when all Build workers stop. The judge reads a separate checkout and frozen evidence. A failed judge can retry the same snapshot. This implementation supports source inspection. Application commands, startup, and browser verification are pending.
+
+Kill stops an experiment while preserving the repository and records. The observer can reopen saved experiments, inspect SPEC.md and PR activity, or export the records. Experiment creation uses `POST /api/v2/experiments` and the catalog lives at `GET /api/v2/experiments/catalog`. The existing session routes serve experiment status, events, commands, usage, and exports.
+
+In new repository experiments, agents plan deliverables as open checkboxes in SPEC.md. During Build, each agent checks off their own deliverables individually and records what they verified. Open deliverables stay on the checklist and require an explanation when the agent finishes. The Tasks tab shows checklist progress and the explanations for open items.
+
+### Independent benchmark harness
+
+The benchmark harness has 50 first-name personas, five objectively checked problems, and GPT-6-Luna as its default model. Selecting a problem chooses five relevant agents; edit that roster before starting. Each agent has an independent turn cap and works through a flat, concise message board and a locked shared canvas.
 
 Each technology, science, or business persona has a background introduction, personality, traits, strengths, weaknesses, and an original portrait. These details form part of its system prompt. A session supports 2–50 selected agents and 1–100 turns per agent, defaulting to ten. Agents run independently; provider request capacity limits simultaneous model calls without imposing a speaking order.
 

@@ -6,8 +6,13 @@ type H = Contracts["harness"];
 export type HarnessSnapshot = H["snapshot"];
 export type HarnessCatalog = H["catalog"];
 export type HarnessConfig = H["config"];
+export type ExperimentConfig = H["experimentConfig"];
+export type HarnessAction = H["command"]["action"];
 export type HarnessUsage = H["usage"];
 export type HarnessRecord = H["page"]["records"][number];
+export type RepositoryTree = H["repositoryTree"];
+export type RepositoryFile = H["repositoryFile"];
+export type ExperimentTasks = H["experimentTasks"];
 export type Persona = HarnessCatalog["agents"][number];
 export type Usage = HarnessUsage["total"];
 const ajv = new Ajv({ strict: false, allErrors: true });
@@ -32,6 +37,7 @@ export class HarnessClient {
     return value;
   }
   async catalog(): Promise<HarnessCatalog> { return parse(await this.request("/catalog"), "HarnessCatalog"); }
+  async experimentCatalog(): Promise<HarnessCatalog> { return parse(await this.request("/experiments/catalog"), "HarnessCatalog"); }
   async list(): Promise<HarnessSnapshot[]> {
     const value = await this.request("/sessions");
     if (!Array.isArray(value)) throw new Error("Invalid Chorus session list.");
@@ -44,7 +50,10 @@ export class HarnessClient {
   async create(config: HarnessConfig): Promise<HarnessSnapshot> {
     return parse(await this.request("/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
   }
-  async command(id: string, action: H["command"]["action"]): Promise<HarnessSnapshot> {
+  async createExperiment(config: Pick<ExperimentConfig, "problemId" | "participantIds" | "model" | "judgeModel">): Promise<HarnessSnapshot> {
+    return parse(await this.request("/experiments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
+  }
+  async command(id: string, action: HarnessAction): Promise<HarnessSnapshot> {
     const commandId = crypto.randomUUID();
     for (let attempt = 0; attempt < 3; attempt++) {
       const current = await this.get(id);
@@ -63,6 +72,15 @@ export class HarnessClient {
   }
   async usage(id: string): Promise<HarnessUsage> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}/usage`), "UsageReport"); }
   async record(id: string, recordId: string): Promise<HarnessRecord> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}/records/${encodeURIComponent(recordId)}`), "Record"); }
+  async repositoryTree(id: string, branch: string): Promise<RepositoryTree> {
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/tree?${new URLSearchParams({ branch })}`), "RepositoryTree");
+  }
+  async repositoryFile(id: string, branch: string, revision: string, path: string): Promise<RepositoryFile> {
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/file?${new URLSearchParams({ branch, revision, path })}`), "RepositoryFile");
+  }
+  async agentTasks(id: string, agent: string): Promise<ExperimentTasks> {
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/agents/${encodeURIComponent(agent)}/tasks`), "ExperimentTasks");
+  }
   subscribe(id: string, revision: number, receive: (state: HarnessSnapshot) => void, fail: (message: string) => void): () => void {
     let closed = false;
     const stream = new EventSource(`${this.base}/sessions/${encodeURIComponent(id)}/events?after=${revision}`);

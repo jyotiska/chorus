@@ -8,9 +8,9 @@ import time
 import hashlib
 from datetime import datetime, timezone
 from uuid import uuid4
-from chorus.harness import PROMPT_VERSION
 from chorus.harness.models import Usage, UsageReport
 from chorus.llm.caching import CACHE_SCOPE
+from chorus.llm.openai import assert_luna_budget, luna_input_estimate
 from chorus.llm.transport import assert_budget
 from chorus.llm.usage import count
 from chorus.storage import now
@@ -71,7 +71,7 @@ def usage_report(repository, sid):
     records = repository.all(sid, "call")
     participants = [r for r in records if r.agentId != "judge"]
     judges = [r for r in records if r.agentId == "judge"]
-    end = datetime.fromisoformat(state.updatedAt) if state.status in {"completed", "stopped"} else datetime.now(timezone.utc)
+    end = datetime.fromisoformat(state.updatedAt) if state.status in {"completed", "stopped", "killed", "judge_failed"} else datetime.now(timezone.utc)
     return UsageReport(agents={a.id: aggregate([r for r in participants if r.agentId == a.id]) for a in state.agents}, participants=aggregate(participants), judge=aggregate(judges), total=aggregate(records), wallTimeMs=max(0, round((end - datetime.fromisoformat(state.createdAt)).total_seconds() * 1000)))
 
 
@@ -81,11 +81,14 @@ class Meter:
         self.active = set()
         self.closed = False
 
+    def route(self, model):
+        info = next((m for m in self.call.catalog.models if m.id == model), None) if hasattr(self.call, "catalog") else None
+        return info.provider if info else "unknown"
+
     async def invoke(self, sid, actor, generation, messages, *, phase="agent", tools=None, output=2400, model=None):
         state = self.repo.get(sid)
         model = model or state.config.model
-        info = next(m for m in self.call.catalog.models if m.id == model) if hasattr(self.call, "catalog") else None
-        route = info.provider if info else "unknown"
+        route = self.route(model)
         worker = next((w for w in state.workers if w.agentId == actor), None)
         if worker and worker.callsUsed >= state.config.maxCallsPerTurn:
             raise ValueError("This agent's model-call budget is exhausted.")
@@ -96,7 +99,7 @@ class Meter:
                 w.state = "waiting_model" if w.state not in {"finished", "capped"} else w.state
             self.repo.change(sid, reserve, generation=generation)
         rid = str(uuid4())
-        data = {"id": rid, "phase": phase, "model": model, "route": route, "promptVersion": PROMPT_VERSION,
+        data = {"id": rid, "phase": phase, "model": model, "route": route, "promptVersion": state.promptVersion,
                 "startedAt": None, "queuedAt": now(), "endedAt": None, "latencyMs": None, "inputTokens": None,
                 "outputTokens": None, "cachedTokens": None, "cacheUsed": None, "cacheUtilizationPercent": None,
                 "costUSD": None, "costSource": "unknown", "outcome": "queued", "rateSnapshot": rates(route, model)}
@@ -122,15 +125,17 @@ class Meter:
                     sent = self.local_messages(messages, tools or [], phase == "judge")
                 elif tools:
                     options["tools"] = tools
-                assert_budget(sent, output + (2048 if route == "openrouter" else 0), format={"tools": tools} if tools else None)
+                if route == "openai" and model == "gpt-6-luna":
+                    schema = {"tools": tools, "format": None} if tools else None
+                    assert_luna_budget(luna_input_estimate(sent, schema), output)
+                else:
+                    assert_budget(sent, output + (2048 if route == "openrouter" else 0), format={"tools": tools} if tools else None)
                 request = self.repo.append(sid, "request", actor, worker.currentTurnIndex if worker else 0, {"callId": rid, "messages": sent, "tools": tools, "outputAllowance": output}, generation=generation)
                 data["requestRecordId"] = request.id
                 data["requestHash"] = hashlib.sha256(json.dumps({"messages": sent, "tools": tools}, sort_keys=True).encode()).hexdigest()
                 result = await self.call(model, sent, **options)
                 if self.closed:
                     raise asyncio.CancelledError
-                output_record = self.repo.append(sid, "output", actor, worker.currentTurnIndex if worker else 0, {"callId": rid, "message": result.get("message", {}), "doneReason": result.get("done_reason")})
-                data["outputRecordId"] = output_record.id
                 data["inputTokens"], data["outputTokens"] = count(result.get("prompt_eval_count")), count(result.get("eval_count"))
                 details = result.get("usage_details", {})
                 data["cachedTokens"] = count(details.get("cachedInput"), data["inputTokens"]) if data["inputTokens"] is not None else None
@@ -153,6 +158,12 @@ class Meter:
                     if writes_known and cached + writes <= data["inputTokens"]:
                         estimate = ((data["inputTokens"] - cached - writes) * rate["input"] + cached * rate["cached"] + writes * rate["cacheWrite"] + data["outputTokens"] * rate["output"]) / 1e6
                         data.update(costUSD=estimate, costSource="estimated")
+                if state.experiment is not None:
+                    current = self.repo.get(sid)
+                    if current.generation != generation or current.experiment.phase != phase:
+                        raise asyncio.CancelledError
+                output_record = self.repo.append(sid, "output", actor, worker.currentTurnIndex if worker else 0, {"callId": rid, "message": result.get("message", {}), "doneReason": result.get("done_reason")}, generation=generation if state.experiment else None)
+                data["outputRecordId"] = output_record.id
                 if tools and route == "ollama":
                     result = self.local_result(result)
                 result["harnessCallId"] = rid

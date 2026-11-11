@@ -5,8 +5,12 @@ from importlib.resources import files
 from typing import Literal
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import Response, StreamingResponse
-from chorus.harness.models import HarnessCatalog, HarnessConfig, HarnessSnapshot, HarnessCommand, ModelInfo, RecordPage, Record, UsageReport
+from chorus.harness.models import (
+    ExperimentConfig, ExperimentTasks, HarnessCatalog, HarnessCommand, HarnessConfig,
+    HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryFile, RepositoryTree, UsageReport,
+)
 from chorus.harness.accounting import usage_report
+from chorus.harness.experiment_spec import checklist
 from chorus.services.errors import ChorusError
 
 router = APIRouter(prefix="/api/v2")
@@ -19,9 +23,24 @@ def service(request):
 @router.get("/catalog", response_model=HarnessCatalog)
 async def catalog(request: Request):
     svc = service(request)
-    models = await svc.call.model_infos() if hasattr(svc.call, "model_infos") else svc.catalog.models
+    return await current_catalog(svc, svc.catalog)
+
+
+async def current_catalog(svc, catalog):
+    models = await svc.call.model_infos() if hasattr(svc.call, "model_infos") else catalog.models
     infos = [ModelInfo.model_validate({k: v for k, v in m.model_dump().items() if k in ModelInfo.model_fields}) for m in models]
-    return svc.catalog.model_copy(update={"models": infos})
+    return catalog.model_copy(update={"models": infos})
+
+
+@router.get("/experiments/catalog", response_model=HarnessCatalog)
+async def experiment_catalog(request: Request):
+    svc = service(request)
+    return await current_catalog(svc, svc.experiments.catalog)
+
+
+@router.post("/experiments", response_model=HarnessSnapshot, status_code=201)
+async def create_experiment(request: Request, config: ExperimentConfig):
+    return service(request).experiments.create(config)
 
 
 @router.get("/assets/{agent_id}/{asset}")
@@ -49,22 +68,64 @@ async def get(request: Request, sid: str):
     return service(request).repo.get(sid)
 
 
+def repository_for(svc, sid, branch):
+    experiment = svc.repo.get(sid).experiment
+    if experiment is None or branch not in {"main", *(tree.branch for tree in experiment.repository.worktrees)}:
+        raise ChorusError("NOT_FOUND", "Experiment branch not found.", 404)
+    return svc.experiments.git
+
+
+@router.get("/sessions/{sid}/repository/tree", response_model=RepositoryTree)
+def repository_tree(request: Request, sid: str, branch: str = Query(default="main", max_length=90)):
+    return repository_for(service(request), sid, branch).browse_tree(sid, branch)
+
+
+@router.get("/sessions/{sid}/repository/file", response_model=RepositoryFile)
+def repository_file(request: Request, sid: str, revision: str, path: str = Query(min_length=1, max_length=1024),
+                    branch: str = Query(default="main", max_length=90)):
+    return repository_for(service(request), sid, branch).browse_file(sid, branch, revision, path)
+
+
+@router.get("/sessions/{sid}/agents/{agent_id}/tasks", response_model=ExperimentTasks)
+def agent_tasks(request: Request, sid: str, agent_id: str):
+    svc = service(request)
+    state = svc.repo.get(sid)
+    agent = next((agent for agent in state.agents if agent.id == agent_id), None)
+    if state.experiment is None or agent is None:
+        raise ChorusError("NOT_FOUND", "Agent task list not found.", 404)
+    markdown = svc.experiments.spec.agent_tasks(state, agent)
+    items = checklist(markdown)
+    return ExperimentTasks(revision=state.canvasVersion, markdown=markdown,
+                           completed=sum(done for _, done in items), total=len(items))
+
+
 @router.post("/sessions/{sid}/commands", response_model=HarnessSnapshot)
 async def command(request: Request, sid: str, command: HarnessCommand):
     return service(request).command(sid, command)
 
 
+PRIVATE_DURING_EXPERIMENT = {"summary", "conversation", "tool", "request", "output"}
+
+
+def visible(state, kind):
+    return state.experiment is None or kind not in PRIVATE_DURING_EXPERIMENT or state.status in {"completed", "killed"}
+
+
 @router.get("/sessions/{sid}/records", response_model=RecordPage)
-async def records(request: Request, sid: str, kind: Literal["board", "summary", "change", "conversation", "call", "version", "activity", "diagnostic", "assessment", "tool", "request", "output"], after: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=100), agent: str | None = None):
-    return service(request).repo.page(sid, kind, after, limit, agent)
+async def records(request: Request, sid: str, kind: Literal["board", "summary", "change", "conversation", "call", "version", "activity", "diagnostic", "assessment", "tool", "request", "output", "vote", "plan_completion", "commit", "pr", "process"], after: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=100), agent: str | None = None):
+    repo = service(request).repo
+    state = repo.get(sid)
+    if not visible(state, kind):
+        return RecordPage(records=[], cursor=after, highWater=state.sequence, hasMore=False)
+    return repo.page(sid, kind, after, limit, agent)
 
 
 @router.get("/sessions/{sid}/records/{record_id}", response_model=Record)
 async def record(request: Request, sid: str, record_id: str):
     svc = service(request)
-    svc.repo.get(sid)
+    state = svc.repo.get(sid)
     value = svc.repo.record(sid, record_id)
-    if value is None:
+    if value is None or not visible(state, value.kind):
         raise ChorusError("NOT_FOUND", "Evidence record not found.", 404)
     return value
 
@@ -82,7 +143,9 @@ async def export(request: Request, sid: str, format: Literal["json", "markdown"]
     if format == "markdown":
         return Response(state.canvas, media_type="text/markdown", headers=headers)
     kinds = ("board", "summary", "change", "conversation", "call", "version", "activity", "diagnostic", "assessment", "tool", "command", "request", "output")
-    payload = {"session": state.model_dump(mode="json"), "records": {kind: [r.model_dump(mode="json") for r in svc.repo.all(sid, kind)] for kind in kinds}, "usage": usage_report(svc.repo, sid).model_dump(mode="json")}
+    if state.experiment is not None:
+        kinds += ("vote", "plan_completion", "commit", "pr", "process")
+    payload = {"session": state.model_dump(mode="json"), "records": {kind: [r.model_dump(mode="json") for r in svc.repo.all(sid, kind)] for kind in kinds if visible(state, kind)}, "usage": usage_report(svc.repo, sid).model_dump(mode="json")}
     return Response(json.dumps(payload, ensure_ascii=False), media_type="application/json", headers=headers)
 
 

@@ -114,6 +114,15 @@ class Repository:
             row = db.get(HarnessRecordRow, (session_id, record_id))
             return Record.model_validate(row.record) if row else None
 
+    def record_at_sequence(self, session_id: str, kind: str, sequence: int) -> Record | None:
+        with Session(self.engine) as db:
+            query = select(HarnessRecordRow).where(
+                HarnessRecordRow.session_id == session_id, HarnessRecordRow.kind == kind,
+                HarnessRecordRow.sequence == sequence,
+            )
+            row = db.scalars(query).one_or_none()
+            return Record.model_validate(row.record) if row else None
+
     def update_record(self, session_id: str, record_id: str, data: dict) -> None:
         """Finalize an existing ledger row, even after cancellation; never republish it."""
         with Session(self.engine) as db, db.begin():
@@ -144,6 +153,17 @@ class Repository:
             if not page.hasMore:
                 return out
             cursor = page.cursor
+
+    def recent(self, session_id: str, kind: str, agent: str, limit: int = 100, *, before: int | None = None) -> list[Record]:
+        with Session(self.engine) as db:
+            query = select(HarnessRecordRow).where(
+                HarnessRecordRow.session_id == session_id, HarnessRecordRow.kind == kind,
+                HarnessRecordRow.agent_id == agent,
+            )
+            if before is not None:
+                query = query.where(HarnessRecordRow.sequence < before)
+            rows = list(db.scalars(query.order_by(HarnessRecordRow.sequence.desc()).limit(limit)))
+            return [Record.model_validate(row.record) for row in reversed(rows)]
 
     def lease(self, session_id: str) -> dict:
         with Session(self.engine) as db:

@@ -132,7 +132,7 @@ def test_catalog_fields_default_and_flat_board_validation():
 async def test_independent_workers_final_judge_records_and_usage(store):
     model = ScriptedModel(delay=.002)
     svc = HarnessService(store, model)
-    state = svc.create(config())
+    state = svc.create(config(judgeEnabled=True))
     command(svc, state.id, "start")
     final = await settled(svc, state.id)
     assert final.status == "completed", final.error
