@@ -48,7 +48,7 @@ jobs:
         if: matrix.web
       - run: .venv/bin/python scripts/check.py --python-only
         if: ${{ !matrix.web }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: checks-${{ matrix.os }}-${{ matrix.python }}
