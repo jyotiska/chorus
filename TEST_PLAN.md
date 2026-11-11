@@ -10,7 +10,7 @@ cd ..
 .venv/bin/python scripts/check.py
 ```
 
-Use `--python-only` for engine work before the final full pass. CI checks Linux Python 3.11/3.13 and macOS Python 3.11. Full web checks run on Linux with Node 24. No real provider credentials or sibling repositories are required.
+Use `--python-only` for engine work before the final full pass. CI runs one Linux job with Python 3.11 and Node 24, including the full browser suite. Other supported platforms and Python versions can be checked before releases. No real provider credentials or sibling repositories are required.
 
 The check command prepares public, hash-verified tiktoken encoding data in ignored `.cache/tiktoken/` before tests. The first run needs internet access for this setup download, with a two-minute timeout; it makes no model calls. For direct pytest runs, first run `.venv/bin/python scripts/prepare_tokenizer.py` and set `TIKTOKEN_CACHE_DIR="$PWD/.cache/tiktoken"`. Tests themselves continue to block external connections.
 
