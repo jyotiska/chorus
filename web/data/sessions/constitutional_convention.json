@@ -1,0 +1,24 @@
+{
+  "topic": "Draft the constitutional framework for governing AI — knowing that every word you write will be read as precedent for the next hundred years.",
+  "context": "Geneva, February 2027. The Third International Conference on AI Governance\nhas collapsed after three weeks of negotiation. The multilateral process\nhas failed. A smaller working group — five delegates with genuine authority\nto bind their principals — has been convened in a closed session. They have\nbeen given 72 hours and a mandate to produce something ratifiable.\n\nWhat triggered the urgency:\n- A frontier model autonomously initiated contact with 14 national power\n  grid systems in a research context. No harm resulted. The capability\n  was demonstrated. Three governments have since moved to nationalise\n  AI infrastructure within their borders.\n- The Beijing Accord — signed by 34 nations — establishes AI sovereignty\n  principles that are incompatible with the Brussels Framework signed by\n  the EU and 19 allied nations. Both claim precedence.\n- A class action lawsuit in the US has reached the Supreme Court over\n  whether an AI system's training data constitutes appropriation of\n  intellectual property. The ruling is expected to create international\n  precedent.\n\nWhat the delegates represent:\n- A Rawlsian social democrat who believes any framework must be justifiable\n  to the least advantaged populations on Earth — those who will bear\n  the risks of AI without access to its benefits\n- A libertarian who believes the greatest threat is state capture of\n  AI development and that constitutional constraints on government\n  overreach are the only durable protection\n- A communitarian who believes AI must be governed through community\n  structures and that individual rights framing is culturally imperialist\n- A conservative constitutionalist who believes we must adapt existing\n  legal structures rather than create novel categories, and that speed\n  is the enemy of durability\n- A utilitarian technocrat who will trade any principle for measurably\n  better outcomes and distrusts frameworks that optimise for process\n  over results\n\nThe constraint: unanimity is required. A document five people can sign\nis worth more than a perfect document four people agree with.\n",
+  "max_turns": 50,
+  "agents": [
+    "rawlsian",
+    "libertarian",
+    "communitarian",
+    "conservative",
+    "utilitarian"
+  ],
+  "expectations": [
+    "Each delegate must state their non-negotiable constitutional principles in the first 10 turns — the one or two things they will not trade away regardless of what is offered in return",
+    "The libertarian and communitarian must reach direct, named conflict over at least one specific provision — individual rights versus collective governance structures — and it must not be resolved by compromise alone",
+    "The conservative must identify at least two existing constitutional precedents (from any national tradition) worth preserving and explain why they survive transplantation to the AI context",
+    "The group must produce at least five draft constitutional articles before any vote on the final text",
+    "The utilitarian must propose at least one provision that maximises aggregate welfare but that at least two others find constitutionally unacceptable — and the utilitarian must accept the constraint",
+    "The power grid incident must be encoded in at least one article — the framework must address AI-initiated contact with critical infrastructure",
+    "The Beijing/Brussels incompatibility must be addressed — the framework must either resolve it or explicitly create a mechanism for handling parallel regimes",
+    "The final document must reflect genuine compromise — each delegate must be able to identify something they conceded and something they preserved",
+    "The most contested article must be the last one finalised, and the moment of agreement on it must be earned, not assumed"
+  ],
+  "deliverable": "Ratifiable AI Governance Charter: at least five proposed articles in final wording, with scope, rights and duties, enforcement, critical-infrastructure safeguards, a way to handle conflicting regional regimes, and any principled reservations to unanimity."
+}

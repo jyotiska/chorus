@@ -1,5 +1,17 @@
 # Chorus test plan
 
+## Repository consolidation — 11 November 2026
+
+Chorus Web now lives in `web/`. The engine, HTTP API, shared SDK ownership, session identifiers, and existing database location are unchanged. Nanoville stays in its own repository and is not required by Chorus generation or tests.
+
+- Full Python suite: 299 tests passed, including six new launcher tests. Three subsequently added export boundary tests also passed (302 total across these runs).
+- `npm run check --prefix web` with Node 24: lint, type generation/type checking, production build, and all 31 browser journeys passed. Browser tests used fake providers and temporary databases.
+- Real `chorus launch --no-browser` smoke checks passed in both development and `--production` modes, from outside the checkout, using alternate ports and an isolated SQLite database. Verified the interface, engine health, the proxied fifty-agent catalog, session reads, and that both listening ports close on interrupt.
+- Launcher integration tests cover Ctrl-C, termination, frontend startup failure, and a frontend crash after readiness. Port conflicts leave the original listener running.
+- The contract exporter uses `web/` dependencies. Tests verify local-only generation, explicit export to an existing external checkout, and rejection of invalid external paths before writing files. Real generation produced no contract or SDK drift.
+- All 121 tracked frontend files were imported. Only frontend guidance, documentation, package metadata/lockfile, and test paths changed; no existing dependency versions changed.
+- No live model calls or changes to saved user sessions were needed. Nanoville’s existing uncommitted work and the original Chorus Web checkout were left untouched.
+
 ## Independent harness release on 2 November 2026
 
 The default engine is `/api/v2`, implemented in `chorus/harness/`. Verification passed 268 Python tests, plus the complete checks in both frontends: 27 Nanoville unit/component/client tests, 25 chorus-web browser journeys, and 17 Nanoville browser journeys. Lint, generated contracts, strict TypeScript, and both production builds passed. Frontend browser suites ran sequentially against fake providers and isolated databases.

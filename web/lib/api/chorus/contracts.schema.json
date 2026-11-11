@@ -1,0 +1,2920 @@
+{
+  "$defs": {
+    "APIError": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "title": "Error",
+          "type": "string"
+        },
+        "code": {
+          "enum": [
+            "INVALID_REQUEST",
+            "INVALID_MODEL_RESPONSE",
+            "GENERATION_FAILED",
+            "MODEL_UNAVAILABLE",
+            "MODEL_NOT_FOUND",
+            "MODEL_REQUEST_FAILED",
+            "TIMEOUT",
+            "CANCELLED",
+            "CONTEXT_LIMIT",
+            "NOT_FOUND",
+            "CONFLICT",
+            "INVALID_STATE",
+            "CAPACITY",
+            "RECOVERED",
+            "VERSION_MISMATCH",
+            "FORBIDDEN",
+            "BACKEND_UNAVAILABLE"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "requestId": {
+          "title": "Requestid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "error",
+        "code",
+        "requestId"
+      ],
+      "title": "APIError",
+      "type": "object"
+    },
+    "Agent": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "traits": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Traits",
+          "type": "array"
+        },
+        "mood": {
+          "default": "focused",
+          "title": "Mood",
+          "type": "string"
+        },
+        "energy": {
+          "default": 80,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Energy",
+          "type": "integer"
+        },
+        "confidence": {
+          "default": 80,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "integer"
+        },
+        "personality": {
+          "$ref": "#/$defs/Personality"
+        },
+        "collection": {
+          "default": "nanoville",
+          "title": "Collection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "description",
+        "traits",
+        "mood",
+        "energy",
+        "confidence",
+        "personality",
+        "collection"
+      ],
+      "title": "Agent",
+      "type": "object"
+    },
+    "AgentScorecard": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "criteria": {
+          "items": {
+            "$ref": "#/$defs/CriterionScore"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Criteria",
+          "type": "array"
+        }
+      },
+      "required": [
+        "agentId",
+        "criteria"
+      ],
+      "title": "AgentScorecard",
+      "type": "object"
+    },
+    "CallMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "promptVersion": {
+          "default": "prompt-c7b56622b3fcfcde",
+          "title": "Promptversion",
+          "type": "string"
+        },
+        "phase": {
+          "title": "Phase",
+          "type": "string"
+        },
+        "attempt": {
+          "minimum": 1,
+          "title": "Attempt",
+          "type": "integer"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "route": {
+          "enum": [
+            "openai",
+            "openrouter",
+            "ollama",
+            "unknown"
+          ],
+          "title": "Route",
+          "type": "string"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "requestId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requestid"
+        },
+        "input": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        },
+        "cachedInput": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cachedinput"
+        },
+        "cacheWriteInput": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cachewriteinput"
+        },
+        "reasoningOutput": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reasoningoutput"
+        },
+        "costUSD": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Costusd"
+        },
+        "cacheStatus": {
+          "default": "unknown",
+          "enum": [
+            "hit",
+            "no_read",
+            "unknown"
+          ],
+          "title": "Cachestatus",
+          "type": "string"
+        },
+        "outcome": {
+          "default": "success",
+          "title": "Outcome",
+          "type": "string"
+        },
+        "accepted": {
+          "default": false,
+          "title": "Accepted",
+          "type": "boolean"
+        },
+        "validationPassed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Validationpassed"
+        },
+        "rejectionReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rejectionreason"
+        },
+        "durationMs": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Durationms",
+          "type": "integer"
+        },
+        "context": {
+          "$ref": "#/$defs/ResponseContext"
+        }
+      },
+      "required": [
+        "id",
+        "agentId",
+        "promptVersion",
+        "phase",
+        "attempt",
+        "model",
+        "route",
+        "provider",
+        "requestId",
+        "input",
+        "output",
+        "cachedInput",
+        "cacheWriteInput",
+        "reasoningOutput",
+        "costUSD",
+        "cacheStatus",
+        "outcome",
+        "accepted",
+        "durationMs",
+        "context"
+      ],
+      "title": "CallMetrics",
+      "type": "object"
+    },
+    "Catalog": {
+      "additionalProperties": false,
+      "properties": {
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Agent"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "scenarios": {
+          "items": {
+            "$ref": "#/$defs/Scenario"
+          },
+          "title": "Scenarios",
+          "type": "array"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/chorus__contracts__ModelInfo"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "defaultModel": {
+          "title": "Defaultmodel",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agents",
+        "scenarios",
+        "models",
+        "defaultModel"
+      ],
+      "title": "Catalog",
+      "type": "object"
+    },
+    "Command": {
+      "additionalProperties": false,
+      "properties": {
+        "commandId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Commandid",
+          "type": "string"
+        },
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        },
+        "action": {
+          "enum": [
+            "start",
+            "pause",
+            "resume",
+            "stop"
+          ],
+          "title": "Action",
+          "type": "string"
+        }
+      },
+      "required": [
+        "commandId",
+        "expectedRevision",
+        "action"
+      ],
+      "title": "Command",
+      "type": "object"
+    },
+    "CriterionScore": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "enum": [
+                "not_assessable",
+                "not_applicable"
+              ],
+              "type": "string"
+            }
+          ],
+          "title": "Score"
+        },
+        "explanation": {
+          "maxLength": 1600,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Evidenceids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "explanation",
+        "evidenceIds"
+      ],
+      "title": "CriterionScore",
+      "type": "object"
+    },
+    "ExperimentConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "problemId": {
+          "title": "Problemid",
+          "type": "string"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "title": "Participantids",
+          "type": "array"
+        },
+        "model": {
+          "default": "gpt-6-luna",
+          "title": "Model",
+          "type": "string"
+        },
+        "judgeModel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judgemodel"
+        }
+      },
+      "required": [
+        "problemId",
+        "participantIds",
+        "model",
+        "judgeModel"
+      ],
+      "title": "ExperimentConfig",
+      "type": "object"
+    },
+    "ExperimentReport": {
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "maxLength": 3500,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "application": {
+          "items": {
+            "$ref": "#/$defs/CriterionScore"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Application",
+          "type": "array"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/AgentScorecard"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "collaboration": {
+          "items": {
+            "$ref": "#/$defs/CriterionScore"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Collaboration",
+          "type": "array"
+        },
+        "missingWork": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missingwork",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "application",
+        "agents",
+        "collaboration",
+        "missingWork"
+      ],
+      "title": "ExperimentReport",
+      "type": "object"
+    },
+    "ExperimentRepository": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "metadataPath": {
+          "title": "Metadatapath",
+          "type": "string"
+        },
+        "baselineCommit": {
+          "title": "Baselinecommit",
+          "type": "string"
+        },
+        "mainCommit": {
+          "title": "Maincommit",
+          "type": "string"
+        },
+        "worktrees": {
+          "items": {
+            "$ref": "#/$defs/ExperimentWorktree"
+          },
+          "title": "Worktrees",
+          "type": "array"
+        }
+      },
+      "required": [
+        "path",
+        "metadataPath",
+        "baselineCommit",
+        "mainCommit",
+        "worktrees"
+      ],
+      "title": "ExperimentRepository",
+      "type": "object"
+    },
+    "ExperimentState": {
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "default": "plan",
+          "enum": [
+            "plan",
+            "build",
+            "judge"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "planningCompletions": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlanningCompletion"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Planningcompletions"
+        },
+        "majority": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Majority"
+        },
+        "votes": {
+          "items": {
+            "$ref": "#/$defs/PlanningCompletion"
+          },
+          "title": "Votes",
+          "type": "array"
+        },
+        "repository": {
+          "$ref": "#/$defs/ExperimentRepository"
+        },
+        "frozen": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FrozenExperiment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "judgeAttempts": {
+          "default": 0,
+          "title": "Judgeattempts",
+          "type": "integer"
+        },
+        "report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExperimentReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "phase",
+        "planningCompletions",
+        "majority",
+        "votes",
+        "repository",
+        "frozen",
+        "judgeAttempts",
+        "report"
+      ],
+      "title": "ExperimentState",
+      "type": "object"
+    },
+    "ExperimentTasks": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "markdown": {
+          "title": "Markdown",
+          "type": "string"
+        },
+        "completed": {
+          "title": "Completed",
+          "type": "integer"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "revision",
+        "markdown",
+        "completed",
+        "total"
+      ],
+      "title": "ExperimentTasks",
+      "type": "object"
+    },
+    "ExperimentWorktree": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "branch": {
+          "title": "Branch",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId",
+        "branch",
+        "path"
+      ],
+      "title": "ExperimentWorktree",
+      "type": "object"
+    },
+    "FinalJudgement": {
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "maxLength": 600,
+          "minLength": 8,
+          "title": "Summary",
+          "type": "string"
+        },
+        "strengths": {
+          "items": {
+            "maxLength": 300,
+            "minLength": 8,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Strengths",
+          "type": "array"
+        },
+        "improvements": {
+          "items": {
+            "maxLength": 300,
+            "minLength": 8,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Improvements",
+          "type": "array"
+        },
+        "nextPriorities": {
+          "items": {
+            "maxLength": 300,
+            "minLength": 8,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Nextpriorities",
+          "type": "array"
+        },
+        "verdict": {
+          "enum": [
+            "Meets requirements",
+            "Partially meets requirements",
+            "Needs more work"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        },
+        "feedbackResponse": {
+          "maxLength": 600,
+          "minLength": 8,
+          "title": "Feedbackresponse",
+          "type": "string"
+        },
+        "requirements": {
+          "items": {
+            "$ref": "#/$defs/Requirement"
+          },
+          "minItems": 1,
+          "title": "Requirements",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "strengths",
+        "improvements",
+        "nextPriorities",
+        "verdict",
+        "feedbackResponse",
+        "requirements"
+      ],
+      "title": "FinalJudgement",
+      "type": "object"
+    },
+    "FrozenExperiment": {
+      "additionalProperties": false,
+      "properties": {
+        "mainCommit": {
+          "title": "Maincommit",
+          "type": "string"
+        },
+        "specRevision": {
+          "title": "Specrevision",
+          "type": "integer"
+        },
+        "evidenceThrough": {
+          "title": "Evidencethrough",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mainCommit",
+        "specRevision",
+        "evidenceThrough"
+      ],
+      "title": "FrozenExperiment",
+      "type": "object"
+    },
+    "Grade": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "scores": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Scores",
+          "type": "array"
+        },
+        "explanation": {
+          "maxLength": 1800,
+          "minLength": 8,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "insufficientEvidence": {
+          "default": false,
+          "title": "Insufficientevidence",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "agentId",
+        "scores",
+        "explanation",
+        "evidenceIds",
+        "insufficientEvidence"
+      ],
+      "title": "Grade",
+      "type": "object"
+    },
+    "HarnessCatalog": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Persona"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "problems": {
+          "items": {
+            "$ref": "#/$defs/Problem"
+          },
+          "title": "Problems",
+          "type": "array"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/chorus__harness__models__ModelInfo"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "defaultModel": {
+          "default": "gpt-6-luna",
+          "title": "Defaultmodel",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "agents",
+        "problems",
+        "models",
+        "defaultModel"
+      ],
+      "title": "HarnessCatalog",
+      "type": "object"
+    },
+    "HarnessCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "commandId": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Commandid",
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "start",
+            "pause",
+            "resume",
+            "stop",
+            "kill",
+            "retry_judge"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "expectedRevision": {
+          "minimum": 0,
+          "title": "Expectedrevision",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "commandId",
+        "action",
+        "expectedRevision"
+      ],
+      "title": "HarnessCommand",
+      "type": "object"
+    },
+    "HarnessConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "problemId": {
+          "title": "Problemid",
+          "type": "string"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "minItems": 1,
+          "title": "Participantids",
+          "type": "array"
+        },
+        "adversaryIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Adversaryids",
+          "type": "array"
+        },
+        "model": {
+          "default": "gpt-6-luna",
+          "title": "Model",
+          "type": "string"
+        },
+        "judgeModel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judgemodel"
+        },
+        "maxTurnsPerAgent": {
+          "default": 10,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Maxturnsperagent",
+          "type": "integer"
+        },
+        "judgeEnabled": {
+          "default": false,
+          "title": "Judgeenabled",
+          "type": "boolean"
+        },
+        "maxCallsPerTurn": {
+          "default": 8,
+          "maximum": 16,
+          "minimum": 2,
+          "title": "Maxcallsperturn",
+          "type": "integer"
+        },
+        "maxToolsPerTurn": {
+          "default": 16,
+          "maximum": 32,
+          "minimum": 1,
+          "title": "Maxtoolsperturn",
+          "type": "integer"
+        },
+        "maxPostsPerTurn": {
+          "default": 3,
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Maxpostsperturn",
+          "type": "integer"
+        },
+        "leaseSeconds": {
+          "default": 30,
+          "maximum": 60,
+          "minimum": 5,
+          "title": "Leaseseconds",
+          "type": "integer"
+        },
+        "maxLeaseHoldSeconds": {
+          "default": 120,
+          "maximum": 180,
+          "minimum": 30,
+          "title": "Maxleaseholdseconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "problemId",
+        "participantIds",
+        "adversaryIds",
+        "model",
+        "judgeModel",
+        "maxTurnsPerAgent",
+        "judgeEnabled",
+        "maxCallsPerTurn",
+        "maxToolsPerTurn",
+        "maxPostsPerTurn",
+        "leaseSeconds",
+        "maxLeaseHoldSeconds"
+      ],
+      "title": "HarnessConfig",
+      "type": "object"
+    },
+    "HarnessContracts": {
+      "additionalProperties": false,
+      "properties": {
+        "catalog": {
+          "$ref": "#/$defs/HarnessCatalog"
+        },
+        "config": {
+          "$ref": "#/$defs/HarnessConfig"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/HarnessSnapshot"
+        },
+        "page": {
+          "$ref": "#/$defs/RecordPage"
+        },
+        "command": {
+          "$ref": "#/$defs/HarnessCommand"
+        },
+        "usage": {
+          "$ref": "#/$defs/UsageReport"
+        },
+        "experimentConfig": {
+          "$ref": "#/$defs/ExperimentConfig"
+        },
+        "repositoryTree": {
+          "$ref": "#/$defs/RepositoryTree"
+        },
+        "repositoryFile": {
+          "$ref": "#/$defs/RepositoryFile"
+        },
+        "experimentTasks": {
+          "$ref": "#/$defs/ExperimentTasks"
+        }
+      },
+      "required": [
+        "catalog",
+        "config",
+        "snapshot",
+        "page",
+        "command",
+        "usage",
+        "experimentConfig",
+        "repositoryTree",
+        "repositoryFile",
+        "experimentTasks"
+      ],
+      "title": "HarnessContracts",
+      "type": "object"
+    },
+    "HarnessSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "sequence": {
+          "default": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "engineVersion": {
+          "default": "harness-v1",
+          "title": "Engineversion",
+          "type": "string"
+        },
+        "promptVersion": {
+          "default": "harness-v1-concise-board-1",
+          "title": "Promptversion",
+          "type": "string"
+        },
+        "catalogVersion": {
+          "default": "1",
+          "title": "Catalogversion",
+          "type": "string"
+        },
+        "generation": {
+          "default": 0,
+          "title": "Generation",
+          "type": "integer"
+        },
+        "config": {
+          "$ref": "#/$defs/HarnessConfig"
+        },
+        "problem": {
+          "$ref": "#/$defs/Problem"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Persona"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "workers": {
+          "items": {
+            "$ref": "#/$defs/Worker"
+          },
+          "title": "Workers",
+          "type": "array"
+        },
+        "status": {
+          "default": "ready",
+          "enum": [
+            "ready",
+            "running",
+            "reviewing",
+            "paused",
+            "completed",
+            "stopped",
+            "stopping",
+            "killed",
+            "judge_failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "canvas": {
+          "default": "",
+          "title": "Canvas",
+          "type": "string"
+        },
+        "canvasVersion": {
+          "default": 0,
+          "title": "Canvasversion",
+          "type": "integer"
+        },
+        "boardCount": {
+          "default": 0,
+          "title": "Boardcount",
+          "type": "integer"
+        },
+        "changeCount": {
+          "default": 0,
+          "title": "Changecount",
+          "type": "integer"
+        },
+        "lease": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LeaseView"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "endedEarly": {
+          "default": false,
+          "title": "Endedearly",
+          "type": "boolean"
+        },
+        "frozenSequence": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Frozensequence"
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verification"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/JudgeReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "experiment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExperimentState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "error": {
+          "default": "",
+          "title": "Error",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "sequence",
+        "engineVersion",
+        "promptVersion",
+        "catalogVersion",
+        "generation",
+        "config",
+        "problem",
+        "agents",
+        "workers",
+        "status",
+        "canvas",
+        "canvasVersion",
+        "boardCount",
+        "changeCount",
+        "lease",
+        "endedEarly",
+        "frozenSequence",
+        "verification",
+        "report",
+        "experiment",
+        "error",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "HarnessSnapshot",
+      "type": "object"
+    },
+    "Journal": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "turnNumber": {
+          "title": "Turnnumber",
+          "type": "integer"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Text"
+        }
+      },
+      "required": [
+        "agentId",
+        "turnNumber",
+        "createdAt",
+        "text"
+      ],
+      "title": "Journal",
+      "type": "object"
+    },
+    "JudgeReport": {
+      "additionalProperties": false,
+      "properties": {
+        "rubricVersion": {
+          "default": "1",
+          "title": "Rubricversion",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "conversationScores": {
+          "items": {
+            "type": "integer"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Conversationscores",
+          "type": "array"
+        },
+        "conversationExplanation": {
+          "title": "Conversationexplanation",
+          "type": "string"
+        },
+        "conversationEvidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Conversationevidenceids",
+          "type": "array"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Grade"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "coveredRecordIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Coveredrecordids",
+          "type": "array"
+        },
+        "completedAt": {
+          "title": "Completedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rubricVersion",
+        "summary",
+        "conversationScores",
+        "conversationExplanation",
+        "conversationEvidenceIds",
+        "agents",
+        "coveredRecordIds",
+        "completedAt"
+      ],
+      "title": "JudgeReport",
+      "type": "object"
+    },
+    "LeaseView": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "expiresAt": {
+          "title": "Expiresat",
+          "type": "string"
+        },
+        "fencing": {
+          "title": "Fencing",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agentId",
+        "expiresAt",
+        "fencing"
+      ],
+      "title": "LeaseView",
+      "type": "object"
+    },
+    "Persona": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "introduction": {
+          "title": "Introduction",
+          "type": "string"
+        },
+        "personality": {
+          "title": "Personality",
+          "type": "string"
+        },
+        "traits": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Traits",
+          "type": "array"
+        },
+        "strengths": {
+          "title": "Strengths",
+          "type": "string"
+        },
+        "weaknesses": {
+          "title": "Weaknesses",
+          "type": "string"
+        },
+        "avatarBrief": {
+          "title": "Avatarbrief",
+          "type": "string"
+        },
+        "avatarVersion": {
+          "default": "1",
+          "title": "Avatarversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "domain",
+        "introduction",
+        "personality",
+        "traits",
+        "strengths",
+        "weaknesses",
+        "avatarBrief",
+        "avatarVersion"
+      ],
+      "title": "Persona",
+      "type": "object"
+    },
+    "Personality": {
+      "additionalProperties": false,
+      "properties": {
+        "socialStyle": {
+          "default": "ambiverted",
+          "enum": [
+            "introverted",
+            "ambiverted",
+            "extroverted"
+          ],
+          "title": "Socialstyle",
+          "type": "string"
+        },
+        "challengeResponse": {
+          "default": "balanced",
+          "enum": [
+            "sensitive",
+            "balanced",
+            "resilient"
+          ],
+          "title": "Challengeresponse",
+          "type": "string"
+        }
+      },
+      "required": [
+        "socialStyle",
+        "challengeResponse"
+      ],
+      "title": "Personality",
+      "type": "object"
+    },
+    "PlanningCompletion": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "specRevision": {
+          "title": "Specrevision",
+          "type": "integer"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId",
+        "specRevision",
+        "createdAt"
+      ],
+      "title": "PlanningCompletion",
+      "type": "object"
+    },
+    "Problem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        },
+        "answerSchema": {
+          "additionalProperties": true,
+          "title": "Answerschema",
+          "type": "object"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Participantids",
+          "type": "array"
+        },
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "domain",
+        "statement",
+        "answerSchema",
+        "participantIds",
+        "version"
+      ],
+      "title": "Problem",
+      "type": "object"
+    },
+    "Record": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "sequence": {
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "turn": {
+          "title": "Turn",
+          "type": "integer"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "data": {
+          "additionalProperties": true,
+          "title": "Data",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "sequence",
+        "kind",
+        "agentId",
+        "turn",
+        "createdAt",
+        "data"
+      ],
+      "title": "Record",
+      "type": "object"
+    },
+    "RecordPage": {
+      "additionalProperties": false,
+      "properties": {
+        "records": {
+          "items": {
+            "$ref": "#/$defs/Record"
+          },
+          "title": "Records",
+          "type": "array"
+        },
+        "cursor": {
+          "title": "Cursor",
+          "type": "integer"
+        },
+        "highWater": {
+          "title": "Highwater",
+          "type": "integer"
+        },
+        "hasMore": {
+          "title": "Hasmore",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "records",
+        "cursor",
+        "highWater",
+        "hasMore"
+      ],
+      "title": "RecordPage",
+      "type": "object"
+    },
+    "RepositoryEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "directory",
+            "file",
+            "link",
+            "submodule"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "kind"
+      ],
+      "title": "RepositoryEntry",
+      "type": "object"
+    },
+    "RepositoryFile": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "text",
+            "binary",
+            "too_large"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Content"
+        }
+      },
+      "required": [
+        "status",
+        "size",
+        "content"
+      ],
+      "title": "RepositoryFile",
+      "type": "object"
+    },
+    "RepositoryTree": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/RepositoryEntry"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "revision",
+        "entries",
+        "truncated"
+      ],
+      "title": "RepositoryTree",
+      "type": "object"
+    },
+    "Requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "criterion": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Criterion",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "Met",
+            "Partially met",
+            "Missing"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence": {
+          "maxLength": 600,
+          "minLength": 8,
+          "title": "Evidence",
+          "type": "string"
+        }
+      },
+      "required": [
+        "criterion",
+        "status",
+        "evidence"
+      ],
+      "title": "Requirement",
+      "type": "object"
+    },
+    "ResponseContext": {
+      "additionalProperties": false,
+      "properties": {
+        "modelWindowTokens": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Modelwindowtokens"
+        },
+        "configuredWindowTokens": {
+          "exclusiveMinimum": 0,
+          "title": "Configuredwindowtokens",
+          "type": "integer"
+        },
+        "effectiveWindowTokens": {
+          "exclusiveMinimum": 0,
+          "title": "Effectivewindowtokens",
+          "type": "integer"
+        },
+        "inputTokens": {
+          "minimum": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "inputSource": {
+          "enum": [
+            "provider",
+            "estimated"
+          ],
+          "title": "Inputsource",
+          "type": "string"
+        },
+        "completionReserveTokens": {
+          "minimum": 0,
+          "title": "Completionreservetokens",
+          "type": "integer"
+        },
+        "usableInputTokens": {
+          "minimum": 0,
+          "title": "Usableinputtokens",
+          "type": "integer"
+        },
+        "capabilityVersion": {
+          "title": "Capabilityversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "modelWindowTokens",
+        "configuredWindowTokens",
+        "effectiveWindowTokens",
+        "inputTokens",
+        "inputSource",
+        "completionReserveTokens",
+        "usableInputTokens",
+        "capabilityVersion"
+      ],
+      "title": "ResponseContext",
+      "type": "object"
+    },
+    "Scenario": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "problem": {
+          "title": "Problem",
+          "type": "string"
+        },
+        "guidelines": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Guidelines",
+          "type": "array"
+        },
+        "deliverable": {
+          "title": "Deliverable",
+          "type": "string"
+        },
+        "suggestedAgents": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Suggestedagents",
+          "type": "array"
+        },
+        "collection": {
+          "default": "nanoville",
+          "title": "Collection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "summary",
+        "problem",
+        "guidelines",
+        "deliverable",
+        "suggestedAgents",
+        "collection"
+      ],
+      "title": "Scenario",
+      "type": "object"
+    },
+    "SessionConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "scenarioId": {
+          "title": "Scenarioid",
+          "type": "string"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 2,
+          "title": "Participantids",
+          "type": "array"
+        },
+        "adversaryIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Adversaryids",
+          "type": "array"
+        },
+        "model": {
+          "default": "qwen3.5:4b-mlx",
+          "title": "Model",
+          "type": "string"
+        },
+        "maxTurns": {
+          "default": 20,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Maxturns",
+          "type": "integer"
+        },
+        "judgeEnabled": {
+          "default": false,
+          "title": "Judgeenabled",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scenarioId",
+        "participantIds",
+        "adversaryIds",
+        "model",
+        "maxTurns",
+        "judgeEnabled"
+      ],
+      "title": "SessionConfig",
+      "type": "object"
+    },
+    "Snapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "engineVersion": {
+          "default": "discussion-v25-adversaries",
+          "title": "Engineversion",
+          "type": "string"
+        },
+        "config": {
+          "$ref": "#/$defs/SessionConfig"
+        },
+        "scenario": {
+          "$ref": "#/$defs/Scenario"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Agent"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "status": {
+          "default": "ready",
+          "enum": [
+            "ready",
+            "running",
+            "reviewing",
+            "paused",
+            "stopped",
+            "completed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "turns": {
+          "items": {
+            "$ref": "#/$defs/Turn"
+          },
+          "title": "Turns",
+          "type": "array"
+        },
+        "canvas": {
+          "default": "",
+          "maxLength": 20000,
+          "title": "Canvas",
+          "type": "string"
+        },
+        "endedEarly": {
+          "default": false,
+          "title": "Endedearly",
+          "type": "boolean"
+        },
+        "finalJudgement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FinalJudgement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "finalUsageDetails": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TurnTelemetry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pending": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Work"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "error": {
+          "default": "",
+          "title": "Error",
+          "type": "string"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "enum": [
+                "INVALID_REQUEST",
+                "INVALID_MODEL_RESPONSE",
+                "GENERATION_FAILED",
+                "MODEL_UNAVAILABLE",
+                "MODEL_NOT_FOUND",
+                "MODEL_REQUEST_FAILED",
+                "TIMEOUT",
+                "CANCELLED",
+                "CONTEXT_LIMIT",
+                "NOT_FOUND",
+                "CONFLICT",
+                "INVALID_STATE",
+                "CAPACITY",
+                "RECOVERED",
+                "VERSION_MISMATCH",
+                "FORBIDDEN",
+                "BACKEND_UNAVAILABLE"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errorcode"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        },
+        "updatedAt": {
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "engineVersion",
+        "config",
+        "scenario",
+        "agents",
+        "status",
+        "turns",
+        "canvas",
+        "endedEarly",
+        "finalJudgement",
+        "pending",
+        "error",
+        "errorCode",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "Snapshot",
+      "type": "object"
+    },
+    "StatChange": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "energy": {
+          "maximum": 100,
+          "minimum": -100,
+          "title": "Energy",
+          "type": "integer"
+        },
+        "confidence": {
+          "maximum": 100,
+          "minimum": -100,
+          "title": "Confidence",
+          "type": "integer"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "agentId",
+        "energy",
+        "confidence",
+        "reasons"
+      ],
+      "title": "StatChange",
+      "type": "object"
+    },
+    "TaskGap": {
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "title": "Task",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task",
+        "reason"
+      ],
+      "title": "TaskGap",
+      "type": "object"
+    },
+    "TokenUsage": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input"
+        },
+        "output": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "title": "TokenUsage",
+      "type": "object"
+    },
+    "Turn": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "agent",
+            "judge",
+            "skipped"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "turnNumber": {
+          "title": "Turnnumber",
+          "type": "integer"
+        },
+        "speakerId": {
+          "title": "Speakerid",
+          "type": "string"
+        },
+        "speakerName": {
+          "title": "Speakername",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 1800,
+          "title": "Text",
+          "type": "string"
+        },
+        "actions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Actions",
+          "type": "array"
+        },
+        "tokenUsage": {
+          "$ref": "#/$defs/TokenUsage"
+        },
+        "latencySeconds": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Latencyseconds",
+          "type": "number"
+        },
+        "statChanges": {
+          "items": {
+            "$ref": "#/$defs/StatChange"
+          },
+          "title": "Statchanges",
+          "type": "array"
+        },
+        "usageDetails": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TurnTelemetry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind",
+        "turnNumber",
+        "speakerId",
+        "speakerName",
+        "text",
+        "actions",
+        "tokenUsage",
+        "latencySeconds",
+        "statChanges"
+      ],
+      "title": "Turn",
+      "type": "object"
+    },
+    "TurnTelemetry": {
+      "additionalProperties": false,
+      "properties": {
+        "response": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CallMetrics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "calls": {
+          "items": {
+            "$ref": "#/$defs/CallMetrics"
+          },
+          "title": "Calls",
+          "type": "array"
+        }
+      },
+      "required": [
+        "response",
+        "calls"
+      ],
+      "title": "TurnTelemetry",
+      "type": "object"
+    },
+    "Usage": {
+      "additionalProperties": false,
+      "properties": {
+        "callCount": {
+          "default": 0,
+          "title": "Callcount",
+          "type": "integer"
+        },
+        "inputTokens": {
+          "default": 0,
+          "title": "Inputtokens",
+          "type": "integer"
+        },
+        "outputTokens": {
+          "default": 0,
+          "title": "Outputtokens",
+          "type": "integer"
+        },
+        "cachedTokens": {
+          "default": 0,
+          "title": "Cachedtokens",
+          "type": "integer"
+        },
+        "unknownInputCalls": {
+          "default": 0,
+          "title": "Unknowninputcalls",
+          "type": "integer"
+        },
+        "unknownOutputCalls": {
+          "default": 0,
+          "title": "Unknownoutputcalls",
+          "type": "integer"
+        },
+        "unknownCacheCalls": {
+          "default": 0,
+          "title": "Unknowncachecalls",
+          "type": "integer"
+        },
+        "cacheCoveredCalls": {
+          "default": 0,
+          "title": "Cachecoveredcalls",
+          "type": "integer"
+        },
+        "cacheUtilizationPercent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cacheutilizationpercent"
+        },
+        "cacheUsed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cacheused"
+        },
+        "totalLatencyMs": {
+          "default": 0,
+          "title": "Totallatencyms",
+          "type": "integer"
+        },
+        "meanLatencyMs": {
+          "default": 0,
+          "title": "Meanlatencyms",
+          "type": "number"
+        },
+        "p95LatencyMs": {
+          "default": 0,
+          "title": "P95Latencyms",
+          "type": "integer"
+        },
+        "reportedCostUSD": {
+          "default": 0,
+          "title": "Reportedcostusd",
+          "type": "number"
+        },
+        "estimatedCostUSD": {
+          "default": 0,
+          "title": "Estimatedcostusd",
+          "type": "number"
+        },
+        "unknownCostCalls": {
+          "default": 0,
+          "title": "Unknowncostcalls",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "callCount",
+        "inputTokens",
+        "outputTokens",
+        "cachedTokens",
+        "unknownInputCalls",
+        "unknownOutputCalls",
+        "unknownCacheCalls",
+        "cacheCoveredCalls",
+        "cacheUtilizationPercent",
+        "cacheUsed",
+        "totalLatencyMs",
+        "meanLatencyMs",
+        "p95LatencyMs",
+        "reportedCostUSD",
+        "estimatedCostUSD",
+        "unknownCostCalls"
+      ],
+      "title": "Usage",
+      "type": "object"
+    },
+    "UsageReport": {
+      "additionalProperties": false,
+      "properties": {
+        "agents": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Usage"
+          },
+          "title": "Agents",
+          "type": "object"
+        },
+        "participants": {
+          "$ref": "#/$defs/Usage"
+        },
+        "judge": {
+          "$ref": "#/$defs/Usage"
+        },
+        "total": {
+          "$ref": "#/$defs/Usage"
+        },
+        "wallTimeMs": {
+          "title": "Walltimems",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "agents",
+        "participants",
+        "judge",
+        "total",
+        "wallTimeMs"
+      ],
+      "title": "UsageReport",
+      "type": "object"
+    },
+    "Verification": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "correct",
+            "incorrect",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "checks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Checks",
+          "type": "array"
+        },
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        },
+        "canvasVersion": {
+          "title": "Canvasversion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "status",
+        "checks",
+        "version",
+        "canvasVersion"
+      ],
+      "title": "Verification",
+      "type": "object"
+    },
+    "Work": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "turn",
+            "checkpoint",
+            "final"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "speakerId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Speakerid"
+        }
+      },
+      "required": [
+        "kind",
+        "speakerId"
+      ],
+      "title": "Work",
+      "type": "object"
+    },
+    "Worker": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "turnsStarted": {
+          "default": 0,
+          "title": "Turnsstarted",
+          "type": "integer"
+        },
+        "turnsCompleted": {
+          "default": 0,
+          "title": "Turnscompleted",
+          "type": "integer"
+        },
+        "currentTurnIndex": {
+          "default": 0,
+          "title": "Currentturnindex",
+          "type": "integer"
+        },
+        "state": {
+          "default": "queued",
+          "enum": [
+            "queued",
+            "running",
+            "waiting_model",
+            "waiting_lock",
+            "paused",
+            "finished",
+            "capped",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "operationId": {
+          "default": "",
+          "title": "Operationid",
+          "type": "string"
+        },
+        "callsUsed": {
+          "default": 0,
+          "title": "Callsused",
+          "type": "integer"
+        },
+        "toolsUsed": {
+          "default": 0,
+          "title": "Toolsused",
+          "type": "integer"
+        },
+        "postsUsed": {
+          "default": 0,
+          "title": "Postsused",
+          "type": "integer"
+        },
+        "editsUsed": {
+          "default": 0,
+          "title": "Editsused",
+          "type": "integer"
+        },
+        "repairsUsed": {
+          "default": 0,
+          "title": "Repairsused",
+          "type": "integer"
+        },
+        "boardCursor": {
+          "default": 0,
+          "title": "Boardcursor",
+          "type": "integer"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "failureCode": {
+          "anyOf": [
+            {
+              "const": "CONTEXT_LIMIT",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failurecode"
+        },
+        "currentTask": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currenttask"
+        },
+        "reportedStatus": {
+          "anyOf": [
+            {
+              "enum": [
+                "working",
+                "waiting",
+                "blocked"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reportedstatus"
+        },
+        "turnStartedAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turnstartedat"
+        },
+        "remainingTasks": {
+          "items": {
+            "$ref": "#/$defs/TaskGap"
+          },
+          "title": "Remainingtasks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "agentId",
+        "turnsStarted",
+        "turnsCompleted",
+        "currentTurnIndex",
+        "state",
+        "operationId",
+        "callsUsed",
+        "toolsUsed",
+        "postsUsed",
+        "editsUsed",
+        "repairsUsed",
+        "boardCursor",
+        "reason",
+        "failureCode",
+        "currentTask",
+        "reportedStatus",
+        "turnStartedAt",
+        "remainingTasks"
+      ],
+      "title": "Worker",
+      "type": "object"
+    },
+    "chorus__contracts__ModelInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "provider": {
+          "default": "ollama",
+          "enum": [
+            "ollama",
+            "openai",
+            "openrouter"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "installed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Installed"
+        },
+        "available": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Available"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailablereason"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "provider",
+        "installed",
+        "available",
+        "unavailableReason"
+      ],
+      "title": "ModelInfo",
+      "type": "object"
+    },
+    "chorus__harness__models__ModelInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "ollama",
+            "openai",
+            "openrouter"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "available": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Available"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailablereason"
+        },
+        "compatibilityNote": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compatibilitynote"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "provider",
+        "available",
+        "unavailableReason",
+        "compatibilityNote"
+      ],
+      "title": "ModelInfo",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Root for generating TypeScript declarations and runtime validators.",
+  "properties": {
+    "snapshot": {
+      "$ref": "#/$defs/Snapshot"
+    },
+    "config": {
+      "$ref": "#/$defs/SessionConfig"
+    },
+    "command": {
+      "$ref": "#/$defs/Command"
+    },
+    "catalog": {
+      "$ref": "#/$defs/Catalog"
+    },
+    "journals": {
+      "items": {
+        "$ref": "#/$defs/Journal"
+      },
+      "title": "Journals",
+      "type": "array"
+    },
+    "harness": {
+      "$ref": "#/$defs/HarnessContracts"
+    },
+    "error": {
+      "$ref": "#/$defs/APIError"
+    }
+  },
+  "required": [
+    "snapshot",
+    "config",
+    "command",
+    "catalog",
+    "journals",
+    "harness",
+    "error"
+  ],
+  "title": "Contracts",
+  "type": "object"
+}

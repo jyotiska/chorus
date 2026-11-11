@@ -1,0 +1,25 @@
+{
+  "topic": "Who murdered Lord Ashford in the study on the night of the 14th — and why does the answer implicate everyone in this room?",
+  "context": "Lord Edmund Ashford, 71, was found dead in his locked study at Blackmoor Hall\nat 11:47pm on the night of November 14th. Cause of death: blunt force trauma\nto the back of the skull. The study was locked from the inside with a deadbolt.\nA secret passage behind the mahogany bookshelf was discovered the following\nmorning — it connects to the kitchen and to the east bedroom on the first floor.\n\nEstablished facts:\n- Lord Ashford changed his will three days ago. His solicitor is the only\n  person who knows the new beneficiaries — and he is in this room.\n- A Flemish oil painting (\"The Merchant's Return,\" valued at £40,000) was\n  removed from the study wall during the night. Its location is unknown.\n- The butler served Lord Ashford a whisky at 10:15pm. He claims Ashford\n  was alive and \"in good spirits, if preoccupied.\"\n- The Duchess of Everly arrived unannounced at 9:30pm. She had not been\n  invited and has not explained why she came.\n- The gardener, working late to repair a greenhouse pane, reports hearing\n  raised voices from the study at 10:45pm — one voice was a woman's.\n- A monogrammed handkerchief was found beneath the body. The initials: E.V.\n  The Duchess's full name is Eleanor Vivienne Ashford-Wren.\n- The gardener has his own reason to want Lord Ashford dead that he has\n  not disclosed to anyone.\n- The butler knows what was in the previous will and stands to lose\n  significantly under any change.\n\nWhat each character knows but has not yet shared:\n- The detective suspects the passage was used but cannot prove direction of travel.\n- The butler saw someone enter the east bedroom from the passage at 11:10pm.\n- The Duchess came to return a letter that would have destroyed her reputation.\n  She never got to give it back. She still has it.\n- The gardener saw Lord Ashford alive at 11:15pm — through the study window.\n  This means the time of death is later than reported.\n- The lawyer knows the new will disinherits everyone present and leaves\n  the estate to an illegitimate son no one knew existed.\n",
+  "max_turns": 40,
+  "agents": [
+    "detective",
+    "butler",
+    "duchess",
+    "gardener",
+    "lawyer"
+  ],
+  "expectations": [
+    "Each character must protect their own interests while appearing to cooperate — withhold what would incriminate you, volunteer what implicates others",
+    "The detective must force at least three direct contradictions between characters' accounts and name them explicitly when they occur",
+    "The butler's sighting of someone in the passage must emerge naturally from questioning — not volunteered until pressure forces it",
+    "The gardener's revised time of death must surface by turn 20 and shatter the assumed sequence of events",
+    "The Duchess's letter must be revealed, and the group must determine whether it is the motive or a red herring",
+    "The lawyer must decide whether attorney-client privilege survives the client's death — and the answer must change the power dynamics of the room",
+    "The real murderer must have a motive more compelling than greed alone",
+    "The detective's final accusation must be supported by at least three independent pieces of evidence that emerged during questioning",
+    "The conversation must not converge on a single suspect before turn 28",
+    "The final resolution must leave at least one character implicated in something they cannot explain away — even if they did not commit the murder"
+  ],
+  "deliverable": "Blackmoor Hall Case Board: a verified timeline, clue-to-source list, explicit contradictions, suspect motive/opportunity/evidence matrix, the detective’s final accusation backed by at least three independent clues, and remaining uncertainty."
+}

@@ -49,10 +49,10 @@ These questions connect the project to AI safety through evidence use, truthful 
 Chorus owns the execution rules, prompts, API contracts, model calls, validation, and persistent session records. Keeping these together gives the research a common foundation across different interfaces and problem settings.
 
 - **Chorus:** the Python framework and execution core, with an HTTP API and CLI.
-- **chorus-web:** the primary interface for selecting problems and agents, running experiments, and inspecting their records and evaluation.
+- **`web/` (Chorus Web):** the primary interface for selecting problems and agents, running experiments, and inspecting their records and evaluation.
 - **Nanoville:** the same experiment workspace with an animated scene for up to fifty participants.
 
-Both applications are built on Chorus. The CLI provides another way to use the same core. Interface changes should preserve the execution rules and records needed to interpret a session.
+The engine (`chorus/`), web interface (`web/`), and canonical shared client/UI (`sdk/`) live in this repository. Nanoville remains a separate repository using the same HTTP API. The CLI provides another way to use the same core. Interface changes should preserve the execution rules and records needed to interpret a session.
 
 ### Repository experiments
 
@@ -97,19 +97,23 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
 cp -n .env.example .env
+nvm use  # or activate Node 24 with your preferred manager
+npm ci --prefix web
 ```
 
-Preserve any existing `.env`. Configure `CHORUS_API_KEY` for Luna, `OPENROUTER_API_KEY` for OpenRouter, or `OLLAMA_HOST` for installed local models, then start the backend:
+Preserve any existing `.env`. Configure `CHORUS_API_KEY` for Luna, `OPENROUTER_API_KEY` for OpenRouter, or `OLLAMA_HOST` for installed local models, then launch the application:
 
 ```bash
-chorus serve
+chorus launch
 ```
+
+This starts the engine and web interface, waits for both to be ready, and opens the browser. Ctrl-C stops both services. Use `chorus launch --no-browser` to suppress browser opening, or `--api-port 43287 --web-port 43289` to choose other ports. An occupied port is reported without stopping any existing service. The launcher uses the checkout’s backend `.env` and existing database; it does not reset saved sessions. It currently requires a source checkout installed with `pip install -e .`, Python, and Node 24.
 
 Keep credentials in Chorus's backend environment. Missing Luna access requires an explicit alternative selection. Ollama is needed only for local models.
 
 The local API runs at **http://127.0.0.1:43187**. chorus-web runs at **43189** and Nanoville at **43188**. Both home pages use the new harness; Nanoville includes 50 custom animated sprites and a zoomable large-cast scene.
 
-In either sibling frontend, copy `.env.example` to `.env.local` if needed, run `npm ci`, then `npm run dev`. The server-side `CHORUS_API_URL` points to the backend. For production mode, run `npm run build` followed by `npm run start`. The backend health endpoint is `/health`, and interactive API documentation is at `/docs`.
+For production mode, run `npm run build --prefix web` once, then `chorus launch --production`. Rebuild after interface changes. To run only the API, use `chorus serve`; to run only the interface, use `npm run dev --prefix web`. The launcher sets the interface’s server-side `CHORUS_API_URL` automatically. When running the interface separately, configure it in `web/.env.local` if using a nondefault API address. Nanoville continues to run from its own checkout with `npm ci` and `npm run dev`. The backend health endpoint is `/health`, and interactive API documentation is at `/docs`.
 
 ```bash
 chorus catalog scenarios
@@ -146,17 +150,19 @@ The [live pilot](docs/live-harness-pilot-2026-11-02.json) records two-agent chec
 
 The new API is `/api/v2`; its implementation is in `chorus/harness/`. Model execution, tool authorization, scheduling, accounting, and persistence remain backend responsibilities. A single Chorus process owns SQLite; model requests run outside database transactions. Concurrent workers serialize short commits and acquire the document lock only for canvas work.
 
-The canonical shared UI/client lives under `sdk/harness-*`; `scripts/export_contracts.py` regenerates contracts and copies shared files into both frontends. Modify the source, never generated frontend copies. Install Nanoville's locked dependencies first: the exporter uses its `json-schema-to-typescript` package and Node 24. From this repository, regenerate with:
+The canonical shared UI/client lives under `sdk/harness-*`; `scripts/export_contracts.py` regenerates contracts and copies shared files into `web/lib/api/chorus/`. Modify the source, never generated frontend copies. The exporter uses this repository’s `web/node_modules/json-schema-to-typescript` and Node 24; Nanoville is not required. From this repository, regenerate with:
 
 ```bash
 .venv/bin/python scripts/export_contracts.py
 .venv/bin/python scripts/generate_harness_art.py
 ```
 
+To intentionally update a separate Nanoville checkout, use `.venv/bin/python scripts/export_contracts.py --nanoville ../nanoville`. The default export never writes outside this repository.
+
 The artwork generator creates the original portraits and sixteen-frame sprite sheets from stable persona identities.
 
 Historical sessions remain accessible through `/archive`, `?session=SESSION_ID`, and `/api/v1` read/export endpoints. V1 writes are disabled in production. Old catalogs, generation code, and components remain solely for archive decoding and explicit regression compatibility; they are not selectable on the new home pages. Migration 3 adds harness tables without rewriting old session snapshots.
 
-Run `.venv/bin/python -m pytest` for backend verification, then `npm run check` in each frontend using Node 24. Browser suites run sequentially with fake providers and isolated databases. Do not run tests against saved user sessions.
+Run `.venv/bin/python -m pytest` for backend verification, then `npm run check --prefix web` using Node 24. After exporting changes to Nanoville, run its checks separately. Browser suites run sequentially with fake providers and isolated databases. Do not run tests against saved user sessions.
 
 See [running Chorus](docs/running-chorus.md), [implementation plan](docs/real-world-harness-plan.md), [release notes](docs/harness-release-notes.md), and [research architecture](docs/chorus-architecture.md).
