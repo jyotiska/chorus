@@ -50,6 +50,7 @@ blob-report/
 node_modules/
 .ruff_cache/
 .mypy_cache/
+.cache/
 
 # Large downloaded/generated datasets, model weights, archives, and recordings.
 # scripts/check_repository.py enforces a 5 MiB limit on tracked files.

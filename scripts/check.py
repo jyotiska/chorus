@@ -26,6 +26,15 @@ def main():
         if not key.startswith(("CHORUS_", "OPENROUTER_")) and key != "OLLAMA_HOST"
     }
     env["PYTHON_DOTENV_DISABLED"] = "1"
+    env.setdefault("TIKTOKEN_CACHE_DIR", str(ROOT / ".cache/tiktoken"))
+    print("Preparing public tokenizer data (first run may download it).", flush=True)
+    subprocess.run(
+        [sys.executable, "scripts/prepare_tokenizer.py"],
+        cwd=ROOT,
+        env=env,
+        check=True,
+        timeout=120,
+    )
     commands = [
         ["uv", "lock", "--check"],
         [sys.executable, "scripts/check_repository.py"],

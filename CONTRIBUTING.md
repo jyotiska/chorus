@@ -25,6 +25,8 @@ The lockfiles are `uv.lock` and `web/package-lock.json`. Normal setup must not r
 
 This checks repository policy, the Python lock, basic Python lint, formatting for the new maintenance modules, gradual Python type checking, Python tests and coverage, generated contracts, web lint/types/build/browser tests, and high/critical npm audit findings. Python formatting and type checking have an explicit initial scope in `scripts/check.py` and `pyproject.toml`; expand it as modules are improved. Existing Python code is not fully type checked.
 
+The check command prepares public, hash-verified tiktoken encoding data in ignored `.cache/tiktoken/` before tests. The first run needs internet access for this setup download, with a two-minute timeout; it makes no model calls. For direct pytest runs, first run `.venv/bin/python scripts/prepare_tokenizer.py` and set `TIKTOKEN_CACHE_DIR="$PWD/.cache/tiktoken"`. Tests themselves continue to block external connections.
+
 For a faster engine-only pass, use `--python-only`. CI runs Python on Linux (3.11 and 3.13) and macOS (3.11), with the full browser suite on Linux. Browser tests use ports 3111, 43191 and 11436. Run them sequentially, separately from Nanoville tests. Test subprocesses use temporary data and disabled .env loading; normal Python tests block non-loopback connections.
 
 Reports go to ignored paths or short-lived CI artifacts. Test reports are not research evidence. See [the test guide](TEST_PLAN.md).
