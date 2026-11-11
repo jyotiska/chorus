@@ -53,7 +53,7 @@ class HarnessCatalog(Model):
 
 class HarnessConfig(Model):
     problemId: str
-    participantIds: list[str] = Field(min_length=2, max_length=50)
+    participantIds: list[str] = Field(min_length=1, max_length=50)
     adversaryIds: list[str] = Field(default_factory=list, max_length=50)
     model: str = "gpt-6-luna"
     judgeModel: str | None = None
@@ -74,6 +74,11 @@ class HarnessConfig(Model):
         return self
 
 
+class TaskGap(Model):
+    task: str
+    reason: str
+
+
 class Worker(Model):
     agentId: str
     turnsStarted: int = 0
@@ -88,7 +93,11 @@ class Worker(Model):
     repairsUsed: int = 0
     boardCursor: int = 0
     reason: str = ""
+    failureCode: Literal["CONTEXT_LIMIT"] | None = None
+    currentTask: str | None = None
+    reportedStatus: Literal["working", "waiting", "blocked"] | None = None
     turnStartedAt: str | None = None
+    remainingTasks: list[TaskGap] = Field(default_factory=list)
 
 
 class LeaseView(Model):
@@ -135,6 +144,106 @@ class JudgeReport(Model):
         return self
 
 
+class ExperimentConfig(Model):
+    problemId: str
+    participantIds: list[str] = Field(min_length=1, max_length=10)
+    model: str = "gpt-6-luna"
+    judgeModel: str | None = None
+
+    @model_validator(mode="after")
+    def distinct_participants(self):
+        if len(set(self.participantIds)) != len(self.participantIds):
+            raise ValueError("Participants must be distinct.")
+        return self
+
+
+class ExperimentWorktree(Model):
+    agentId: str
+    branch: str
+    path: str
+
+
+class ExperimentRepository(Model):
+    path: str
+    metadataPath: str
+    baselineCommit: str
+    mainCommit: str
+    worktrees: list[ExperimentWorktree]
+
+
+class RepositoryEntry(Model):
+    path: str
+    kind: Literal["directory", "file", "link", "submodule"]
+
+
+class RepositoryTree(Model):
+    revision: str
+    entries: list[RepositoryEntry]
+    truncated: bool
+
+
+class RepositoryFile(Model):
+    status: Literal["text", "binary", "too_large"]
+    size: int
+    content: str | None
+
+
+class ExperimentTasks(Model):
+    revision: int
+    markdown: str
+    completed: int
+    total: int
+
+
+class PlanningCompletion(Model):
+    agentId: str
+    specRevision: int
+    createdAt: str
+
+
+class FrozenExperiment(Model):
+    mainCommit: str
+    specRevision: int
+    evidenceThrough: int
+
+
+class CriterionScore(Model):
+    score: int | Literal["not_assessable", "not_applicable"] = Field()
+    explanation: str = Field(min_length=1, max_length=1600)
+    evidenceIds: list[str] = Field(max_length=30)
+
+    @model_validator(mode="after")
+    def valid_score(self):
+        if isinstance(self.score, int) and not 0 <= self.score <= 4:
+            raise ValueError("Scores must be between zero and four.")
+        return self
+
+
+class AgentScorecard(Model):
+    agentId: str
+    criteria: list[CriterionScore] = Field(min_length=5, max_length=5)
+
+
+class ExperimentReport(Model):
+    summary: str = Field(min_length=1, max_length=3500)
+    application: list[CriterionScore] = Field(min_length=5, max_length=5)
+    agents: list[AgentScorecard]
+    collaboration: list[CriterionScore] = Field(min_length=5, max_length=5)
+    missingWork: list[str]
+
+
+class ExperimentState(Model):
+    phase: Literal["plan", "build", "judge"] = "plan"
+    planningCompletions: list[PlanningCompletion] | None = None
+    # Preserve the original decision and threshold for archived majority runs.
+    majority: int | None = None
+    votes: list[PlanningCompletion] = Field(default_factory=list)
+    repository: ExperimentRepository
+    frozen: FrozenExperiment | None = None
+    judgeAttempts: int = 0
+    report: ExperimentReport | None = None
+
+
 class HarnessSnapshot(Model):
     id: str
     revision: int = 0
@@ -147,7 +256,7 @@ class HarnessSnapshot(Model):
     problem: Problem
     agents: list[Persona]
     workers: list[Worker]
-    status: Literal["ready", "running", "reviewing", "paused", "completed", "stopped"] = "ready"
+    status: Literal["ready", "running", "reviewing", "paused", "completed", "stopped", "stopping", "killed", "judge_failed"] = "ready"
     canvas: str = ""
     canvasVersion: int = 0
     boardCount: int = 0
@@ -157,6 +266,8 @@ class HarnessSnapshot(Model):
     frozenSequence: int | None = None
     verification: Verification | None = None
     report: JudgeReport | None = None
+    # Existing persisted sessions have no experiment state.
+    experiment: ExperimentState | None = None
     error: str = ""
     createdAt: str
     updatedAt: str
@@ -181,7 +292,7 @@ class RecordPage(Model):
 
 class HarnessCommand(Model):
     commandId: str = Field(min_length=1, max_length=100)
-    action: Literal["start", "pause", "resume", "stop"]
+    action: Literal["start", "pause", "resume", "stop", "kill", "retry_judge"]
     expectedRevision: int = Field(ge=0)
 
 
@@ -219,3 +330,7 @@ class HarnessContracts(Model):
     page: RecordPage
     command: HarnessCommand
     usage: UsageReport
+    experimentConfig: ExperimentConfig
+    repositoryTree: RepositoryTree
+    repositoryFile: RepositoryFile
+    experimentTasks: ExperimentTasks

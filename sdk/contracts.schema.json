@@ -112,6 +112,30 @@
       "title": "Agent",
       "type": "object"
     },
+    "AgentScorecard": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "criteria": {
+          "items": {
+            "$ref": "#/$defs/CriterionScore"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Criteria",
+          "type": "array"
+        }
+      },
+      "required": [
+        "agentId",
+        "criteria"
+      ],
+      "title": "AgentScorecard",
+      "type": "object"
+    },
     "CallMetrics": {
       "additionalProperties": false,
       "properties": {
@@ -403,6 +427,323 @@
       "title": "Command",
       "type": "object"
     },
+    "CriterionScore": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "enum": [
+                "not_assessable",
+                "not_applicable"
+              ],
+              "type": "string"
+            }
+          ],
+          "title": "Score"
+        },
+        "explanation": {
+          "maxLength": 1600,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "evidenceIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 30,
+          "title": "Evidenceids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "score",
+        "explanation",
+        "evidenceIds"
+      ],
+      "title": "CriterionScore",
+      "type": "object"
+    },
+    "ExperimentConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "problemId": {
+          "title": "Problemid",
+          "type": "string"
+        },
+        "participantIds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "title": "Participantids",
+          "type": "array"
+        },
+        "model": {
+          "default": "gpt-6-luna",
+          "title": "Model",
+          "type": "string"
+        },
+        "judgeModel": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Judgemodel"
+        }
+      },
+      "required": [
+        "problemId",
+        "participantIds",
+        "model",
+        "judgeModel"
+      ],
+      "title": "ExperimentConfig",
+      "type": "object"
+    },
+    "ExperimentReport": {
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "maxLength": 3500,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "application": {
+          "items": {
+            "$ref": "#/$defs/CriterionScore"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Application",
+          "type": "array"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/AgentScorecard"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "collaboration": {
+          "items": {
+            "$ref": "#/$defs/CriterionScore"
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "title": "Collaboration",
+          "type": "array"
+        },
+        "missingWork": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missingwork",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "application",
+        "agents",
+        "collaboration",
+        "missingWork"
+      ],
+      "title": "ExperimentReport",
+      "type": "object"
+    },
+    "ExperimentRepository": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "metadataPath": {
+          "title": "Metadatapath",
+          "type": "string"
+        },
+        "baselineCommit": {
+          "title": "Baselinecommit",
+          "type": "string"
+        },
+        "mainCommit": {
+          "title": "Maincommit",
+          "type": "string"
+        },
+        "worktrees": {
+          "items": {
+            "$ref": "#/$defs/ExperimentWorktree"
+          },
+          "title": "Worktrees",
+          "type": "array"
+        }
+      },
+      "required": [
+        "path",
+        "metadataPath",
+        "baselineCommit",
+        "mainCommit",
+        "worktrees"
+      ],
+      "title": "ExperimentRepository",
+      "type": "object"
+    },
+    "ExperimentState": {
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "default": "plan",
+          "enum": [
+            "plan",
+            "build",
+            "judge"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "planningCompletions": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PlanningCompletion"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Planningcompletions"
+        },
+        "majority": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Majority"
+        },
+        "votes": {
+          "items": {
+            "$ref": "#/$defs/PlanningCompletion"
+          },
+          "title": "Votes",
+          "type": "array"
+        },
+        "repository": {
+          "$ref": "#/$defs/ExperimentRepository"
+        },
+        "frozen": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FrozenExperiment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "judgeAttempts": {
+          "default": 0,
+          "title": "Judgeattempts",
+          "type": "integer"
+        },
+        "report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExperimentReport"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "phase",
+        "planningCompletions",
+        "majority",
+        "votes",
+        "repository",
+        "frozen",
+        "judgeAttempts",
+        "report"
+      ],
+      "title": "ExperimentState",
+      "type": "object"
+    },
+    "ExperimentTasks": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "markdown": {
+          "title": "Markdown",
+          "type": "string"
+        },
+        "completed": {
+          "title": "Completed",
+          "type": "integer"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "revision",
+        "markdown",
+        "completed",
+        "total"
+      ],
+      "title": "ExperimentTasks",
+      "type": "object"
+    },
+    "ExperimentWorktree": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "branch": {
+          "title": "Branch",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId",
+        "branch",
+        "path"
+      ],
+      "title": "ExperimentWorktree",
+      "type": "object"
+    },
     "FinalJudgement": {
       "additionalProperties": false,
       "properties": {
@@ -479,6 +820,30 @@
         "requirements"
       ],
       "title": "FinalJudgement",
+      "type": "object"
+    },
+    "FrozenExperiment": {
+      "additionalProperties": false,
+      "properties": {
+        "mainCommit": {
+          "title": "Maincommit",
+          "type": "string"
+        },
+        "specRevision": {
+          "title": "Specrevision",
+          "type": "integer"
+        },
+        "evidenceThrough": {
+          "title": "Evidencethrough",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mainCommit",
+        "specRevision",
+        "evidenceThrough"
+      ],
+      "title": "FrozenExperiment",
       "type": "object"
     },
     "Grade": {
@@ -585,7 +950,9 @@
             "start",
             "pause",
             "resume",
-            "stop"
+            "stop",
+            "kill",
+            "retry_judge"
           ],
           "title": "Action",
           "type": "string"
@@ -616,7 +983,7 @@
             "type": "string"
           },
           "maxItems": 50,
-          "minItems": 2,
+          "minItems": 1,
           "title": "Participantids",
           "type": "array"
         },
@@ -730,6 +1097,18 @@
         },
         "usage": {
           "$ref": "#/$defs/UsageReport"
+        },
+        "experimentConfig": {
+          "$ref": "#/$defs/ExperimentConfig"
+        },
+        "repositoryTree": {
+          "$ref": "#/$defs/RepositoryTree"
+        },
+        "repositoryFile": {
+          "$ref": "#/$defs/RepositoryFile"
+        },
+        "experimentTasks": {
+          "$ref": "#/$defs/ExperimentTasks"
         }
       },
       "required": [
@@ -738,7 +1117,11 @@
         "snapshot",
         "page",
         "command",
-        "usage"
+        "usage",
+        "experimentConfig",
+        "repositoryTree",
+        "repositoryFile",
+        "experimentTasks"
       ],
       "title": "HarnessContracts",
       "type": "object"
@@ -808,7 +1191,10 @@
             "reviewing",
             "paused",
             "completed",
-            "stopped"
+            "stopped",
+            "stopping",
+            "killed",
+            "judge_failed"
           ],
           "title": "Status",
           "type": "string"
@@ -883,6 +1269,17 @@
           ],
           "default": null
         },
+        "experiment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExperimentState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "error": {
           "default": "",
           "title": "Error",
@@ -919,6 +1316,7 @@
         "frozenSequence",
         "verification",
         "report",
+        "experiment",
         "error",
         "createdAt",
         "updatedAt"
@@ -1149,6 +1547,30 @@
       "title": "Personality",
       "type": "object"
     },
+    "PlanningCompletion": {
+      "additionalProperties": false,
+      "properties": {
+        "agentId": {
+          "title": "Agentid",
+          "type": "string"
+        },
+        "specRevision": {
+          "title": "Specrevision",
+          "type": "integer"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agentId",
+        "specRevision",
+        "createdAt"
+      ],
+      "title": "PlanningCompletion",
+      "type": "object"
+    },
     "Problem": {
       "additionalProperties": false,
       "properties": {
@@ -1273,6 +1695,94 @@
         "hasMore"
       ],
       "title": "RecordPage",
+      "type": "object"
+    },
+    "RepositoryEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "directory",
+            "file",
+            "link",
+            "submodule"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "kind"
+      ],
+      "title": "RepositoryEntry",
+      "type": "object"
+    },
+    "RepositoryFile": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "text",
+            "binary",
+            "too_large"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Content"
+        }
+      },
+      "required": [
+        "status",
+        "size",
+        "content"
+      ],
+      "title": "RepositoryFile",
+      "type": "object"
+    },
+    "RepositoryTree": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        },
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/RepositoryEntry"
+          },
+          "title": "Entries",
+          "type": "array"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "revision",
+        "entries",
+        "truncated"
+      ],
+      "title": "RepositoryTree",
       "type": "object"
     },
     "Requirement": {
@@ -1679,6 +2189,25 @@
         "reasons"
       ],
       "title": "StatChange",
+      "type": "object"
+    },
+    "TaskGap": {
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "title": "Task",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task",
+        "reason"
+      ],
+      "title": "TaskGap",
       "type": "object"
     },
     "TokenUsage": {
@@ -2125,6 +2654,48 @@
           "title": "Reason",
           "type": "string"
         },
+        "failureCode": {
+          "anyOf": [
+            {
+              "const": "CONTEXT_LIMIT",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failurecode"
+        },
+        "currentTask": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Currenttask"
+        },
+        "reportedStatus": {
+          "anyOf": [
+            {
+              "enum": [
+                "working",
+                "waiting",
+                "blocked"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reportedstatus"
+        },
         "turnStartedAt": {
           "anyOf": [
             {
@@ -2136,6 +2707,13 @@
           ],
           "default": null,
           "title": "Turnstartedat"
+        },
+        "remainingTasks": {
+          "items": {
+            "$ref": "#/$defs/TaskGap"
+          },
+          "title": "Remainingtasks",
+          "type": "array"
         }
       },
       "required": [
@@ -2152,7 +2730,11 @@
         "repairsUsed",
         "boardCursor",
         "reason",
-        "turnStartedAt"
+        "failureCode",
+        "currentTask",
+        "reportedStatus",
+        "turnStartedAt",
+        "remainingTasks"
       ],
       "title": "Worker",
       "type": "object"

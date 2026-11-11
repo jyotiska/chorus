@@ -186,7 +186,7 @@ export type Models1 = ModelInfo1[];
 export type Defaultmodel1 = string;
 export type Problemid = string;
 /**
- * @minItems 2
+ * @minItems 1
  * @maxItems 50
  */
 export type Participantids2 = string[];
@@ -225,9 +225,16 @@ export type Editsused = number;
 export type Repairsused = number;
 export type Boardcursor = number;
 export type Reason = string;
+export type Failurecode = "CONTEXT_LIMIT" | null;
+export type Currenttask = string | null;
+export type Reportedstatus = ("working" | "waiting" | "blocked") | null;
 export type Turnstartedat = string | null;
+export type Task = string;
+export type Reason1 = string;
+export type Remainingtasks = TaskGap[];
 export type Workers = Worker[];
-export type Status2 = "ready" | "running" | "reviewing" | "paused" | "completed" | "stopped";
+export type Status2 =
+  "ready" | "running" | "reviewing" | "paused" | "completed" | "stopped" | "stopping" | "killed" | "judge_failed";
 export type Canvas1 = string;
 export type Canvasversion = number;
 export type Boardcount = number;
@@ -262,21 +269,65 @@ export type Insufficientevidence = boolean;
 export type Agents4 = Grade[];
 export type Coveredrecordids = string[];
 export type Completedat = string;
-export type Error1 = string;
+export type Phase1 = "plan" | "build" | "judge";
+export type Planningcompletions = PlanningCompletion[] | null;
+export type Agentid6 = string;
+export type Specrevision = number;
 export type Createdat2 = string;
+export type Majority = number | null;
+export type Votes = PlanningCompletion[];
+export type Path = string;
+export type Metadatapath = string;
+export type Baselinecommit = string;
+export type Maincommit = string;
+export type Agentid7 = string;
+export type Branch = string;
+export type Path1 = string;
+export type Worktrees = ExperimentWorktree[];
+export type Maincommit1 = string;
+export type Specrevision1 = number;
+export type Evidencethrough = number;
+export type Judgeattempts = number;
+export type Summary3 = string;
+export type Score = number | ("not_assessable" | "not_applicable");
+export type Explanation1 = string;
+/**
+ * @maxItems 30
+ */
+export type Evidenceids1 = string[];
+/**
+ * @minItems 5
+ * @maxItems 5
+ */
+export type Application = CriterionScore[];
+export type Agentid8 = string;
+/**
+ * @minItems 5
+ * @maxItems 5
+ */
+export type Criteria = CriterionScore[];
+export type Agents5 = AgentScorecard[];
+/**
+ * @minItems 5
+ * @maxItems 5
+ */
+export type Collaboration = CriterionScore[];
+export type Missingwork = string[];
+export type Error1 = string;
+export type Createdat3 = string;
 export type Updatedat1 = string;
 export type Id9 = string;
 export type Sequence1 = number;
 export type Kind2 = string;
-export type Agentid6 = string;
+export type Agentid9 = string;
 export type Turn1 = number;
-export type Createdat3 = string;
+export type Createdat4 = string;
 export type Records = Record[];
 export type Cursor = number;
 export type Highwater = number;
 export type Hasmore = boolean;
 export type Commandid1 = string;
-export type Action1 = "start" | "pause" | "resume" | "stop";
+export type Action1 = "start" | "pause" | "resume" | "stop" | "kill" | "retry_judge";
 export type Expectedrevision1 = number;
 export type Callcount = number;
 export type Inputtokens1 = number;
@@ -295,6 +346,26 @@ export type Reportedcostusd = number;
 export type Estimatedcostusd = number;
 export type Unknowncostcalls = number;
 export type Walltimems = number;
+export type Problemid1 = string;
+/**
+ * @minItems 1
+ * @maxItems 10
+ */
+export type Participantids3 = string[];
+export type Model3 = string;
+export type Judgemodel1 = string | null;
+export type Revision2 = string;
+export type Path2 = string;
+export type Kind3 = "directory" | "file" | "link" | "submodule";
+export type Entries = RepositoryEntry[];
+export type Truncated = boolean;
+export type Status4 = "text" | "binary" | "too_large";
+export type Size = number;
+export type Content = string | null;
+export type Revision3 = number;
+export type Markdown = string;
+export type Completed = number;
+export type Total = number;
 export type Error2 = string;
 export type Code =
   | "INVALID_REQUEST"
@@ -491,6 +562,10 @@ export interface HarnessContracts {
   page: RecordPage;
   command: HarnessCommand;
   usage: UsageReport;
+  experimentConfig: ExperimentConfig;
+  repositoryTree: RepositoryTree;
+  repositoryFile: RepositoryFile;
+  experimentTasks: ExperimentTasks;
 }
 export interface HarnessCatalog {
   version: Version;
@@ -568,8 +643,9 @@ export interface HarnessSnapshot {
   frozenSequence: Frozensequence;
   verification: Verification | null;
   report: JudgeReport | null;
+  experiment: ExperimentState | null;
   error: Error1;
-  createdAt: Createdat2;
+  createdAt: Createdat3;
   updatedAt: Updatedat1;
 }
 export interface Worker {
@@ -586,7 +662,15 @@ export interface Worker {
   repairsUsed: Repairsused;
   boardCursor: Boardcursor;
   reason: Reason;
+  failureCode: Failurecode;
+  currentTask: Currenttask;
+  reportedStatus: Reportedstatus;
   turnStartedAt: Turnstartedat;
+  remainingTasks: Remainingtasks;
+}
+export interface TaskGap {
+  task: Task;
+  reason: Reason1;
 }
 export interface LeaseView {
   agentId: Agentid4;
@@ -616,6 +700,54 @@ export interface Grade {
   evidenceIds: Evidenceids;
   insufficientEvidence: Insufficientevidence;
 }
+export interface ExperimentState {
+  phase: Phase1;
+  planningCompletions: Planningcompletions;
+  majority: Majority;
+  votes: Votes;
+  repository: ExperimentRepository;
+  frozen: FrozenExperiment | null;
+  judgeAttempts: Judgeattempts;
+  report: ExperimentReport | null;
+}
+export interface PlanningCompletion {
+  agentId: Agentid6;
+  specRevision: Specrevision;
+  createdAt: Createdat2;
+}
+export interface ExperimentRepository {
+  path: Path;
+  metadataPath: Metadatapath;
+  baselineCommit: Baselinecommit;
+  mainCommit: Maincommit;
+  worktrees: Worktrees;
+}
+export interface ExperimentWorktree {
+  agentId: Agentid7;
+  branch: Branch;
+  path: Path1;
+}
+export interface FrozenExperiment {
+  mainCommit: Maincommit1;
+  specRevision: Specrevision1;
+  evidenceThrough: Evidencethrough;
+}
+export interface ExperimentReport {
+  summary: Summary3;
+  application: Application;
+  agents: Agents5;
+  collaboration: Collaboration;
+  missingWork: Missingwork;
+}
+export interface CriterionScore {
+  score: Score;
+  explanation: Explanation1;
+  evidenceIds: Evidenceids1;
+}
+export interface AgentScorecard {
+  agentId: Agentid8;
+  criteria: Criteria;
+}
 export interface RecordPage {
   records: Records;
   cursor: Cursor;
@@ -626,9 +758,9 @@ export interface Record {
   id: Id9;
   sequence: Sequence1;
   kind: Kind2;
-  agentId: Agentid6;
+  agentId: Agentid9;
   turn: Turn1;
-  createdAt: Createdat3;
+  createdAt: Createdat4;
   data: Data;
 }
 export interface Data {
@@ -640,13 +772,13 @@ export interface HarnessCommand {
   expectedRevision: Expectedrevision1;
 }
 export interface UsageReport {
-  agents: Agents5;
+  agents: Agents6;
   participants: Usage;
   judge: Usage;
   total: Usage;
   wallTimeMs: Walltimems;
 }
-export interface Agents5 {
+export interface Agents6 {
   [k: string]: Usage;
 }
 export interface Usage {
@@ -666,6 +798,32 @@ export interface Usage {
   reportedCostUSD: Reportedcostusd;
   estimatedCostUSD: Estimatedcostusd;
   unknownCostCalls: Unknowncostcalls;
+}
+export interface ExperimentConfig {
+  problemId: Problemid1;
+  participantIds: Participantids3;
+  model: Model3;
+  judgeModel: Judgemodel1;
+}
+export interface RepositoryTree {
+  revision: Revision2;
+  entries: Entries;
+  truncated: Truncated;
+}
+export interface RepositoryEntry {
+  path: Path2;
+  kind: Kind3;
+}
+export interface RepositoryFile {
+  status: Status4;
+  size: Size;
+  content: Content;
+}
+export interface ExperimentTasks {
+  revision: Revision3;
+  markdown: Markdown;
+  completed: Completed;
+  total: Total;
 }
 export interface APIError {
   error: Error2;

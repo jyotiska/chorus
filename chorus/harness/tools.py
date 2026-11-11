@@ -47,7 +47,7 @@ def definitions(judge=False):
     return [{"type": "function", "function": {"name": name, "description": DEFINITIONS[name][0], "parameters": DEFINITIONS[name][1]}} for name in sorted(allowed)]
 
 
-def board_text(text: str, agents) -> tuple[str, list[str]]:
+def board_text(text: str, agents, *, use_ids=False) -> tuple[str, list[str]]:
     text = " ".join(text.split())
     if not text or len(text) > 400 or len(text.split()) > 60:
         raise ValueError("Use one or two sentences, at most 60 words and 400 characters.")
@@ -57,15 +57,17 @@ def board_text(text: str, agents) -> tuple[str, list[str]]:
     ends = re.findall(r"[.!?]+[\"”’')\]]*(?=\s|$)", counted)
     if not 1 <= len(ends) <= 2 or not re.search(r"[.!?][\"”’')\]]*$", counted):
         raise ValueError("Write one or two complete sentences ending in punctuation.")
-    roster = {agent.name.lower(): agent for agent in agents}
+    roster = {(agent.id if use_ids else agent.name).lower(): agent for agent in agents}
     mentioned = []
     def replace(match):
         agent = roster.get(match[1].lower())
         if agent is None:
-            raise ValueError(f"Unknown participant @{match[1]}. Use a selected participant's first name.")
+            identity = "identifier" if use_ids else "first name"
+            raise ValueError(f"Unknown participant @{match[1]}. Use a selected participant's {identity}.")
         mentioned.append(agent.id)
-        return "@" + agent.name
-    text = re.sub(r"(?<![\w@])@([A-Za-z]+)", replace, text)
+        return "@" + (agent.id if use_ids else agent.name)
+    pattern = r"(?<![\w@])@([A-Za-z][A-Za-z0-9-]*)" if use_ids else r"(?<![\w@])@([A-Za-z]+)"
+    text = re.sub(pattern, replace, text)
     return text, list(dict.fromkeys(mentioned))
 
 

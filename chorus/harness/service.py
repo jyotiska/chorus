@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from chorus.harness import ENGINE_VERSION, PROMPT_VERSION
 from chorus.harness.accounting import Meter
 from chorus.harness.catalog import load_catalog
+from chorus.harness.experiment import ExperimentRuntime
 from chorus.harness.models import HarnessSnapshot, HarnessConfig, Worker, Grade, JudgeReport
 from chorus.harness.storage import Repository
 from chorus.harness.tools import ToolRuntime, definitions
@@ -28,11 +29,14 @@ class HarnessService:
         self.retired_tasks = set()
         self.tools = ToolRuntime(self.repo)
         self.meter = Meter(self.repo, self.call, {"local": asyncio.Semaphore(int(os.getenv("CHORUS_LOCAL_CONCURRENCY", "1"))), "cloud": asyncio.Semaphore(int(os.getenv("CHORUS_CLOUD_CONCURRENCY", "4")))})
+        self.experiments = ExperimentRuntime(self)
         self.recover()
 
     def recover(self):
         for state in self.repo.list():
-            if state.status in {"running", "reviewing"} or state.lease:
+            if state.experiment is not None:
+                self.experiments.recover(state)
+            elif state.status in {"running", "reviewing"} or state.lease:
                 def recover(s):
                     s.generation += 1
                     s.status, s.error, s.lease = "paused", "Chorus restarted. Resume to retry interrupted work.", None
@@ -50,8 +54,8 @@ class HarnessService:
     def create(self, config: HarnessConfig):
         problem = next((p for p in self.catalog.problems if p.id == config.problemId), None)
         lookup = {a.id: a for a in self.catalog.agents}
-        if problem is None or not set(config.participantIds) <= set(lookup):
-            raise ChorusError("INVALID_REQUEST", "Choose a current problem and known participants.", 400)
+        if problem is None or len(config.participantIds) < 2 or not set(config.participantIds) <= set(lookup):
+            raise ChorusError("INVALID_REQUEST", "Choose a benchmark problem and at least two known participants.", 400)
         self.validate_model(config.model)
         if config.judgeEnabled and config.judgeModel:
             self.validate_model(config.judgeModel)
@@ -64,12 +68,16 @@ class HarnessService:
             self.call.validate_model(model)
 
     def command(self, sid, command):
+        state = self.repo.get(sid)
+        if state.experiment is not None:
+            return self.experiments.command(state, command)
+        if command.action in {"kill", "retry_judge"}:
+            raise ChorusError("INVALID_STATE", "This command is only available for repository experiments.", 409)
         previous = self.repo.record(sid, "command:" + command.commandId)
         if previous:
             if previous.data["action"] != command.action:
                 raise ChorusError("CONFLICT", "Command ID already used for another action.", 409)
             return self.repo.get(sid)
-        state = self.repo.get(sid)
         action = command.action
         if state.status in {"completed", "stopped"}:
             raise ChorusError("INVALID_STATE", "This session has ended.", 409)
@@ -443,6 +451,7 @@ class HarnessService:
         self.repo.change(sid, lambda s: setattr(s, "report", report), generation=generation)
 
     async def close(self):
+        await self.experiments.close()
         # Fence publication before cancelling; even an adapter that suppresses
         # cancellation cannot commit a late action during shutdown.
         for state in self.repo.list():

@@ -234,3 +234,131 @@
 .darkWorkspace .actions a { display:inline-flex; align-items:center; min-height:32px; padding:3px 0; font-size:13px; text-decoration:underline; }
 .darkWorkspace section[aria-labelledby="board-heading"] { position:relative; }
 .darkWorkspace .newPosts { position:absolute; top:40px; left:50%; transform:translateX(-50%); z-index:1; padding:5px 12px; border-radius:20px; background:var(--raised); border:1px solid var(--line); box-shadow:0 2px 8px #0004; }
+
+.markdown.specDocument {
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.markdown.specDocument > h2 {
+  font-size: 21px;
+  margin: 28px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.markdown.specDocument > h2:first-child { margin-top: 0; }
+.markdown.specDocument h3 {
+  font-size: 17px;
+  margin: 22px 0 8px;
+}
+.markdown.specDocument h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 18px 0 6px;
+}
+.markdown.specDocument p {
+  margin: 0 0 12px;
+  white-space: pre-line;
+}
+.markdown.specDocument ul,.markdown.specDocument ol {
+  margin: 0 0 14px;
+  padding-inline-start: 1.45em;
+}
+.markdown.specDocument ul { list-style: disc; }
+.markdown.specDocument ol { list-style: decimal; }
+.markdown.specDocument li + li { margin-top: 4px; }
+.markdown.specDocument li:global(.task-list-item) { list-style: none; }
+.markdown.specDocument input[type="checkbox"] {
+  margin-inline-end: 6px;
+  accent-color: var(--accent);
+}
+.voteCheck {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  flex: none;
+  border-radius: 50%;
+  background: #ccebd8;
+  color: #174730;
+  font: 700 12px/1 system-ui, sans-serif;
+}
+.agentUsage {
+  display: grid;
+  gap: 2px;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.agentTasks h2 { margin-bottom: 14px; }
+.agentTasks h3 {
+  margin: 20px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.agentTasks h3 small {
+  margin-inline-start: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.taskDetails { display: grid; gap: 9px; }
+.taskDetails > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px;
+}
+.taskDetails dt { color: var(--muted); }
+.taskDetails dd { margin: 0; overflow-wrap: anywhere; }
+.repositoryBrowser {
+  margin: 20px 0 26px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.repositoryControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.repositoryControls label { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.repositoryControls select { max-width: 100%; background: var(--raised, #edf1ea); color: var(--ink); }
+.repositoryControls button { margin-inline-start: auto; }
+.repositoryLayout { display: grid; grid-template-columns: minmax(145px, 0.8fr) minmax(0, 2fr); }
+.repositoryTree {
+  min-width: 0;
+  max-height: 55vh;
+  overflow: auto;
+  padding: 8px;
+  border-inline-end: 1px solid var(--line);
+}
+.repositoryFiles { list-style: none; margin: 0; padding: 0; }
+.repositoryFiles ul { padding-inline-start: 12px; }
+.repositoryFiles :is(summary,button,li > span) {
+  width: 100%;
+  text-align: start;
+  padding: 4px 6px;
+  font: 12px/1.5 var(--font-geist-mono), monospace;
+  overflow-wrap: anywhere;
+  border-radius: 4px;
+}
+.repositoryFiles button[aria-pressed="true"] { background: var(--accent); color: #14251d; }
+.repositoryPreview { min-width: 0; padding: 10px 12px; }
+.repositoryPreview h3 { margin: 0 0 8px; overflow-wrap: anywhere; }
+.repositoryPreview pre {
+  margin: 0;
+  max-height: 55vh;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font: 12px/1.55 var(--font-geist-mono), monospace;
+  tab-size: 2;
+}
+.darkWorkspace .repositoryPreview pre { background: #101515; color: #d8e3dd; }
+@media (max-width: 620px) {
+  .repositoryLayout { grid-template-columns: minmax(0, 1fr); }
+  .repositoryTree { max-height: 28vh; border-inline-end: 0; border-bottom: 1px solid var(--line); }
+}
