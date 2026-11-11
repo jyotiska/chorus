@@ -323,7 +323,8 @@ def test_cli_defaults_to_luna_relevant_roster_and_per_agent_cap(monkeypatch):
     assert captured[0]["participantIds"] == next(p for p in load_catalog().problems if p.id == "production-mix").participantIds
     assert captured[0]["judgeEnabled"] is True
     rejected = CliRunner().invoke(cli.app, ["run", "production-mix", "--turns", "10"])
-    assert rejected.exit_code != 0 and "--turns-per-agent" in rejected.output
+    plain_output = re.sub(r"\x1b\[[0-9;]*m", "", rejected.output)
+    assert rejected.exit_code != 0 and "--turns-per-agent" in plain_output
 
 
 async def test_summary_permissions_and_frozen_judge_reads(store):
