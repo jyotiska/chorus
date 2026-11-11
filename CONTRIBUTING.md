@@ -27,7 +27,7 @@ This checks repository policy, the Python lock, basic Python lint, formatting fo
 
 The check command prepares public, hash-verified tiktoken encoding data in ignored `.cache/tiktoken/` before tests. The first run needs internet access for this setup download, with a two-minute timeout; it makes no model calls. For direct pytest runs, first run `.venv/bin/python scripts/prepare_tokenizer.py` and set `TIKTOKEN_CACHE_DIR="$PWD/.cache/tiktoken"`. Tests themselves continue to block external connections.
 
-For a faster engine-only pass, use `--python-only`. CI runs Python on Linux (3.11 and 3.13) and macOS (3.11), with the full browser suite on Linux. Browser tests use ports 3111, 43191 and 11436. Run them sequentially, separately from Nanoville tests. Test subprocesses use temporary data and disabled .env loading; normal Python tests block non-loopback connections.
+For a faster engine-only pass, use `--python-only`. CI runs one Linux job with Python 3.11 and Node 24 for engine and browser checks. Additional platform/version checks can be run before releases. Dependency updates are reviewed manually; automatic update PRs are disabled. Browser tests use ports 3111, 43191 and 11436. Run them sequentially, separately from Nanoville tests. Test subprocesses use temporary data and disabled .env loading; normal Python tests block non-loopback connections.
 
 Reports go to ignored paths or short-lived CI artifacts. Test reports are not research evidence. See [the test guide](TEST_PLAN.md).
 
