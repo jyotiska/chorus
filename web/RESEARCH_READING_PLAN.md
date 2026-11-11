@@ -6,13 +6,11 @@
 
 **Currency:** Refreshed on 7 October 2026. The first readings in most weeks emphasize 2025–2026 research; older papers and methods are marked as foundations. This is a curated path through work most relevant to Chorus, not an exhaustive or permanently current bibliography. I distinguish published research from preprints where that matters.
 
-## Start with the project as it exists
+## Implementation context
 
-Chorus currently has 16 scenarios and 53 reusable agent profiles. A browser run sends turns to a local Ollama model in a fixed round-robin order. Every participant receives the discussion history and a shared text canvas; agents can edit that canvas. An optional Judge reviews progress every five agent turns and assigns a final letter grade. Runs are held in the browser rather than persisted.
+This reading plan was written for the October 2026 prototype. Its exercises and implementation references are historical; the readings have not been re-reviewed in the repository merge.
 
-The README describes possible future work on staged scenarios, observable state, adaptive turn selection, incentives, and consensus measurement. Those are research directions, not capabilities of the current web app. In particular, the `architecture_review` scenario describes a fictional M1 system; its claims should be checked against the live implementation before being treated as facts about Chorus.
-
-Useful starting points in this repository: [`README.md`](README.md), [`data/sessions/`](data/sessions/), [`data/agents/`](data/agents/), [`lib/session-data.ts`](lib/session-data.ts), [`components/session-explorer.tsx`](components/session-explorer.tsx), and [`app/api/simulation/turn/route.ts`](app/api/simulation/turn/route.ts).
+The current application has a Python engine, persistent SQLite records, an integrated browser interface and separate app-building and checked-benchmark flows. Start with the [main README](../README.md), [architecture](../docs/chorus-architecture.md) and [contributor guide](../CONTRIBUTING.md) when mapping an exercise to today's code.
 
 ## Week 1 — What is an agent system?
 

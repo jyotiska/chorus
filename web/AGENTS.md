@@ -8,12 +8,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## Chorus harness ownership
+## Chorus web guidance
 
-Use Node 24 and `npm run check`. The default home page uses the independent-agent v2 harness. All model calls, prompts, tool authorization, scheduling, persistence, accounting, and verification belong in Chorus.
+Follow the root `../AGENTS.md` and `../CONTRIBUTING.md`. Use Node 24. The home page creates app experiments (four briefs, ten roles, six initially selected, Plan → Build → Judge). Benchmarks and archive sessions keep their own views and semantics. Do not add benchmark turn caps or optional judging to the app setup screen.
 
-`lib/api/chorus/harness-workspace.tsx`, its CSS, client, and contracts are generated from `../sdk/`. Modify the canonical shared source and regenerate with `../.venv/bin/python ../scripts/export_contracts.py`; do not hand-edit copies. Keep the proxy transport-only and credentials in Chorus.
+All model calls, prompts, tool authorization, execution, persistence, accounting and verification belong in Python. Keep the proxy transport-only and credentials in the engine.
 
-Luna is the default. Problems auto-select relevant editable rosters; rerenders cannot overwrite user selections. Turn caps are per agent. Board posts stay at one level with valid @mentions, one or two sentences, <=60 words/400 characters. Summaries describe stated decisions; peers cannot read them, while the final judge can. Energy/confidence are absent from new sessions. Canvas writes require an exclusive fenced lease and atomic changelog. Published actions survive later failure; late cancelled work cannot publish. The judge runs once after the frozen completion barrier, reads only, and cannot overrule deterministic verification.
+`lib/api/chorus/` contains generated copies of contracts and shared UI/client sources from `../sdk/`. Edit the canonical source and regenerate with `../.venv/bin/python ../scripts/export_contracts.py`. Do not export to Nanoville without an explicit request.
 
-Render backend usage without inventing missing counts or charges. Keep reported/estimated cost and covered/unknown values distinct. Historical v1 work remains readable through `/archive` and direct session URLs. Explicit test switches preserve old regression coverage; production legacy writes are disabled. Run browser suites sequentially using their isolated databases and ports 3111/43191/11436.
+Keep user-edited team/model choices across rerenders. Render backend usage without inventing missing counts or charges. Preserve distinct reported/estimated/unknown values, live-update cleanup, stale-revision rejection and readable errors. Historical records stay readable via `/archive` and direct session URLs; production legacy writes are disabled.
+
+Run `npm run check` here and the root full check before committing. Browser suites use fake providers and isolated temporary data on ports 3111/43191/11436; run sequentially. Keep generated test reports, screenshots and recordings out of Git. Do not add CLAUDE.md.

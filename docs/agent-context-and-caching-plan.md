@@ -14,7 +14,7 @@ Stage 1 is implemented: provider cache usage normalization, stable participant i
 
 Validation diagnostics now distinguish rejected attempts from validated edits discarded with a skipped slot. Rejection feedback is recorded without draft text; brief replies receive measured length feedback and a shorter target. Skipped turns show aggregate cached input and context from the last attempted spoken response. Historical rejection reasons remain unavailable.
 
-The isolated [1 November cache pilot](cache-pilot-2026-11-01.json) verified direct GPT reads of 2,266 cached tokens out of 2,281 input tokens and an OpenRouter/DeepSeek read of 2,304 out of 2,433. One later DeepSeek call missed, so these observations establish working cache reads rather than a guaranteed hit rate or full-session savings.
+The isolated 1 November cache pilot (raw results retained outside Git) verified direct GPT reads of 2,266 cached tokens out of 2,281 input tokens and an OpenRouter/DeepSeek read of 2,304 out of 2,433. One later DeepSeek call missed, so these observations establish working cache reads rather than a guaranteed hit rate or full-session savings.
 
 Stages 2–5 remain planned: durable per-agent message histories, caching of that growing history with broader route capabilities, compaction and the advanced session/observer inspector. Per-call costs are currently displayed when reported; automatic price reconciliation and broader workload cost comparisons remain follow-up work.
 

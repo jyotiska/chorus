@@ -56,3 +56,16 @@ def test_invalid_external_target_does_not_create_checkout_or_write_contracts(exp
     assert error.value.code == 2
     assert not missing.exists()
     assert (root / "sdk/contracts.schema.json").read_bytes() == original
+
+
+def test_check_detects_drift_without_overwriting_files(exporter, monkeypatch):
+    main, root, _ = exporter
+    monkeypatch.setattr(sys, "argv", ["export_contracts.py"])
+    main()
+    monkeypatch.setattr(sys, "argv", ["export_contracts.py", "--check"])
+    main()
+    path = root / "web/lib/api/chorus/harness-client.ts"
+    path.write_text("stale client\n")
+    with pytest.raises(SystemExit, match="Generated files are stale"):
+        main()
+    assert path.read_text() == "stale client\n"

@@ -1,17 +1,19 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "chorus"
 version = "0.2.0"
 description = "Chorus simulation framework and local API platform"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "typer>=0.12",
     "rich>=13",
     "pydantic>=2",
-    "python-dotenv>=1.0",
+    "python-dotenv>=1.2",
     "fastapi>=0.115,<1",
     "uvicorn>=0.30,<1",
     "httpx>=0.28,<1",
@@ -30,6 +32,10 @@ dev = [
     "pytest-asyncio>=0.23",
     "pytest-mock>=3",
     "hypothesis>=6",
+    "pytest-cov>=6",
+    "ruff>=0.14",
+    "mypy>=1.18",
+    "build>=1.2",
 ]
 
 [tool.setuptools.packages.find]
@@ -38,6 +44,32 @@ include = ["chorus*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.setuptools.package-data]
-chorus = ["catalog/*.json", "services/*.json", "harness/*.json", "harness/assets/*.svg"]
+chorus = ["catalog/*.json", "services/*.json", "harness/*.json", "harness/assets/*.svg", "harness/starters/*.md", "harness/starters/frontend/*", "harness/starters/backend/*"]
+
+[tool.coverage.run]
+branch = true
+source = ["chorus"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+exclude = ["chorus/harness/starters"]
+
+[tool.ruff.lint]
+# Start with correctness checks across existing code; expand without mass reformatting.
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["chorus/error_codes.py", "chorus/services/errors.py", "chorus/cli/doctor.py", "scripts/check_repository.py"]
+follow_imports = "silent"
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = true

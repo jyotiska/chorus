@@ -92,7 +92,7 @@ test("restores SPEC.md and the repository and preserves them after a kill", asyn
   await tree.getByRole("button", { name: "package.json", exact: true }).click();
   const preview = page.getByRole("region", { name: "File preview" });
   await expect(preview.getByRole("heading")).toHaveText("frontend/package.json");
-  await expect(preview.locator("pre")).toContainText('"next"');
+  await expect(preview.locator("pre")).toContainText('"name": "test-frontend"');
   await page.getByRole("combobox", { name: "Branch" }).selectOption("agents/general-agent");
   await expect(tree.getByText("frontend/", { exact: true })).toBeVisible();
   await expect(preview).toContainText("Select a file");
@@ -194,4 +194,20 @@ test("live agent badges follow the phase and timestamps age beside usage totals"
   await page.reload();
   await expect(roster.getByRole("img", { name: "Finished building" })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Experiment phase" }).getByText("Judge")).toHaveAttribute("aria-current", "step");
+});
+
+
+test("shows actionable starter errors through the validated client", async ({ page }) => {
+  await page.route("**/api/chorus/v2/experiments", (route) => route.fulfill({
+    status: 503,
+    json: {
+      code: "SCAFFOLD_UNAVAILABLE", requestId: "synthetic-request",
+      error: "Starter frontend/backend directories are unavailable. Check CHORUS_EXPERIMENT_SCAFFOLD.",
+    },
+  }));
+  await page.goto("/?experiment=1");
+  await page.getByRole("combobox", { name: "Model", exact: true }).click();
+  await page.getByRole("listbox").getByRole("option", { name: "Qwen 3.5 4B MLX", exact: true }).click();
+  await page.getByRole("button", { name: "Start experiment", exact: true }).click();
+  await expect(page.getByText("Starter frontend/backend directories are unavailable. Check CHORUS_EXPERIMENT_SCAFFOLD.", { exact: true })).toBeVisible();
 });

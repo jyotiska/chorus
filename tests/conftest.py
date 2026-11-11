@@ -1,5 +1,9 @@
 from __future__ import annotations
 import json
+import os
+
+# Disable .env loading before importing the API; tests supply their own settings.
+os.environ["PYTHON_DOTENV_DISABLED"] = "1"
 import asyncio
 import pytest
 from chorus.contracts import SessionConfig
@@ -61,3 +65,31 @@ def svc(store, model):
 @pytest.fixture
 def snapshot(svc):
     return svc.create(SessionConfig(**CONFIG))
+
+
+@pytest.fixture(autouse=True)
+def isolated_environment(monkeypatch):
+    for name in list(os.environ):
+        if name.startswith(("CHORUS_", "OPENROUTER_")) or name == "OLLAMA_HOST":
+            monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("PYTHON_DOTENV_DISABLED", "1")
+
+
+@pytest.fixture(autouse=True)
+def no_external_network(monkeypatch):
+    """Fake transports and local test servers work; paid/network requests fail."""
+    import socket
+
+    original = socket.socket.connect
+    original_ex = socket.socket.connect_ex
+
+    def guarded(method):
+        def connect(sock, address):
+            if sock.family in (socket.AF_INET, socket.AF_INET6):
+                if address[0] not in {"127.0.0.1", "::1", "localhost"}:
+                    raise AssertionError("External network access is disabled in tests")
+            return method(sock, address)
+        return connect
+
+    monkeypatch.setattr(socket.socket, "connect", guarded(original))
+    monkeypatch.setattr(socket.socket, "connect_ex", guarded(original_ex))

@@ -99,7 +99,7 @@ class ExperimentRuntime:
         self.catalog = load_experiment_catalog()
         self.temporary = tempfile.TemporaryDirectory(prefix="chorus-experiments-") if self.repo.store.lock is None else None
         default_runs = self.temporary.name if self.temporary else Path(self.repo.store.lock.name).parent / "experiments"
-        default_scaffold = Path(__file__).resolve().parents[3] / "starter-repos"
+        default_scaffold = Path(__file__).resolve().parent / "starters"
         self.git = ExperimentGit(Path(os.getenv("CHORUS_EXPERIMENT_ROOT", str(default_runs))),
                                  Path(os.getenv("CHORUS_EXPERIMENT_SCAFFOLD", str(default_scaffold))))
         self.spec = ExperimentSpec(self.repo, authorize)

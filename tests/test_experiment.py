@@ -323,8 +323,8 @@ async def test_judge_resolves_only_matching_frozen_citation_aliases(store, start
         await svc.close()
 
 
-async def test_finish_waits_for_own_prs_through_conflict_and_replacement(store, starter):
-    svc = HarnessService(store)
+async def test_finish_waits_for_own_prs_through_conflict_and_replacement(store, starter, model):
+    svc = HarnessService(store, model)
     try:
         sid = create(svc, PARTICIPANTS[:2]).id
         owner, peer = PARTICIPANTS[:2]
@@ -374,8 +374,8 @@ async def test_finish_waits_for_own_prs_through_conflict_and_replacement(store, 
         await svc.close()
 
 
-async def test_deliverables_require_verification_and_open_items_require_explanations(store, starter):
-    svc = HarnessService(store)
+async def test_deliverables_require_verification_and_open_items_require_explanations(store, starter, model):
+    svc = HarnessService(store, model)
     try:
         owner, peer = PARTICIPANTS[:2]
         sid = create(svc, [owner, peer]).id
