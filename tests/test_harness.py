@@ -31,7 +31,6 @@ class ScriptedModel:
         self.catalog = load_catalog()
         self.finish, self.delay = finish, delay
         self.active, self.maximum = 0, 0
-        self.steps = {}
 
     async def __call__(self, model, messages, **options):
         self.active += 1
@@ -53,12 +52,14 @@ class ScriptedModel:
                     value = {"agentId": actor, "scores": [3] * 5, "explanation": "The participant contributed relevant evidence and reviewed the constraints.", "evidenceIds": refs, "insufficientEvidence": not refs}
                 text = json.dumps(value)
             else:
-                actor = re.search(r'You are (\w+)\.', messages[0]["content"])[1].lower()
                 cycle = next(re.search(r'Current cycle (\d+)', m["content"])[1] for m in reversed(messages) if m.get("role") == "user" and m["content"].startswith("Current cycle"))
-                key = actor, cycle
-                step = self.steps.get(key, 0)
-                self.steps[key] = step + 1
-                results = [json.loads(m["content"]) for m in messages if m.get("role") == "tool"]
+                # A cancelled response is not necessarily persisted. Derive progress
+                # from durable tool results, not from how often this adapter was called.
+                # Resume adds another marker for the same cycle: keep the first one.
+                start = next(i for i, m in enumerate(messages)
+                             if m.get("role") == "user" and m["content"].startswith(f"Current cycle {cycle}/"))
+                results = [json.loads(m["content"]) for m in messages[start:] if m.get("role") == "tool"]
+                step = len(results)
                 token = next((r["token"] for r in reversed(results) if "token" in r), "")
                 canvas = next((r for r in reversed(results) if "canvas" in r), {"version": 0, "canvas": ""})
                 actions = [
@@ -404,3 +405,16 @@ async def test_provider_tool_ids_are_scoped_to_the_model_response(store):
     assert first["id"] != second["id"] and repeated == first
     assert svc.repo.get(state.id).boardCount == 2
     await svc.close()
+
+
+async def test_scripted_model_does_not_advance_an_unpublished_response():
+    model = ScriptedModel()
+    messages = [{"role": "system", "content": "You are Alex."},
+                {"role": "user", "content": "Current cycle 1/1."}]
+    first = await model("fake", messages, phase="action")
+    retry = await model("fake", messages, phase="action")
+    assert first["message"]["tool_calls"][0]["function"] == retry["message"]["tool_calls"][0]["function"]
+    messages += [first["message"], {"role": "tool", "content": "{}", "tool_call_id": first["message"]["tool_calls"][0]["id"]},
+                 {"role": "user", "content": "Current cycle 1/1. Resumed."}]
+    following = await model("fake", messages, phase="action")
+    assert following["message"]["tool_calls"][0]["function"]["name"] == "board_write"
