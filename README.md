@@ -1,10 +1,12 @@
 # Chorus
 
-**A local app for studying how AI agents work together.**
+Chorus is a research harness that brings together swarms of AI agents with different personalities, roles, and perspectives to work on a shared problem statement. I created it to study how these differences shape collaboration: how agents divide work, share information, challenge each other, resolve disagreements, and reach decisions.
 
-Give a team of agents a task, watch their discussion, and inspect what they produce. Chorus records their work so you can study where they cooperate, disagree, make mistakes, or change their minds.
+Through Chorus, I want to understand which tasks benefit from a team and which are better handled by one agent or several agents working independently. I’m interested in whether a swarm of smaller models can match a stronger model.
 
-The research question is simple: **does working together help agents reach better answers?** A convincing discussion or a finished task does not, by itself, mean the result is correct.
+I also want to look beyond whether a team finishes a task. Does disagreement help agents discover a better answer, or do they settle too quickly on the first convincing idea? Do different personalities, roles, and sources of information help them catch each other’s mistakes? What happens when their goals conflict, or when one agent has evidence the others need?
+
+The goal is to understand when collaboration produces better work, what makes it succeed or fail, and whether the improvement is worth the time and cost. By varying tasks and teams and repeating comparisons, I hope to build evidence about when agent swarms are useful, how they can be made more reliable, and when a simpler approach is enough.
 
 ![Chorus experiment setup with a task brief, six selected agents, and model settings](docs/images/chorus-experiment-setup.png)
 
