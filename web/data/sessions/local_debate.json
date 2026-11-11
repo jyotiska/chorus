@@ -1,0 +1,24 @@
+{
+  "topic": "Should we launch our AI productivity app MVP this quarter — or are we about to make a mistake we cannot undo?",
+  "context": "Northlight is a 6-person startup that has spent 8 months building an\nAI-powered productivity tool for knowledge workers. The product uses LLMs\nto summarise meetings, draft follow-up emails, prioritise tasks, and surface\nrelevant documents at the right moment in the workflow.\n\nCurrent state — as of this week's planning session:\n- Meeting summarisation and email drafting: working, tested, users love them\n- Task prioritisation: functional but produces wrong orderings in ~12% of\n  real-world cases, concentrated in multi-project contexts\n- Document surfacing: 60% complete. Works for local files. Cloud integrations\n  (Google Drive, Notion, Confluence) are not built. This is the #1 complaint.\n- 120 beta users from a waitlist of 2,400. Beta NPS: 47.\n- Runway: 14 months at current burn rate ($22K/month)\n- A well-funded competitor (Relay.ai, backed by $18M Series A) announced a\n  similar product last week and is targeting general availability in 6 weeks\n- No pricing model. No payment infrastructure. The app is currently free.\n\nThe constraint that cannot be resolved before the decision:\n- Engineering capacity allows completing EITHER cloud integrations OR\n  stabilising the task prioritisation algorithm this quarter — not both\n- A launch would require pulling one engineer into support and onboarding,\n  reducing feature velocity by roughly 20%\n- Fintech Corp, a 200-person financial services company, has expressed\n  interest in an enterprise pilot — contingent specifically on Google Drive\n  integration being available. Estimated contract value: $48K ARR.\n\nThe founding team is split: two want to launch now, two want to wait,\ntwo are genuinely undecided. This conversation needs to produce a decision.\n",
+  "max_turns": 100,
+  "agents": [
+    "optimist",
+    "pessimist",
+    "analyst",
+    "visionary",
+    "pragmatist",
+    "critic"
+  ],
+  "expectations": [
+    "The Relay.ai competitive threat must be quantified — not dismissed as \"we should focus on our own product\" or catastrophised as existential. How many of the 2,400 waitlist users will actually switch if Relay launches?",
+    "The 12% task prioritisation error rate must be evaluated in terms of user impact, not just the number — what does a wrong ordering cost a user, and how often do they catch it?",
+    "The Fintech Corp pilot must be assessed as a strategic decision, not just a revenue line — does an enterprise pilot at this stage help or constrain the product direction?",
+    "The group must evaluate a staged launch option specifically — expand beta to 500 users, no public announcement, no SLA commitments — and assess whether it is a real middle ground or a way of avoiding the decision",
+    "The session must produce a clear, binding recommendation: full launch this quarter, delay until cloud integrations ship, or staged rollout with specific named criteria that trigger the next stage",
+    "The top three risks of the recommended path must be named explicitly with concrete mitigations — not \"we'll monitor it\" but specific actions with owners and timelines",
+    "Define what success looks like 90 days after the decision — a specific, measurable state the team would agree constitutes validation",
+    "The pessimist and optimist must directly engage with each other's strongest argument at least once, not just state their positions in parallel"
+  ],
+  "deliverable": "Northlight MVP Launch Decision Memo: choose full launch, delay, or staged rollout; define the rollout scope, measurable gates for task accuracy and integrations, owners and dates, top three mitigations, and a 90-day validation target."
+}

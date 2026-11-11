@@ -11,12 +11,18 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
 cp -n .env.example .env
-chorus serve
+nvm use  # or activate Node 24 with your preferred manager
+npm ci --prefix web
+chorus launch
 ```
 
 Preserve an existing `.env`. Set `CHORUS_API_KEY` there to use the default GPT-6-Luna model. OpenRouter uses `OPENROUTER_API_KEY`; local models use `OLLAMA_HOST`. No credentials belong in a browser environment. Luna is never silently replaced when unavailable.
 
-Default ports are Chorus 43187, Nanoville 43188, and chorus-web 43189. In each frontend, configure server-side `CHORUS_API_URL=http://127.0.0.1:43187`, then run `npm ci` and `npm run dev`. Production uses `npm run build` followed by `npm run start`.
+The launcher starts the engine (43187) and interface (43189), waits for readiness, and opens the browser. Ctrl-C or termination stops both, including frontend workers. Use `--no-browser` to skip opening a tab and `--api-port` / `--web-port` to change ports. Occupied ports cause an error without stopping existing services. The launcher always starts its own engine; use `chorus serve` and `npm run dev --prefix web` separately to connect to an already-running engine.
+
+For production, run `npm run build --prefix web`, then `chorus launch --production`. Rebuild after interface changes. Launching requires a source checkout installed in editable mode and Node 24. API-only installations still support `chorus serve`. The launcher sets server-side `CHORUS_API_URL` for the interface automatically and reads the backend configuration from the checkout’s `.env`. Existing records stay in the configured SQLite database.
+
+Nanoville remains a separate repository on port 43188. Configure its server-side `CHORUS_API_URL` if the engine uses a nondefault port, then use its own `npm ci` and `npm run dev`.
 
 ## Start an experiment
 
@@ -76,7 +82,7 @@ Every dispatched attempt records tokens, cache use/utilization, provider-call la
 
 ## Development and verification
 
-Run `.venv/bin/python -m pytest` in Chorus. Run `scripts/export_contracts.py` after contracts, client, or shared UI changes, using Node 24. Shared files under each frontend's API directory are generated copies. Artwork is regenerated with `scripts/generate_harness_art.py`.
+Run `.venv/bin/python -m pytest` in Chorus. Run `scripts/export_contracts.py` after contracts, client, or shared UI changes, using Node 24 and the dependencies installed in `web/`. The default export updates only Chorus Web; pass `--nanoville /path/to/nanoville` to intentionally update that separate checkout. Shared files under each frontend's API directory are generated copies. Artwork is regenerated with `scripts/generate_harness_art.py`.
 
 Each frontend's `npm run check` runs lint, types, a production build, and browser verification; Nanoville also runs its unit/component suite. Browser tests use separate temporary databases and fake Ollama. Run browser suites sequentially: Nanoville reserves 3100/43190/11435; chorus-web 3111/43191/11436. Their explicit legacy test switches preserve historical regression coverage; leave these switches unset for normal use.
 

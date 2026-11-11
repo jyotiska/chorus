@@ -1,0 +1,23 @@
+{
+  "topic": "How should the team respond to a request to obtain evidence of ministerial bribery from the Meridian Tower vault?",
+  "context": "A client offers $4M for a signed agreement that may prove a sitting minister accepted bribes in a weapons procurement contract. The minister has reportedly offered $6M to suppress it. The team has been asked to break into Meridian Tower, a private depository, during a narrow overnight window.\n\nThe situation is volatile: an insider may be under investigation, the document’s authenticity and custody are uncertain, and the team does not know who else is monitoring the matter. The people in this room disagree about duty, risk, and whether illegal access could destroy the evidence or endanger others.\n\nThis is a fictional ethics and decision-making exercise. Do not develop a break-in plan or provide actionable instructions for entry, bypassing security, theft, evasion, or escape. Focus on a clear no-go decision for unauthorized entry, lawful evidence preservation and authentication, safe reporting channels, protection from coercion or retaliation, and the characters’ competing obligations.",
+  "max_turns": 40,
+  "agents": [
+    "mastermind",
+    "safecracker",
+    "driver",
+    "inside_man",
+    "paranoid"
+  ],
+  "expectations": [
+    "The group must make and justify a clear decision not to conduct an unauthorized entry, even if the client’s deadline creates pressure",
+    "The inside man must reveal the withheld fact that materially changes the team’s understanding of personal and evidentiary risk",
+    "The paranoid must surface at least three ways the proposed illegal approach could endanger people, compromise evidence, or undermine a future investigation",
+    "The group must distinguish what is known, alleged, and unverified about the document and bribery claim",
+    "The team must compare lawful options for preserving, authenticating, and reporting the evidence, including independent legal counsel and appropriate oversight channels",
+    "The plan must account for coercion and retaliation risks to the insider and other people without prescribing concealment or evasion",
+    "The final decision memo must identify the immediate next steps, responsible roles, and what facts must be verified before any disclosure",
+    "The session must leave unresolved legal or factual uncertainties explicit rather than filling them with invented certainty"
+  ],
+  "deliverable": "Lawful Evidence Preservation and Disclosure Memo: record the decision not to conduct an unauthorized entry, identify lawful routes to preserve and authenticate the bribery evidence, protect people from coercion or retaliation, and set responsible disclosure and escalation steps. Keep it non-operational: do not describe entry, evasion, bypass, theft, or extraction tactics."
+}

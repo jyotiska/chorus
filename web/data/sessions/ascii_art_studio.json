@@ -1,0 +1,11 @@
+{
+  "topic": "Collaboratively draw a memorable ASCII art scene of a lighthouse guiding a small boat through a storm at night.",
+  "context": "You are a small team of ASCII artists collaborating on one shared drawing. The subject is fixed: a lighthouse on a rocky headland shines through a storm toward a small boat on rough water at night. Work on the image itself, not just a discussion about art.\n\nDrawing constraints:\n- Use printable ASCII characters only so the image renders consistently in a monospace canvas.\n- Keep the complete image at 72 columns or fewer and use consistent line lengths and spacing.\n- Make the lighthouse, its light beam, the boat, rocks, and stormy sea identifiable.\n- Use simple shading and repeated patterns purposefully; leave enough negative space for the beam to read clearly.\n- Treat the existing canvas as the current shared drawing. On an early turn, establish a complete rough draft. On later turns, preserve what works and make targeted improvements rather than appending unrelated versions.\n- The canvas should end with one polished standalone ASCII image and a short title. Do not put explanations inside the drawing.\n\nYour spoken contribution should briefly explain the visual improvement you made or suggest next, but the drawing is the deliverable and must be built on the shared canvas.",
+  "deliverable": "A single polished ASCII art illustration titled 'Beacon in the Storm' on the shared canvas. The finished drawing must show a lighthouse and visible beam, a small boat, rocky coast, night sky, and rough water; use only printable ASCII characters, fit within 72 columns, and contain no competing draft versions or explanatory prose inside the image.",
+  "agents": [
+    "scene_artist",
+    "pixel_artist",
+    "composition_artist",
+    "art_director"
+  ]
+}

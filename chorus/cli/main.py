@@ -10,7 +10,7 @@ from rich.console import Console
 from chorus.contracts import SessionConfig
 from chorus.harness.models import HarnessConfig
 
-app = typer.Typer(help="Chorus simulation platform. Start the service with chorus serve.")
+app = typer.Typer(help="Chorus simulation platform. Open the application with chorus launch.")
 console = Console()
 
 
@@ -41,6 +41,22 @@ def harness_request(method: str, path: str, body: object = None) -> object:
         return response.json()
     except httpx.HTTPError as error:
         console.print(f"Cannot reach Chorus: {error}. Start chorus serve first.", style="red")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def launch(
+    api_port: int = typer.Option(43187, min=1, max=65535),
+    web_port: int = typer.Option(43189, min=1, max=65535),
+    browser: bool = typer.Option(True, "--browser/--no-browser"),
+    production: bool = typer.Option(False, "--production", help="Use the prebuilt web interface instead of development mode."),
+) -> None:
+    """Start the engine and web interface together; Ctrl-C stops both."""
+    from chorus.cli.launcher import LaunchError, launch_application
+    try:
+        launch_application(api_port=api_port, web_port=web_port, browser=browser, production=production)
+    except LaunchError as error:
+        console.print(str(error), style="red", markup=False)
         raise typer.Exit(1) from None
 
 

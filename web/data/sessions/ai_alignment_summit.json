@@ -1,0 +1,23 @@
+{
+  "topic": "Should frontier AI development be paused, regulated, or accelerated — and who has the legitimate authority to decide?",
+  "context": "It is October 2025. Four researchers have been brought together by the\nUN Special Committee on Transformative Technology for an off-the-record\ntechnical briefing before next week's emergency session. What they say\nhere will inform a binding resolution. Each of them has been told the\nothers will be in the room. None of them are happy about it.\n\nEvents that triggered this meeting:\n- DeepMind's Gemini Ultra 3 passed an internal evaluation for autonomous\n  replication in a sandboxed environment on September 3rd. The paper was\n  submitted to arXiv, then quietly withdrawn six hours later.\n- The EU AI Act passed with Article 47b intact: any model exceeding compute\n  threshold X requires a 90-day pre-deployment review. The US, China, and\n  the UK refused to implement equivalent provisions.\n- Mistral released Mistral-Frontier under an Apache 2.0 license — matching\n  closed frontier performance with no usage restrictions. Downloads: 2.1M\n  in the first 72 hours.\n- A leaked internal memo from Anthropic's safety team, published by The\n  Intercept, reveals that a deployment decision was made over the objection\n  of three senior safety researchers. The company has not confirmed or denied.\n- A coordinated cyberattack on two frontier AI labs — attributed to a state\n  actor — targeted model weights rather than infrastructure. Nothing was taken.\n  The capability to take was demonstrated.\n\nWhat divides the room:\n- Whether the replication evaluation result is evidence of danger or evidence\n  that the safety process is working\n- Whether open-source release shifts or merely redistributes risk\n- Whether any governance body has legitimate authority over entities that\n  operate across jurisdictions and move faster than legislation\n- Whether the people most qualified to decide are the people most conflicted\n  about the outcome\n",
+  "max_turns": 50,
+  "agents": [
+    "accelerationist",
+    "existential_risk",
+    "pragmatist_ai",
+    "doomer"
+  ],
+  "expectations": [
+    "Each participant must state their empirical beliefs about AI timelines and risk probability with specific numbers — not ranges wider than 20 years and not probability estimates stated as \"low\" or \"high\"",
+    "The open-source dilemma must be engaged directly — if Mistral-Frontier cannot be recalled, what does any pause actually accomplish? Who bears the risk of the answer?",
+    "The leaked Anthropic memo must be addressed as a governance failure, not an anecdote — what structural condition produced it and what would prevent it?",
+    "The accelerationist must make the strongest possible version of their case in the first 10 turns — not a straw-man version but the argument that genuinely troubles the others",
+    "At least one participant must meaningfully update their stated position based on another's argument — not capitulate, but refine in a way that acknowledges the force of the challenge",
+    "The group must produce a concrete disagreement about what \"sufficient alignment\" means and what evidence would constitute proof of it",
+    "The pragmatist must propose an intervention that all parties could accept — and the doomer must explain specifically why it is not enough",
+    "Each participant must end by naming the one piece of evidence that would change their position — and stating honestly whether they believe that evidence is obtainable before it is too late",
+    "The session must not end in false consensus — the genuine remaining disagreements must be named and left unresolved if they cannot be bridged"
+  ],
+  "deliverable": "Emergency Frontier AI Governance Resolution: a decision-ready resolution stating its scope, legitimate decision authority, measurable pause or release triggers, safety evidence required, independent oversight, treatment of open-weight releases, incident response, and unresolved dissent."
+}
