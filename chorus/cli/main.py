@@ -14,6 +14,21 @@ app = typer.Typer(help="Chorus simulation platform. Open the application with ch
 console = Console()
 
 
+@app.command()
+def doctor() -> None:
+    """Check local setup without model calls or changes to saved work."""
+    from dotenv import load_dotenv
+    from chorus.cli.doctor import inspect_setup
+
+    load_dotenv()
+    checks = inspect_setup()
+    for passed, description in checks:
+        console.print(f"{'OK' if passed else 'FAIL'}: {description}")
+    console.print("Model access is not tested. Configure a provider before starting an experiment; tests need no keys.")
+    if not all(passed for passed, _ in checks):
+        raise typer.Exit(1)
+
+
 def client() -> httpx.Client:
     return httpx.Client(base_url=os.getenv("CHORUS_API_URL", "http://127.0.0.1:43187"), timeout=15)
 
@@ -173,5 +188,6 @@ def export(session_id: str, output: Path, format: str = "markdown", journals: bo
         if response.status_code == 404:
             response = http.get(f"/api/v1/sessions/{session_id}/export", params={"format": format, "includeJournals": str(journals).lower()})
         response.raise_for_status()
+        output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(response.text)
     console.print(str(output))

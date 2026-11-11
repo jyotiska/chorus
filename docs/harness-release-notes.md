@@ -1,6 +1,6 @@
 # Independent agent harness
 
-The new harness uses `/api/v2` and is the default in Chorus's CLI, chorus-web, and Nanoville. It has a shared catalog of 50 personas, five checked problems, Luna as the default model, and independent participant workers. Historical `/api/v1` sessions remain readable and exportable; production v1 writes are disabled.
+This note describes the benchmark harness introduced before app experiments. It uses `/api/v2` and remains the CLI benchmark engine; the current Chorus Web home page creates app experiments. Nanoville remains a separate API consumer. It has a shared catalog of 50 personas, five checked problems, Luna as the default model, and independent participant workers. Historical `/api/v1` sessions remain readable and exportable; production v1 writes are disabled.
 
 ## Session behavior
 
@@ -40,7 +40,7 @@ Nanoville adds a scrollable, zoomable research commons for up to fifty participa
 
 Deterministic verification includes all five positive/negative problem fixtures, concurrency, cap enforcement, lock expiry/fencing, idempotence across interrupted publication, per-agent summary boundaries, accounting, shutdown fencing, and a fifty-worker restart stress case. Both frontend suites retain historical regressions under their explicit test-only archive mode and add current-engine browser journeys.
 
-Live smoke-check results are recorded in `live-harness-pilot-2026-11-02.json`. Small successful live checks establish request compatibility and observed usage only; they do not establish reliable problem solving, judge calibration, or performance at fifty paid agents.
+Raw live smoke-check results are retained outside Git. Small successful live checks establish request compatibility and observed usage only; they do not establish reliable problem solving, judge calibration, or performance at fifty paid agents.
 
 After the inspection-loop correction, Luna and DeepSeek completed their two-agent runs and final reports. Luna's production answer failed the deterministic optimum check; DeepSeek's passed. The local Qwen 0.8B check produced no board/canvas contributions and paused on invalid judge output. Its setup option carries this observed compatibility limitation; the harness preserves the failed trace and never substitutes another model.
 

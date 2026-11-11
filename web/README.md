@@ -32,7 +32,7 @@ chorus launch --production
 
 The agents plan the work, build the code, and then receive a final review. The judge can use the same model as the agents or a different one.
 
-App experiments need the separate starter files described in the [main README](../README.md#what-you-can-do). The experiment tools can write and inspect code, but cannot yet run or test the generated app in a browser.
+App experiments use the small bundled frontend/backend starters described in the [main README](../README.md#what-you-can-do). The experiment tools can write and inspect code, but cannot yet run or test the generated app in a browser.
 
 ## Follow the work
 

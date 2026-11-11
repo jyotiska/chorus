@@ -4,12 +4,12 @@ Chorus owns independent agent execution, local records, and the shared contracts
 
 ## Setup
 
-Use Python 3.11 or newer and Node 24 for frontend development. From the Chorus directory:
+Use macOS or Linux (Windows through WSL), Git, Python 3.11 or newer and Node 24. From the Chorus directory:
 
 ```bash
-python3 -m venv .venv
+python3 -m pip install uv==0.9.8
+uv sync --locked --extra dev
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
 cp -n .env.example .env
 nvm use  # or activate Node 24 with your preferred manager
 npm ci --prefix web
@@ -30,7 +30,7 @@ The web home page offers four briefs: build an app like Todoist, Linear, Notion,
 
 Agents first discuss the brief and write a shared plan and task lists in `SPEC.md`. Once every agent finishes planning, they build in separate working copies and combine their changes through local pull requests. The judge then reviews a fixed copy of the final code and records.
 
-These experiments require Git and a `starter-repos/` folder beside Chorus, containing frontend and backend starter files. These files are not included in this repository. Set `CHORUS_EXPERIMENT_SCAFFOLD` in `.env` to use another location. Generated projects are saved beside the database in `experiments/`, unless `CHORUS_EXPERIMENT_ROOT` is set.
+These experiments require Git and use the bundled `chorus/harness/starters/` projects. Set `CHORUS_EXPERIMENT_SCAFFOLD` in `.env` to use another reviewed frontend/backend starter root. Generated projects are saved beside the database in `experiments/`, unless `CHORUS_EXPERIMENT_ROOT` is set.
 
 Use **Kill experiment** to stop work while keeping its files and records. Use **Retry judge** if the final review fails. Switching sessions or closing the browser leaves the experiment running.
 
@@ -59,8 +59,8 @@ chorus inspect SESSION_ID --records summary --agent quinn
 chorus inspect SESSION_ID --records call --agent quinn
 chorus control SESSION_ID pause
 chorus control SESSION_ID resume
-chorus export SESSION_ID session.json --format json
-chorus export SESSION_ID solution.md --format markdown
+chorus export SESSION_ID exports/session.json --format json
+chorus export SESSION_ID exports/solution.md --format markdown
 ```
 
 For benchmark runs, the CLI defaults to Luna, the problem's relevant roster, ten turns per agent, and final judging. `--adversaries` accepts comma-separated selected IDs; assignments are observer-visible and hidden from peers/judge. `--turns` is deliberately rejected. Ctrl-C pauses a watched run. `--archive` on inspect/control selects the legacy API; production archives permit reads and exports only.
@@ -94,10 +94,20 @@ Every dispatched attempt records tokens, cache use/utilization, provider-call la
 
 ## Development and verification
 
-Run `.venv/bin/python -m pytest` in Chorus. Run `scripts/export_contracts.py` after contracts, client, or shared UI changes, using Node 24 and the dependencies installed in `web/`. The default export updates only Chorus Web; pass `--nanoville /path/to/nanoville` to intentionally update that separate checkout. Shared files under each frontend's API directory are generated copies. Artwork is regenerated with `scripts/generate_harness_art.py`.
+Run `.venv/bin/python scripts/check.py` in Chorus. Run `scripts/export_contracts.py` after contracts, client, or shared UI changes, using Node 24 and the dependencies installed in `web/`. The default export updates only Chorus Web; pass `--nanoville /path/to/nanoville` to intentionally update that separate checkout. Shared files under each frontend's API directory are generated copies. Artwork is regenerated with `scripts/generate_harness_art.py`.
 
 Each frontend's `npm run check` runs lint, types, a production build, and browser verification; Nanoville also runs its unit/component suite. Browser tests use separate temporary databases and fake Ollama. Run browser suites sequentially: Nanoville reserves 3100/43190/11435; chorus-web 3111/43191/11436. Their explicit legacy test switches preserve historical regression coverage; leave these switches unset for normal use.
 
 Historical work is readable through `/archive`, a `?session=` URL, v1 read endpoints, or automatic archive fallback during CLI export. New runs cannot resume under legacy semantics. The new harness does not compact or silently drop history; context exhaustion pauses with committed work intact.
 
 See [release notes](harness-release-notes.md), [implementation plan](real-world-harness-plan.md), and [test record](../TEST_PLAN.md).
+
+## Setup checks and supported systems
+
+Use macOS or Linux with Git, Python 3.11+ and Node 24. Native Windows is unsupported; use WSL. `chorus doctor` checks runtimes, integrated web dependencies and starter availability without contacting model providers or printing credentials. Use `uv sync --locked --extra dev` and `npm ci --prefix web` to reproduce dependencies. The complete contributor workflow is in [CONTRIBUTING.md](../CONTRIBUTING.md).
+
+## Backup and restore
+
+Stop the launcher and any separately started engine before copying data. Back up the entire database directory, including SQLite sidecars if present and the sibling `experiments/` directory. If `CHORUS_EXPERIMENT_ROOT` points elsewhere, back up that directory too. Keep the matching source commit and lockfiles. Git repositories alone do not contain the full discussion, usage or run state.
+
+Restore to the same absolute workspace location, or validate stored paths before attempting recovery; a general relocation tool is not provided. Start one engine against the restored database and inspect sessions before resuming. Keep backups and exports outside Git. No history or live data is migrated by source updates.

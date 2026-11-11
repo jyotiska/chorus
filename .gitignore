@@ -11,3 +11,68 @@ dist/
 build/
 *.sqlite3
 *.sqlite3.lock
+
+# Experiment data stays local. Keep source, small test fixtures, contracts,
+# and intentional documentation images in Git. Export runs into /exports/.
+experiments/
+/runs/
+/results/
+/exports/
+/artifacts/
+/data/
+output/
+/docs/*-pilot-*.json
+
+# Local databases and their journals/locks
+*.sqlite
+*.sqlite.lock
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Generated test reports, logs, and dependency caches
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+playwright-report/
+test-results/
+blob-report/
+*.log
+node_modules/
+.ruff_cache/
+.mypy_cache/
+
+# Large downloaded/generated datasets, model weights, archives, and recordings.
+# scripts/check_repository.py enforces a 5 MiB limit on tracked files.
+*.parquet
+*.arrow
+*.h5
+*.hdf5
+*.npy
+*.npz
+*.safetensors
+*.gguf
+*.pt
+*.pth
+*.onnx
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.mp4
+*.mov
+*.webm
+
+# Private environment variants (keep documented examples)
+.env.*
+!.env.example

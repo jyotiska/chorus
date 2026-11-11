@@ -1,0 +1,37 @@
+"""Stable error codes shared by service exceptions and generated API contracts."""
+
+from typing import Literal
+
+ErrorCode = Literal[
+    "BACKEND_UNAVAILABLE",
+    "CANCELLED",
+    "CAPACITY",
+    "CONFLICT",
+    "CONTEXT_LIMIT",
+    "FORBIDDEN",
+    "GENERATION_FAILED",
+    "GIT_CONFLICT",
+    "GIT_FAILED",
+    "INVALID_MODEL_RESPONSE",
+    "INVALID_REQUEST",
+    "INVALID_SCAFFOLD",
+    "INVALID_STATE",
+    "JUDGE_CALL_BUDGET",
+    "JUDGE_INVALID_REPORT",
+    "MODEL_NOT_FOUND",
+    "MODEL_REQUEST_FAILED",
+    "MODEL_UNAVAILABLE",
+    "NOT_FOUND",
+    "NO_CHANGES",
+    "PR_ALREADY_INTEGRATED",
+    "PR_CONFLICT",
+    "PR_STALE_SOURCE",
+    "PR_STALE_TARGET",
+    "RECOVERED",
+    "SCAFFOLD_UNAVAILABLE",
+    "SPEC_RESERVED",
+    "TIMEOUT",
+    "VERSION_MISMATCH",
+    "WORKSPACE_UNAVAILABLE",
+    "WRONG_BRANCH",
+]

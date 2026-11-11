@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import fcntl
+from fnmatch import fnmatch
 from hashlib import sha256
 import json
 import os
@@ -27,6 +28,18 @@ _GENERATED = {
     ".git", ".DS_Store", ".next", "node_modules", "out", "build", "dist",
     "coverage", "next-env.d.ts", "data.sqlite-shm", "data.sqlite-wal",
 }
+_PRIVATE = {".ssh", ".aws", ".azure", ".gcloud", ".gnupg", ".npmrc", ".netrc", ".pypirc", "credentials", "credentials.json", "id_rsa", "id_ed25519"}
+_PRIVATE_PATTERNS = ("*.pem", "*.key", "*.p12", "*.pfx", "*.sqlite*", "*.db", "*.db-*", "*.log", "*.zip", "*.tar*", "*.gguf", "*.safetensors")
+_MAX_STARTER_FILE = 5 * 1024 * 1024
+_MAX_STARTER_BYTES = 50 * 1024 * 1024
+
+
+def validate_scaffold(source: Path) -> None:
+    """Check the two project roots without touching an experiment workspace."""
+    for name in ("frontend", "backend"):
+        part = source / name
+        if not part.is_dir() or part.is_symlink():
+            raise ChorusError("SCAFFOLD_UNAVAILABLE", "Starter frontend/backend directories are unavailable. Check CHORUS_EXPERIMENT_SCAFFOLD or reinstall Chorus.", 503)
 
 
 def _save_journal(path: Path, data: dict) -> None:
@@ -81,16 +94,30 @@ def _copy_scaffold(source: Path, destination: Path) -> None:
     if not source.is_dir() or source.is_symlink():
         raise ChorusError("SCAFFOLD_UNAVAILABLE", f"The {source.name} starter directory is unavailable.", 503)
 
+    copied_bytes = 0
+
     def ignore(directory: str, names: list[str]) -> set[str]:
+        nonlocal copied_bytes
         folder = Path(directory)
         excluded = _GENERATED.intersection(names)
         for name in set(names) - excluded:
             child = folder / name
-            if name.endswith(".tsbuildinfo") or child == source / "data.sqlite":
+            lower = name.lower()
+            private_env = lower.startswith(".env") and lower != ".env.example"
+            if private_env or lower in _PRIVATE or any(fnmatch(lower, pattern) for pattern in _PRIVATE_PATTERNS):
+                excluded.add(name)
+            elif name.endswith(".tsbuildinfo") or child == source / "data.sqlite":
                 excluded.add(name)
             elif child.is_symlink():
-                if Path(os.readlink(child)).is_absolute() or not child.resolve().is_relative_to(source):
-                    raise ChorusError("INVALID_SCAFFOLD", "A starter link points outside its project.", 503)
+                # Reject even internal links: an innocuous name can point to an excluded secret.
+                raise ChorusError("INVALID_SCAFFOLD", "Starter projects must contain regular files and directories, not symbolic links.", 503)
+            elif child.is_file():
+                size = child.stat().st_size
+                copied_bytes += size
+                if size > _MAX_STARTER_FILE or copied_bytes > _MAX_STARTER_BYTES:
+                    raise ChorusError("INVALID_SCAFFOLD", "Starter project exceeds the 5 MiB per-file or 50 MiB per-project limit.", 503)
+            elif not child.is_dir():
+                raise ChorusError("INVALID_SCAFFOLD", "Starter projects must contain only regular files and directories.", 503)
         return excluded
 
     shutil.copytree(source, destination, ignore=ignore, symlinks=True)
@@ -115,6 +142,7 @@ class ExperimentGit:
             yield session
 
     def initialize(self, session_id: str, participant_ids: list[str]) -> dict:
+        validate_scaffold(self.scaffold_root)
         session = self._session(session_id)
         branches = [(actor, f"agents/{_identifier(actor)}") for actor in participant_ids]
         if len({actor for actor, _ in branches}) != len(branches):

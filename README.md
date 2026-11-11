@@ -44,7 +44,7 @@ Each experiment has three stages:
 
 You can follow the discussion, read the plan, inspect code changes, and see each agent’s task progress. Unfinished tasks remain visible with explanations. **Kill experiment** stops the work and keeps its files and records. If judging fails, **Retry judge** reviews the same saved result.
 
-App experiments need Git and starter files for a frontend and backend. By default, Chorus looks for `starter-repos/` beside this repository. Those files are not included here. To use another location, set `CHORUS_EXPERIMENT_SCAFFOLD` in `.env`.
+App experiments need Git. Small frontend and backend starter projects are included. To use your own reviewed starter projects, set `CHORUS_EXPERIMENT_SCAFFOLD` in `.env` to a folder containing `frontend/` and `backend/`.
 
 **Current limit:** agents can write and inspect code, but running application commands, starting the generated app, and checking it in a browser are not implemented in the experiment tools yet. The judge’s report is a code review, not proof that the generated app works.
 
@@ -64,16 +64,17 @@ Command-line benchmark runs include the model judge by default. Add `--no-judge`
 
 ## Run Chorus
 
-You need Python 3.11 or newer and Node 24. Open a terminal in this repository.
+Use macOS or Linux, Git, Python 3.11 or newer, and Node 24. On Windows, use WSL. Open a terminal in this repository.
 
 ### First-time setup
 
 ```bash
-python3 -m venv .venv
+python3 -m pip install uv==0.9.8
+uv sync --locked --extra dev
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
 cp -n .env.example .env
 npm ci --prefix web
+chorus doctor
 ```
 
 If you use nvm to manage Node, run `nvm use` before the npm command. The repository includes the required Node version in `.nvmrc`.
@@ -131,6 +132,8 @@ Generated app projects are saved in an `experiments/` folder beside the database
 
 You can export the shared document as Markdown or the session records as JSON. Some private experiment records are hidden until the experiment completes or is killed. Usage totals keep reported costs, estimates, and missing information separate.
 
+Save local exports under the ignored `exports/` folder. Do not commit experiment results, generated workspaces, databases, model files or recordings. Small test fixtures and documentation images remain in Git.
+
 ## Project files
 
 - `chorus/` — engine, saved records, API, and command-line tools.
@@ -146,11 +149,10 @@ The engine remains responsible for all model calls and execution rules. Moving t
 Run the checks from the repository root:
 
 ```bash
-.venv/bin/python -m pytest
-npm run check --prefix web
+.venv/bin/python scripts/check.py
 ```
 
-The web checks cover code style, types, a production build, and browser tests. For the first browser-test run, install Chromium from `web/` with `npx playwright install chromium`. Tests use temporary databases and fake model responses.
+The shared check runs engine tests, coverage, code checks, generated-file checks, web checks, a dependency audit and repository size/output rules. For the first browser-test run, install Chromium from `web/` with `npx playwright install chromium`. Tests use temporary databases and fake model responses.
 
 Shared files in `web/lib/api/chorus/` are generated copies. Edit their source in `sdk/`, then update the copies:
 
@@ -168,10 +170,17 @@ Run Nanoville’s checks there after exporting. Run the two apps’ browser test
 
 ## More details
 
+- [Contribution guide](CONTRIBUTING.md)
+- [Agent instructions](AGENTS.md)
+- [Security and private data](SECURITY.md)
 - [Setup and commands](docs/running-chorus.md)
 - [Web interface guide](web/README.md)
 - [What moved in the merge](docs/repository-consolidation.md)
 - [Research direction and design](docs/chorus-architecture.md)
 - [Checks performed and known limits](TEST_PLAN.md)
 
-Passing software tests does not establish how reliably a model or a large team will solve a task. The [small model pilot](docs/live-harness-pilot-2026-11-02.json) records a few observed runs, not a general reliability result.
+Passing software tests does not establish how reliably a model or a large team will solve a task. Real experiment results stay outside this repository.
+
+## License and citation
+
+Chorus is licensed under [Apache 2.0](LICENSE). See [CITATION.cff](CITATION.cff) when citing the software; record the exact commit used for a study.
