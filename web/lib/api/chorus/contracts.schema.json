@@ -1121,6 +1121,9 @@
         "repositoryFile": {
           "$ref": "#/$defs/RepositoryFile"
         },
+        "repositoryCommitDiff": {
+          "$ref": "#/$defs/RepositoryCommitDiff"
+        },
         "experimentTasks": {
           "$ref": "#/$defs/ExperimentTasks"
         }
@@ -1135,6 +1138,7 @@
         "experimentConfig",
         "repositoryTree",
         "repositoryFile",
+        "repositoryCommitDiff",
         "experimentTasks"
       ],
       "title": "HarnessContracts",
@@ -1709,6 +1713,25 @@
         "hasMore"
       ],
       "title": "RecordPage",
+      "type": "object"
+    },
+    "RepositoryCommitDiff": {
+      "additionalProperties": false,
+      "properties": {
+        "patch": {
+          "title": "Patch",
+          "type": "string"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "patch",
+        "truncated"
+      ],
+      "title": "RepositoryCommitDiff",
       "type": "object"
     },
     "RepositoryEntry": {

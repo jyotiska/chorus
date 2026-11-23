@@ -12,6 +12,7 @@ export type HarnessUsage = H["usage"];
 export type HarnessRecord = H["page"]["records"][number];
 export type RepositoryTree = H["repositoryTree"];
 export type RepositoryFile = H["repositoryFile"];
+export type RepositoryCommitDiff = H["repositoryCommitDiff"];
 export type ExperimentTasks = H["experimentTasks"];
 export type Persona = HarnessCatalog["agents"][number];
 export type Usage = HarnessUsage["total"];
@@ -77,6 +78,9 @@ export class HarnessClient {
   }
   async repositoryFile(id: string, branch: string, revision: string, path: string): Promise<RepositoryFile> {
     return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/file?${new URLSearchParams({ branch, revision, path })}`), "RepositoryFile");
+  }
+  async repositoryCommitDiff(id: string, branch: string, revision: string): Promise<RepositoryCommitDiff> {
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/commit-diff?${new URLSearchParams({ branch, revision })}`), "RepositoryCommitDiff");
   }
   async agentTasks(id: string, agent: string): Promise<ExperimentTasks> {
     return parse(await this.request(`/sessions/${encodeURIComponent(id)}/agents/${encodeURIComponent(agent)}/tasks`), "ExperimentTasks");

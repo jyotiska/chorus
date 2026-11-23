@@ -188,6 +188,11 @@ class RepositoryFile(Model):
     content: str | None
 
 
+class RepositoryCommitDiff(Model):
+    patch: str
+    truncated: bool
+
+
 class ExperimentTasks(Model):
     revision: int
     markdown: str
@@ -333,4 +338,5 @@ class HarnessContracts(Model):
     experimentConfig: ExperimentConfig
     repositoryTree: RepositoryTree
     repositoryFile: RepositoryFile
+    repositoryCommitDiff: RepositoryCommitDiff
     experimentTasks: ExperimentTasks

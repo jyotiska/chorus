@@ -376,6 +376,8 @@ export type Truncated = boolean;
 export type Status4 = "text" | "binary" | "too_large";
 export type Size = number;
 export type Content = string | null;
+export type Patch = string;
+export type Truncated1 = boolean;
 export type Revision3 = number;
 export type Markdown = string;
 export type Completed = number;
@@ -593,6 +595,7 @@ export interface HarnessContracts {
   experimentConfig: ExperimentConfig;
   repositoryTree: RepositoryTree;
   repositoryFile: RepositoryFile;
+  repositoryCommitDiff: RepositoryCommitDiff;
   experimentTasks: ExperimentTasks;
 }
 export interface HarnessCatalog {
@@ -846,6 +849,10 @@ export interface RepositoryFile {
   status: Status4;
   size: Size;
   content: Content;
+}
+export interface RepositoryCommitDiff {
+  patch: Patch;
+  truncated: Truncated1;
 }
 export interface ExperimentTasks {
   revision: Revision3;

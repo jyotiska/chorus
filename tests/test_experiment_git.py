@@ -85,6 +85,16 @@ def test_repository_browser_reads_only_committed_objects_on_selected_branch(expe
     with pytest.raises(ChorusError, match="not on the selected branch"):
         harness.browse_file("run-one", "main", commit, "frontend/index.js")
 
+    patch = harness.browse_commit_diff("run-one", "agents/designer", commit)
+    assert "diff --git a/frontend/index.js b/frontend/index.js" in patch.patch
+    assert "-baseline\n+changed" in patch.patch
+    assert "uncommitted.txt" not in patch.patch
+    assert patch.truncated and len(patch.patch.encode()) <= 128 * 1024
+    with pytest.raises(ChorusError, match="not on the selected branch"):
+        harness.browse_commit_diff("run-one", "main", commit)
+    with pytest.raises(ChorusError, match="Choose a commit"):
+        harness.browse_commit_diff("run-one", "agents/designer", "HEAD")
+
 
 def test_commit_sync_restores_only_its_own_stash_and_judge_uses_frozen_copy(experiment):
     harness, _, view, paths = experiment

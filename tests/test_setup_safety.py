@@ -29,6 +29,10 @@ def test_bundled_starter_creates_an_experiment(tmp_path, model):
         assert state["experiment"]["phase"] == "plan"
         assert (tmp_path / "experiments" / state["id"] / "repository/frontend/server.mjs").is_file()
         assert client.get(f'/api/v2/sessions/{state["id"]}/repository/tree').status_code == 200
+        revision = state["experiment"]["repository"]["baselineCommit"]
+        diff = client.get(f'/api/v2/sessions/{state["id"]}/repository/commit-diff', params={"revision": revision})
+        assert diff.status_code == 200
+        assert "frontend/server.mjs" in diff.json()["patch"]
 
 
 def test_missing_starter_returns_actionable_contract(tmp_path, monkeypatch, model):

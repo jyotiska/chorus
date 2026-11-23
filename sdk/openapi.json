@@ -1504,6 +1504,96 @@
         }
       }
     },
+    "/api/v2/sessions/{sid}/repository/commit-diff": {
+      "get": {
+        "summary": "Repository Commit Diff",
+        "operationId": "repository_commit_diff_api_v2_sessions__sid__repository_commit_diff_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 64,
+              "title": "Revision"
+            }
+          },
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 90,
+              "default": "main",
+              "title": "Branch"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepositoryCommitDiff"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v2/sessions/{sid}/agents/{agent_id}/tasks": {
       "get": {
         "summary": "Agent Tasks",
@@ -3847,6 +3937,25 @@
           "hasMore"
         ],
         "title": "RecordPage"
+      },
+      "RepositoryCommitDiff": {
+        "properties": {
+          "patch": {
+            "type": "string",
+            "title": "Patch"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "patch",
+          "truncated"
+        ],
+        "title": "RepositoryCommitDiff"
       },
       "RepositoryEntry": {
         "properties": {

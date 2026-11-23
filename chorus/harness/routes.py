@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request, Query
 from fastapi.responses import Response, StreamingResponse
 from chorus.harness.models import (
     ExperimentConfig, ExperimentTasks, HarnessCatalog, HarnessCommand, HarnessConfig,
-    HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryFile, RepositoryTree, UsageReport,
+    HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryCommitDiff, RepositoryFile, RepositoryTree, UsageReport,
 )
 from chorus.harness.accounting import usage_report
 from chorus.harness.experiment_spec import checklist
@@ -84,6 +84,12 @@ def repository_tree(request: Request, sid: str, branch: str = Query(default="mai
 def repository_file(request: Request, sid: str, revision: str, path: str = Query(min_length=1, max_length=1024),
                     branch: str = Query(default="main", max_length=90)):
     return repository_for(service(request), sid, branch).browse_file(sid, branch, revision, path)
+
+
+@router.get("/sessions/{sid}/repository/commit-diff", response_model=RepositoryCommitDiff)
+def repository_commit_diff(request: Request, sid: str, revision: str = Query(max_length=64),
+                           branch: str = Query(default="main", max_length=90)):
+    return repository_for(service(request), sid, branch).browse_commit_diff(sid, branch, revision)
 
 
 @router.get("/sessions/{sid}/agents/{agent_id}/tasks", response_model=ExperimentTasks)

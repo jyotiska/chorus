@@ -12,10 +12,11 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-from tempfile import NamedTemporaryFile, mkdtemp
+from tempfile import NamedTemporaryFile, TemporaryFile, mkdtemp
+from typing import BinaryIO
 from uuid import uuid4
 
-from chorus.harness.models import RepositoryEntry, RepositoryFile, RepositoryTree
+from chorus.harness.models import RepositoryCommitDiff, RepositoryEntry, RepositoryFile, RepositoryTree
 from chorus.services.errors import ChorusError
 
 
@@ -63,7 +64,7 @@ def _identifier(value: str) -> str:
 
 
 def _git(path: Path, *args: str, actor: str = "chorus", check: bool = True, reflog: str | None = None,
-         binary: bool = False):
+         binary: bool = False, output: BinaryIO | None = None):
     # A server invocation must not read the operator's Git configuration or
     # inherit checkout, hook, filter, signing, or repository environment overrides.
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
@@ -80,7 +81,7 @@ def _git(path: Path, *args: str, actor: str = "chorus", check: bool = True, refl
             ["git", "-c", f"core.hooksPath={os.devnull}", "-c", f"core.attributesFile={os.devnull}",
              "-c", f"core.excludesFile={os.devnull}", "-c", "core.logAllRefUpdates=true",
              "-c", "commit.gpgSign=false", *args],
-            cwd=path, env=env, capture_output=True,
+            cwd=path, env=env, stdout=subprocess.PIPE if output is None else output, stderr=subprocess.PIPE,
             encoding=None if binary else "utf-8", errors=None if binary else "replace", timeout=30,
         )
     except (OSError, subprocess.TimeoutExpired):
@@ -462,6 +463,23 @@ class ExperimentGit:
         if decoded is None or "\0" in decoded:
             return RepositoryFile(status="binary", size=size, content=None)
         return RepositoryFile(status="text", size=size, content=decoded)
+
+    def browse_commit_diff(self, session_id: str, branch: str, revision: str) -> RepositoryCommitDiff:
+        if not _OBJECT_ID.fullmatch(revision):
+            raise ChorusError("INVALID_REQUEST", "Choose a commit from the repository history.", 400)
+        with self._locked(session_id) as session, TemporaryFile() as patch:
+            repo = session / "repository"
+            head = self._browse_head(repo, branch)
+            if not self._ancestor(repo, revision, head):
+                raise ChorusError("NOT_FOUND", "That revision is not on the selected branch.", 404)
+            _git(repo, "show", "--format=", "--diff-merges=first-parent", "--no-color",
+                 "--no-ext-diff", "--no-textconv", revision, "--", output=patch)
+            patch.seek(0)
+            data = patch.read(_MAX_PREVIEW + 1)
+        truncated = len(data) > _MAX_PREVIEW
+        if truncated:
+            data = data[:_MAX_PREVIEW].rpartition(b"\n")[0]
+        return RepositoryCommitDiff(patch=data.decode("utf-8", errors="replace"), truncated=truncated)
 
     def judge_checkout(self, session_id: str, commit: str) -> Path:
         if not _OBJECT_ID.fullmatch(commit):
