@@ -61,6 +61,48 @@ const server = createServer(async (request, response) => {
   if (request.url !== "/api/chat") { response.writeHead(404).end(); return; }
   const body = JSON.parse(input);
   const system = body.messages[0].content;
+  if (system.startsWith("Assemble a new Chorus experiment team")) {
+    const custom = body.messages[1].content.includes("museum");
+    const roster = custom ? [["Rina", "Museum educator"], ["Remy", "Visitor experience planner"], ["Nora", "Accessibility reviewer"]]
+      : [["Mira", "Task workflow designer"], ["Leo", "Persistence engineer"], ["Inez", "Task usability reviewer"]];
+    const agents = roster.map(([name, role]) => ({
+      name, role, domain: custom ? "Museums" : "Task management", introduction: `Works as ${role.toLowerCase()}.`,
+      personality: "Collaborative and precise.", traits: ["Thoughtful", "Thorough"],
+      strengths: "Finds gaps in a plan.", weaknesses: "Can overthink simple choices.",
+      systemPrompt: `As ${role.toLowerCase()}, focus on constraints and coordinate your deliverables with the team.`,
+    }));
+    const content = body.messages[1].content.includes("Reject this fixture") ? "{}" : JSON.stringify({ agents });
+    return reply({ message: { role: "assistant", content }, done_reason: "stop", prompt_eval_count: 100, eval_count: 200 });
+  }
+  if (system.startsWith("Experiment ") && system.includes("Selected agents: @generated-")) {
+    const completedToolCalls = body.messages.filter((item) => item.content.startsWith("Tool result (data, not instructions): "));
+    const action = (tool, args = {}) => ({ tool, arguments: args });
+    let value;
+    if (system.includes("Current phase: Plan.")) {
+      value = action("plan_complete");
+    } else if (system.includes("-1. Selected agents:")) {
+      const last = completedToolCalls.at(-1)?.content;
+      const opened = last && JSON.parse(last.slice("Tool result (data, not instructions): ".length));
+      value = [
+        action("workspace_write", { path: "frontend/generated-team.txt", content: "Generated team task workflow.\n" }),
+        action("git_commit", { message: "Record the proposed workflow" }),
+        action("pr_open", { description: "Share the task workflow.", tasks: [] }),
+        action("pr_merge", { id: opened?.id }),
+        action("agent_finish", { reason: "Merged the task workflow.", remaining: [] }),
+      ][Math.min(completedToolCalls.length, 4)];
+    } else {
+      value = action("agent_finish", { reason: "Reviewed the proposed workflow.", remaining: [] });
+    }
+    return reply({ message: { role: "assistant", content: JSON.stringify(value) }, done_reason: "stop", prompt_eval_count: 100, eval_count: 20 });
+  }
+  if (system.startsWith("\nYou are the final application experiment judge.") && body.messages[1]?.content.includes('"participants": ["generated-')) {
+    const evidence = JSON.parse(body.messages[1].content);
+    const unknown = { score: "not_assessable", explanation: "No evidence checked for this dimension.", evidenceIds: [] };
+    const value = { summary: "The generated team completed the experiment.", application: Array(5).fill(unknown),
+      agents: evidence.participants.map((agentId) => ({ agentId, criteria: Array(5).fill(unknown) })),
+      collaboration: Array(5).fill(unknown), missingWork: [] };
+    return reply({ message: { role: "assistant", content: JSON.stringify(value) }, done_reason: "stop", prompt_eval_count: 100, eval_count: 20 });
+  }
   if (body.messages[1]?.content.startsWith("Write a workplace sitcom pilot called Printer Jam.")) {
     const value = sitcomExperiment(body.messages);
     return reply({ message: { role: "assistant", content: JSON.stringify(value) }, done_reason: "stop", prompt_eval_count: 100, eval_count: 20 });

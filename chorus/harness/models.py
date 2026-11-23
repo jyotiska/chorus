@@ -29,6 +29,12 @@ class Persona(Model):
     avatarVersion: str = "1"
 
 
+class GeneratedPersona(Persona):
+    generationId: str
+    avatarId: str
+    systemPrompt: str
+
+
 class Problem(Model):
     id: str
     title: str
@@ -153,12 +159,25 @@ class JudgeReport(Model):
         return self
 
 
-class ExperimentConfig(Model):
+class ExperimentBrief(Model):
     problemId: str
-    participantIds: list[str] = Field(min_length=1, max_length=10)
+    customStatement: str | None = None
+
+
+class TeamGenerationRequest(ExperimentBrief):
+    model: str
+
+
+class TeamGeneration(Model):
+    id: str
+    agents: list[GeneratedPersona] = Field(min_length=3, max_length=5)
+
+
+class ExperimentConfig(ExperimentBrief):
+    participantIds: list[str] = Field(min_length=1, max_length=15)
     model: str = "gpt-6-luna"
     judgeModel: str | None = None
-    customStatement: str | None = None
+    teamGenerationId: str | None = Field(default=None, max_length=36)
 
     @model_validator(mode="after")
     def distinct_participants(self):
@@ -324,7 +343,7 @@ class HarnessSnapshot(Model):
     generation: int = 0
     config: HarnessConfig
     problem: Problem
-    agents: list[Persona]
+    agents: list[GeneratedPersona | Persona]
     workers: list[Worker]
     status: Literal["ready", "running", "reviewing", "paused", "completed", "stopped", "stopping", "killed", "judge_failed"] = "ready"
     canvas: str = ""
@@ -393,15 +412,21 @@ class UsageReport(Model):
     wallTimeMs: int
 
 
+class ExperimentUsageReport(UsageReport):
+    teamGeneration: Usage
+
+
 class HarnessContracts(Model):
     catalog: HarnessCatalog
     config: HarnessConfig
     snapshot: HarnessSnapshot
     page: RecordPage
     command: HarnessCommand
-    usage: UsageReport
+    usage: ExperimentUsageReport | UsageReport
     experimentCatalog: ExperimentCatalog
     experimentConfig: ExperimentConfig
+    teamGeneration: TeamGeneration
+    teamGenerationRequest: TeamGenerationRequest
     repositoryTree: RepositoryTree
     repositoryFile: RepositoryFile
     repositoryCommitDiff: RepositoryCommitDiff

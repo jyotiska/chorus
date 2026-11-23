@@ -79,6 +79,105 @@ test("repository experiment defaults and explicit selections survive changes to 
   await expect(page.getByRole("main").getByRole("alert")).toHaveText("Setup test response");
 });
 
+test("Generate replaces the roster using the selected Agent model and starts with the saved profiles", async ({ page, request }) => {
+  await page.goto("/?experiment=1");
+  await page.getByRole("combobox", { name: "Agent model", exact: true }).click();
+  await page.getByRole("option", { name: "Qwen 3.5 4B MLX", exact: true }).click();
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  const judge = page.getByRole("combobox", { name: "Judge model" });
+  await judge.press("Enter");
+  await page.getByRole("listbox").getByRole("option", { name: "Qwen 3.5 0.8B MLX", exact: true }).press("Enter");
+  await expect(judge).toHaveText("Qwen 3.5 0.8B MLX");
+  const generated = page.waitForResponse((response) => response.url().endsWith("/experiments/teams"));
+  await page.getByRole("button", { name: "Generate", exact: true }).click();
+  const response = await generated;
+  expect(response.status()).toBe(201);
+  expect(response.request().postDataJSON()).toEqual({ problemId: "todoist", model: "qwen3.5:4b-mlx" });
+
+  const selected = page.getByRole("list", { name: "Selected agents" });
+  await expect(selected.getByRole("listitem")).toHaveCount(3);
+  await selected.getByRole("button", { name: "View Mira profile" }).click();
+  const profile = page.getByRole("dialog", { name: "Mira profile" });
+  await expect(profile.getByText("System prompt")).toBeVisible();
+  await expect(profile.getByText(/As task workflow designer/)).toBeVisible();
+  await profile.getByRole("button", { name: "Close profile" }).click();
+  await page.getByRole("button", { name: "Edit team" }).click();
+  await page.getByRole("checkbox", { name: "Select General agent" }).check();
+  await page.getByRole("button", { name: "Close Edit team" }).click();
+  await expect(selected.getByRole("listitem")).toHaveCount(4);
+  await expect.poll(() => selected.locator("img").evaluateAll((images) =>
+    new Set(images.filter((image) => (image as HTMLImageElement).naturalWidth > 0)
+      .map((image) => image.getAttribute("src"))).size,
+  )).toBe(4);
+
+  const created = page.waitForResponse((run) => run.url().endsWith("/v2/experiments"));
+  await page.getByRole("button", { name: "Start experiment" }).click();
+  const runResponse = await created;
+  expect(runResponse.status()).toBe(201);
+  const run: HarnessSnapshot = await runResponse.json();
+  const first = run.agents[0];
+  expect(first).toMatchObject({ name: "Mira" });
+  const url = `/api/chorus/v2/sessions/${run.id}`;
+  await expect.poll(async () => (await (await request.get(url)).json()).status).toBe("completed");
+  const saved = await (await request.get(`${url}/export`)).json();
+  expect(saved.session.agents).toEqual(run.agents);
+  expect(saved.records.commit.some((item: HarnessRecord) => item.agentId === first.id)).toBe(true);
+  const workerRequests = saved.records.request.filter((item: HarnessRecord) => item.agentId === first.id);
+  expect(workerRequests[0].data.messages[0].content).toContain("Current phase: Plan");
+  expect(workerRequests[0].data.messages[1].content).toContain("As task workflow designer");
+  expect(workerRequests[0].data.messages[2].content).toContain("Task usability reviewer");
+  expect(saved.records.call[0].data).toMatchObject({ model: "qwen3.5:4b-mlx", phase: "team_generation" });
+  await page.reload();
+  await page.getByRole("button", { name: "Usage", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Team generation" })).toBeVisible();
+});
+
+test("Other generates from the current brief and preserves the roster on failure and stale replies", async ({ page }) => {
+  await page.goto("/?experiment=1");
+  await page.getByRole("combobox", { name: "Agent model", exact: true }).click();
+  await page.getByRole("option", { name: "Qwen 3.5 4B MLX", exact: true }).click();
+  await page.getByRole("button", { name: /Choose brief:/ }).click();
+  await page.getByRole("dialog", { name: "Choose a brief" }).getByRole("button", { name: /^Other/ }).click();
+  const generate = page.getByRole("button", { name: "Generate", exact: true });
+  const brief = page.getByRole("textbox", { name: "Problem statement" });
+  const selected = page.getByRole("list", { name: "Selected agents" });
+  await expect(generate).toBeDisabled();
+  await brief.fill("Reject this fixture.");
+  await generate.click();
+  await expect(page.getByRole("region", { name: "Experiment team" }).getByRole("alert")).toContainText("did not return a complete team");
+  await expect(selected.getByRole("listitem")).toHaveCount(6);
+
+  await brief.fill("Plan a low-walking visit to a museum.");
+  let release = () => {};
+  let delivered = () => {};
+  const wait = new Promise<void>((resolve) => { release = resolve; });
+  const finished = new Promise<void>((resolve) => { delivered = resolve; });
+  await page.route("**/experiments/teams", async (route) => {
+    try {
+      const upstream = await route.fetch();
+      await wait;
+      await route.fulfill({ response: upstream });
+    } finally {
+      delivered();
+    }
+  }, { times: 1 });
+  await generate.click();
+  await expect(page.getByRole("button", { name: "Generating…" })).toBeDisabled();
+  await brief.fill("Plan a low-walking visit to a museum with a workshop.");
+  release();
+  await finished;
+  await expect(selected.getByRole("listitem")).toHaveCount(6);
+
+  const generated = page.waitForResponse((response) => response.url().endsWith("/experiments/teams"));
+  await generate.click();
+  const response = await generated;
+  expect(response.status()).toBe(201);
+  expect(response.request().postDataJSON()).toMatchObject({ problemId: "other", customStatement: await brief.inputValue() });
+  await expect(selected.getByRole("button", { name: "View Rina profile" })).toBeVisible();
+  await brief.fill("Plan a different trip.");
+  await expect(page.getByRole("button", { name: "Start experiment" })).toBeDisabled();
+});
+
 test("Other runs a pasted custom brief and restores its reviewed HTML and Markdown deliverables", async ({ page, request }) => {
   const brief = "Write a workplace sitcom pilot called Printer Jam.\n\nMake the pilot a single HTML file and include character notes.";
   await page.goto("/?experiment=1");
@@ -91,13 +190,15 @@ test("Other runs a pasted custom brief and restores its reviewed HTML and Markdo
   }
   await page.getByRole("button", { name: "Edit team" }).click();
   const team = page.getByRole("dialog", { name: "Edit team" });
-  for (const checked of await team.getByRole("checkbox", { name: /^Select /, checked: true }).all()) await checked.uncheck();
+  const checkedAgents = team.getByRole("checkbox", { name: /^Select /, checked: true });
+  while (await checkedAgents.count()) await checkedAgents.first().uncheck();
   await team.getByRole("checkbox", { name: "Select General agent" }).check();
   await page.getByRole("button", { name: "Close Edit team" }).click();
   await page.getByRole("combobox", { name: "Agent model", exact: true }).click();
   await page.getByRole("option", { name: "Qwen 3.5 4B MLX", exact: true }).click();
-  await page.getByRole("combobox", { name: "Judge model" }).click();
-  await page.getByRole("option", { name: "Qwen 3.5 0.8B MLX", exact: true }).click();
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await page.getByRole("combobox", { name: "Judge model" }).press("Enter");
+  await page.getByRole("listbox").getByRole("option", { name: "Qwen 3.5 0.8B MLX", exact: true }).press("Enter");
 
   await chooseBrief(/^Other/);
   const input = page.getByRole("textbox", { name: "Problem statement" });

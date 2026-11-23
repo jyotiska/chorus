@@ -8,7 +8,7 @@ import time
 import hashlib
 from datetime import datetime, timezone
 from uuid import uuid4
-from chorus.harness.models import Usage, UsageReport
+from chorus.harness.models import ExperimentUsageReport, Usage, UsageReport
 from chorus.llm.caching import CACHE_SCOPE
 from chorus.llm.openai import assert_luna_budget, luna_input_estimate
 from chorus.llm.transport import assert_budget
@@ -69,10 +69,51 @@ def aggregate(records) -> Usage:
 def usage_report(repository, sid):
     state = repository.get(sid)
     records = repository.all(sid, "call")
-    participants = [r for r in records if r.agentId != "judge"]
+    generation = [r for r in records if r.data.get("phase") == "team_generation"]
+    participants = [r for r in records if r.agentId != "judge" and r.data.get("phase") != "team_generation"]
     judges = [r for r in records if r.agentId == "judge"]
     end = datetime.fromisoformat(state.updatedAt) if state.status in {"completed", "stopped", "killed", "judge_failed"} else datetime.now(timezone.utc)
-    return UsageReport(agents={a.id: aggregate([r for r in participants if r.agentId == a.id]) for a in state.agents}, participants=aggregate(participants), judge=aggregate(judges), total=aggregate(records), wallTimeMs=max(0, round((end - datetime.fromisoformat(state.createdAt)).total_seconds() * 1000)))
+    totals = dict(
+        agents={a.id: aggregate([r for r in participants if r.agentId == a.id]) for a in state.agents},
+        participants=aggregate(participants), judge=aggregate(judges), total=aggregate(records),
+        wallTimeMs=max(0, round((end - datetime.fromisoformat(state.createdAt)).total_seconds() * 1000)),
+    )
+    return ExperimentUsageReport(**totals, teamGeneration=aggregate(generation)) if generation else UsageReport(**totals)
+
+
+def call_data(rid, phase, model, route, prompt_version):
+    data = {"id": rid, "phase": phase, "model": model, "route": route, "promptVersion": prompt_version,
+            "startedAt": None, "queuedAt": now(), "endedAt": None, "latencyMs": None, "inputTokens": None,
+            "outputTokens": None, "cachedTokens": None, "cacheUsed": None, "cacheUtilizationPercent": None,
+            "costUSD": None, "costSource": "unknown", "outcome": "queued", "rateSnapshot": rates(route, model)}
+    data["cacheMode"] = os.getenv("CHORUS_OPENAI_CACHE_MODE", "implicit") if route == "openai" else None
+    return data
+
+
+def record_usage(data, result):
+    route = data["route"]
+    data["inputTokens"], data["outputTokens"] = count(result.get("prompt_eval_count")), count(result.get("eval_count"))
+    details = result.get("usage_details", {})
+    data["cachedTokens"] = count(details.get("cachedInput"), data["inputTokens"]) if data["inputTokens"] is not None else None
+    data["cacheWriteTokens"] = count(details.get("cacheWriteInput"), data["inputTokens"]) if data["inputTokens"] is not None else None
+    data.update(requestId=details.get("requestId"), provider=details.get("provider"), outcome="success")
+    cached = data["cachedTokens"]
+    data["cacheUsed"] = None if cached is None else cached > 0
+    data["cacheUtilizationPercent"] = 100.0 * cached / data["inputTokens"] if cached is not None and data["inputTokens"] else None
+    cost = details.get("costUSD")
+    if type(cost) in (int, float) and math.isfinite(cost) and cost >= 0:
+        data.update(costUSD=float(cost), costSource="reported")
+    elif route == "ollama":
+        data.update(costUSD=0.0, costSource="local_api_zero")
+    elif data["rateSnapshot"] and data["inputTokens"] is not None and data["outputTokens"] is not None and cached is not None:
+        rate, writes = data["rateSnapshot"], data["cacheWriteTokens"] or 0
+        # An unreported explicit write is not a known zero. Implicit
+        # OpenAI cache creation has no separate write charge; other
+        # routes need reported counts (or identical write/input rates).
+        writes_known = data["cacheWriteTokens"] is not None or rate["cacheWrite"] == rate["input"] or route == "openai" and data["cacheMode"] in {"implicit", "disabled"}
+        if writes_known and cached + writes <= data["inputTokens"]:
+            estimate = ((data["inputTokens"] - cached - writes) * rate["input"] + cached * rate["cached"] + writes * rate["cacheWrite"] + data["outputTokens"] * rate["output"]) / 1e6
+            data.update(costUSD=estimate, costSource="estimated")
 
 
 class Meter:
@@ -99,11 +140,7 @@ class Meter:
                 w.state = "waiting_model" if w.state not in {"finished", "capped"} else w.state
             self.repo.change(sid, reserve, generation=generation)
         rid = str(uuid4())
-        data = {"id": rid, "phase": phase, "model": model, "route": route, "promptVersion": state.promptVersion,
-                "startedAt": None, "queuedAt": now(), "endedAt": None, "latencyMs": None, "inputTokens": None,
-                "outputTokens": None, "cachedTokens": None, "cacheUsed": None, "cacheUtilizationPercent": None,
-                "costUSD": None, "costSource": "unknown", "outcome": "queued", "rateSnapshot": rates(route, model)}
-        data["cacheMode"] = os.getenv("CHORUS_OPENAI_CACHE_MODE", "implicit") if route == "openai" else None
+        data = call_data(rid, phase, model, route, state.promptVersion)
         record = self.repo.append(sid, "call", actor, worker.currentTurnIndex if worker else 0, data, record_id=rid)
         started = None
         token = CACHE_SCOPE.set(f"{sid}:{actor}:harness-epoch-0")
@@ -136,28 +173,7 @@ class Meter:
                 result = await self.call(model, sent, **options)
                 if self.closed:
                     raise asyncio.CancelledError
-                data["inputTokens"], data["outputTokens"] = count(result.get("prompt_eval_count")), count(result.get("eval_count"))
-                details = result.get("usage_details", {})
-                data["cachedTokens"] = count(details.get("cachedInput"), data["inputTokens"]) if data["inputTokens"] is not None else None
-                data["cacheWriteTokens"] = count(details.get("cacheWriteInput"), data["inputTokens"]) if data["inputTokens"] is not None else None
-                data.update(requestId=details.get("requestId"), provider=details.get("provider"), outcome="success")
-                cached = data["cachedTokens"]
-                data["cacheUsed"] = None if cached is None else cached > 0
-                data["cacheUtilizationPercent"] = 100.0 * cached / data["inputTokens"] if cached is not None and data["inputTokens"] else None
-                cost = details.get("costUSD")
-                if type(cost) in (int, float) and math.isfinite(cost) and cost >= 0:
-                    data.update(costUSD=float(cost), costSource="reported")
-                elif route == "ollama":
-                    data.update(costUSD=0.0, costSource="local_api_zero")
-                elif data["rateSnapshot"] and data["inputTokens"] is not None and data["outputTokens"] is not None and cached is not None:
-                    rate, writes = data["rateSnapshot"], data["cacheWriteTokens"] or 0
-                    # An unreported explicit write is not a known zero. Implicit
-                    # OpenAI cache creation has no separate write charge; other
-                    # routes need reported counts (or identical write/input rates).
-                    writes_known = data["cacheWriteTokens"] is not None or rate["cacheWrite"] == rate["input"] or route == "openai" and data["cacheMode"] in {"implicit", "disabled"}
-                    if writes_known and cached + writes <= data["inputTokens"]:
-                        estimate = ((data["inputTokens"] - cached - writes) * rate["input"] + cached * rate["cached"] + writes * rate["cacheWrite"] + data["outputTokens"] * rate["output"]) / 1e6
-                        data.update(costUSD=estimate, costSource="estimated")
+                record_usage(data, result)
                 if state.experiment is not None:
                     current = self.repo.get(sid)
                     if current.generation != generation or current.experiment.phase != phase:

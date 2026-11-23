@@ -33,6 +33,7 @@ class HarnessService:
         self.recover()
 
     def recover(self):
+        self.repo.interrupt_experiment_teams()
         for state in self.repo.list():
             if state.experiment is not None:
                 self.experiments.recover(state)
@@ -471,6 +472,7 @@ class HarnessService:
         if self.meter.active:
             await asyncio.wait(list(self.meter.active), timeout=2)
         self.meter.closed = True
+        self.repo.interrupt_experiment_teams()
         for state in self.repo.list():
             for record in self.repo.all(state.id, "call"):
                 if record.data.get("outcome") in {"running", "queued"}:

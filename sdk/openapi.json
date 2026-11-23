@@ -1057,6 +1057,74 @@
         }
       }
     },
+    "/api/v2/experiments/teams": {
+      "post": {
+        "summary": "Create Experiment Team",
+        "operationId": "create_experiment_team_api_v2_experiments_teams_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamGenerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamGeneration"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v2/assets/{agent_id}/{asset}": {
       "get": {
         "summary": "Asset",
@@ -2076,7 +2144,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UsageReport"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ExperimentUsageReport"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UsageReport"
+                    }
+                  ],
+                  "title": "Response Usage Api V2 Sessions  Sid  Usage Get"
                 }
               }
             }
@@ -2946,12 +3022,23 @@
             "type": "string",
             "title": "Problemid"
           },
+          "customStatement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customstatement"
+          },
           "participantIds": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "maxItems": 10,
+            "maxItems": 15,
             "minItems": 1,
             "title": "Participantids"
           },
@@ -2971,16 +3058,17 @@
             ],
             "title": "Judgemodel"
           },
-          "customStatement": {
+          "teamGenerationId": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 36
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Customstatement"
+            "title": "Teamgenerationid"
           }
         },
         "additionalProperties": false,
@@ -3217,6 +3305,44 @@
         ],
         "title": "ExperimentTasks"
       },
+      "ExperimentUsageReport": {
+        "properties": {
+          "agents": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Usage"
+            },
+            "type": "object",
+            "title": "Agents"
+          },
+          "participants": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "judge": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "total": {
+            "$ref": "#/components/schemas/Usage"
+          },
+          "wallTimeMs": {
+            "type": "integer",
+            "title": "Walltimems"
+          },
+          "teamGeneration": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "agents",
+          "participants",
+          "judge",
+          "total",
+          "wallTimeMs",
+          "teamGeneration"
+        ],
+        "title": "ExperimentUsageReport"
+      },
       "ExperimentWorktree": {
         "properties": {
           "agentId": {
@@ -3350,6 +3476,89 @@
           "artifactChecks"
         ],
         "title": "FrozenExperiment"
+      },
+      "GeneratedPersona": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "introduction": {
+            "type": "string",
+            "title": "Introduction"
+          },
+          "personality": {
+            "type": "string",
+            "title": "Personality"
+          },
+          "traits": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Traits"
+          },
+          "strengths": {
+            "type": "string",
+            "title": "Strengths"
+          },
+          "weaknesses": {
+            "type": "string",
+            "title": "Weaknesses"
+          },
+          "avatarBrief": {
+            "type": "string",
+            "title": "Avatarbrief"
+          },
+          "avatarVersion": {
+            "type": "string",
+            "title": "Avatarversion",
+            "default": "1"
+          },
+          "generationId": {
+            "type": "string",
+            "title": "Generationid"
+          },
+          "avatarId": {
+            "type": "string",
+            "title": "Avatarid"
+          },
+          "systemPrompt": {
+            "type": "string",
+            "title": "Systemprompt"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role",
+          "domain",
+          "introduction",
+          "personality",
+          "traits",
+          "strengths",
+          "weaknesses",
+          "avatarBrief",
+          "avatarVersion",
+          "generationId",
+          "avatarId",
+          "systemPrompt"
+        ],
+        "title": "GeneratedPersona"
       },
       "Grade": {
         "properties": {
@@ -3733,7 +3942,14 @@
           },
           "agents": {
             "items": {
-              "$ref": "#/components/schemas/Persona"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/GeneratedPersona"
+                },
+                {
+                  "$ref": "#/components/schemas/Persona"
+                }
+              ]
             },
             "type": "array",
             "title": "Agents"
@@ -4844,6 +5060,60 @@
           "reason"
         ],
         "title": "TaskGap"
+      },
+      "TeamGeneration": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/GeneratedPersona"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "minItems": 3,
+            "title": "Agents"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "agents"
+        ],
+        "title": "TeamGeneration"
+      },
+      "TeamGenerationRequest": {
+        "properties": {
+          "problemId": {
+            "type": "string",
+            "title": "Problemid"
+          },
+          "customStatement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customstatement"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "problemId",
+          "model"
+        ],
+        "title": "TeamGenerationRequest"
       },
       "TokenUsage": {
         "properties": {

@@ -41,6 +41,12 @@ class HarnessLeaseRow(Base):
     data: Mapped[dict] = mapped_column(JSON)
 
 
+class ExperimentTeamRow(Base):
+    __tablename__ = "experiment_teams"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    data: Mapped[dict] = mapped_column(JSON)
+
+
 TABLES = (HarnessSessionRow, HarnessRecordRow, HarnessEventRow, HarnessLeaseRow)
 
 
@@ -48,12 +54,32 @@ class Repository:
     def __init__(self, store):
         self.store, self.engine = store, store.engine
 
-    def create(self, state: HarnessSnapshot) -> HarnessSnapshot:
-        data = state.model_dump(mode="json")
+    def create(self, state: HarnessSnapshot, *, initial_call: Record | None = None) -> HarnessSnapshot:
         with Session(self.engine) as db, db.begin():
+            if initial_call is not None:
+                initial_call.sequence = state.sequence = 1
+                db.add(HarnessRecordRow(session_id=state.id, id=initial_call.id, sequence=1,
+                                        kind=initial_call.kind, agent_id=initial_call.agentId,
+                                        record=initial_call.model_dump(mode="json")))
+            data = state.model_dump(mode="json")
             db.add(HarnessSessionRow(id=state.id, revision=0, snapshot=data))
             db.add(HarnessEventRow(session_id=state.id, revision=0, snapshot=data))
         return state
+
+    def save_experiment_team(self, team_id: str, data: dict) -> None:
+        with Session(self.engine) as db, db.begin():
+            db.merge(ExperimentTeamRow(id=team_id, data=data))
+
+    def experiment_team(self, team_id: str) -> dict | None:
+        with Session(self.engine) as db:
+            row = db.get(ExperimentTeamRow, team_id)
+            return row.data if row is not None else None
+
+    def interrupt_experiment_teams(self) -> None:
+        with Session(self.engine) as db, db.begin():
+            outcome = ExperimentTeamRow.data["call"]["outcome"].as_string()
+            for row in db.scalars(select(ExperimentTeamRow).where(outcome.in_(("running", "queued")))):
+                row.data = {**row.data, "call": {**row.data["call"], "outcome": "interrupted", "endedAt": now()}}
 
     def get(self, session_id: str) -> HarnessSnapshot:
         with Session(self.engine) as db:

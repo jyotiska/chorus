@@ -34,7 +34,7 @@ You no longer need a separate `chorus-web` checkout. The merge keeps existing se
 
 The web home page offers four app briefs and **Other**. Choose **Other** to paste a custom problem statement, such as writing a sitcom pilot or planning a trip. Specify the format in the brief or let the team choose one during planning.
 
-Choose from ten agent roles. Six are selected to start, and you can change the team. Choose the model for the agents and, if you want, a different model for the final judge.
+Choose from ten agent roles, with six selected to start. Or choose **Generate** to use the selected **Agent model** to create three to five agents for the brief, each with a distinct avatar and a role-specific prompt. Generation selects the new team. Use **Edit team** to remove agents or add catalog roles. You can choose a different model for the final judge.
 
 Each experiment has three stages:
 

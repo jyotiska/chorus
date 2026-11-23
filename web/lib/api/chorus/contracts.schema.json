@@ -677,11 +677,23 @@
           "title": "Problemid",
           "type": "string"
         },
+        "customStatement": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customstatement"
+        },
         "participantIds": {
           "items": {
             "type": "string"
           },
-          "maxItems": 10,
+          "maxItems": 15,
           "minItems": 1,
           "title": "Participantids",
           "type": "array"
@@ -703,9 +715,10 @@
           "default": null,
           "title": "Judgemodel"
         },
-        "customStatement": {
+        "teamGenerationId": {
           "anyOf": [
             {
+              "maxLength": 36,
               "type": "string"
             },
             {
@@ -713,15 +726,16 @@
             }
           ],
           "default": null,
-          "title": "Customstatement"
+          "title": "Teamgenerationid"
         }
       },
       "required": [
         "problemId",
+        "customStatement",
         "participantIds",
         "model",
         "judgeModel",
-        "customStatement"
+        "teamGenerationId"
       ],
       "title": "ExperimentConfig",
       "type": "object"
@@ -957,6 +971,44 @@
       "title": "ExperimentTasks",
       "type": "object"
     },
+    "ExperimentUsageReport": {
+      "additionalProperties": false,
+      "properties": {
+        "agents": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Usage"
+          },
+          "title": "Agents",
+          "type": "object"
+        },
+        "participants": {
+          "$ref": "#/$defs/Usage"
+        },
+        "judge": {
+          "$ref": "#/$defs/Usage"
+        },
+        "total": {
+          "$ref": "#/$defs/Usage"
+        },
+        "wallTimeMs": {
+          "title": "Walltimems",
+          "type": "integer"
+        },
+        "teamGeneration": {
+          "$ref": "#/$defs/Usage"
+        }
+      },
+      "required": [
+        "agents",
+        "participants",
+        "judge",
+        "total",
+        "wallTimeMs",
+        "teamGeneration"
+      ],
+      "title": "ExperimentUsageReport",
+      "type": "object"
+    },
     "ExperimentWorktree": {
       "additionalProperties": false,
       "properties": {
@@ -1089,6 +1141,89 @@
         "artifactChecks"
       ],
       "title": "FrozenExperiment",
+      "type": "object"
+    },
+    "GeneratedPersona": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "role": {
+          "title": "Role",
+          "type": "string"
+        },
+        "domain": {
+          "title": "Domain",
+          "type": "string"
+        },
+        "introduction": {
+          "title": "Introduction",
+          "type": "string"
+        },
+        "personality": {
+          "title": "Personality",
+          "type": "string"
+        },
+        "traits": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Traits",
+          "type": "array"
+        },
+        "strengths": {
+          "title": "Strengths",
+          "type": "string"
+        },
+        "weaknesses": {
+          "title": "Weaknesses",
+          "type": "string"
+        },
+        "avatarBrief": {
+          "title": "Avatarbrief",
+          "type": "string"
+        },
+        "avatarVersion": {
+          "default": "1",
+          "title": "Avatarversion",
+          "type": "string"
+        },
+        "generationId": {
+          "title": "Generationid",
+          "type": "string"
+        },
+        "avatarId": {
+          "title": "Avatarid",
+          "type": "string"
+        },
+        "systemPrompt": {
+          "title": "Systemprompt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "domain",
+        "introduction",
+        "personality",
+        "traits",
+        "strengths",
+        "weaknesses",
+        "avatarBrief",
+        "avatarVersion",
+        "generationId",
+        "avatarId",
+        "systemPrompt"
+      ],
+      "title": "GeneratedPersona",
       "type": "object"
     },
     "Grade": {
@@ -1341,13 +1476,27 @@
           "$ref": "#/$defs/HarnessCommand"
         },
         "usage": {
-          "$ref": "#/$defs/UsageReport"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExperimentUsageReport"
+            },
+            {
+              "$ref": "#/$defs/UsageReport"
+            }
+          ],
+          "title": "Usage"
         },
         "experimentCatalog": {
           "$ref": "#/$defs/ExperimentCatalog"
         },
         "experimentConfig": {
           "$ref": "#/$defs/ExperimentConfig"
+        },
+        "teamGeneration": {
+          "$ref": "#/$defs/TeamGeneration"
+        },
+        "teamGenerationRequest": {
+          "$ref": "#/$defs/TeamGenerationRequest"
         },
         "repositoryTree": {
           "$ref": "#/$defs/RepositoryTree"
@@ -1371,6 +1520,8 @@
         "usage",
         "experimentCatalog",
         "experimentConfig",
+        "teamGeneration",
+        "teamGenerationRequest",
         "repositoryTree",
         "repositoryFile",
         "repositoryCommitDiff",
@@ -1424,7 +1575,14 @@
         },
         "agents": {
           "items": {
-            "$ref": "#/$defs/Persona"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/GeneratedPersona"
+              },
+              {
+                "$ref": "#/$defs/Persona"
+              }
+            ]
           },
           "title": "Agents",
           "type": "array"
@@ -2494,6 +2652,62 @@
         "reason"
       ],
       "title": "TaskGap",
+      "type": "object"
+    },
+    "TeamGeneration": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/GeneratedPersona"
+          },
+          "maxItems": 5,
+          "minItems": 3,
+          "title": "Agents",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "agents"
+      ],
+      "title": "TeamGeneration",
+      "type": "object"
+    },
+    "TeamGenerationRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "problemId": {
+          "title": "Problemid",
+          "type": "string"
+        },
+        "customStatement": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customstatement"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "problemId",
+        "customStatement",
+        "model"
+      ],
+      "title": "TeamGenerationRequest",
       "type": "object"
     },
     "TokenUsage": {

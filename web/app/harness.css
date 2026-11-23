@@ -446,6 +446,12 @@
   gap: 12px;
   margin-bottom: 10px;
 }
+.experiment-team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
 .experiment-team-title {
   display: flex;
   align-items: baseline;
@@ -477,6 +483,25 @@
 }
 .experiment-team-list li > span[aria-hidden] {
   flex: none;
+}
+.generated-agent-preview {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.generated-agent-preview:is(:hover, :focus-visible) {
+  text-decoration: underline;
+}
+.generated-agent-preview small {
+  display: block;
+  color: var(--secondary);
+  font-size: 11px;
+  font-weight: 400;
 }
 .experiment-team-list :is(img, svg) {
   display: block;

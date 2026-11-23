@@ -224,7 +224,21 @@ export type Engineversion1 = string;
 export type Promptversion1 = string;
 export type Catalogversion = string;
 export type Generation = number;
-export type Agents3 = Persona[];
+export type Id9 = string;
+export type Name2 = string;
+export type Role2 = string;
+export type Domain2 = string;
+export type Introduction1 = string;
+export type Personality2 = string;
+export type Traits2 = string[];
+export type Strengths2 = string;
+export type Weaknesses1 = string;
+export type Avatarbrief1 = string;
+export type Avatarversion1 = string;
+export type Generationid = string;
+export type Avatarid = string;
+export type Systemprompt = string;
+export type Agents3 = (GeneratedPersona | Persona)[];
 export type Agentid3 = string;
 export type Turnsstarted = number;
 export type Turnscompleted = number;
@@ -356,7 +370,7 @@ export type Assumptions = string[];
 export type Error1 = string;
 export type Createdat3 = string;
 export type Updatedat1 = string;
-export type Id9 = string;
+export type Id10 = string;
 export type Sequence1 = number;
 export type Kind3 = string;
 export type Agentid9 = string;
@@ -369,6 +383,7 @@ export type Hasmore = boolean;
 export type Commandid1 = string;
 export type Action1 = "start" | "pause" | "resume" | "stop" | "kill" | "retry_judge";
 export type Expectedrevision1 = number;
+export type Usage = ExperimentUsageReport | UsageReport;
 export type Callcount = number;
 export type Inputtokens1 = number;
 export type Outputtokens = number;
@@ -386,21 +401,32 @@ export type Reportedcostusd = number;
 export type Estimatedcostusd = number;
 export type Unknowncostcalls = number;
 export type Walltimems = number;
+export type Walltimems1 = number;
 export type Version3 = string;
-export type Agents7 = Persona[];
+export type Agents8 = Persona[];
 export type Problems1 = Problem1[];
 export type Models2 = ModelInfo1[];
 export type Defaultmodel2 = string;
 export type Customstatementmaxbytes = number;
 export type Problemid1 = string;
+export type Customstatement = string | null;
 /**
  * @minItems 1
- * @maxItems 10
+ * @maxItems 15
  */
 export type Participantids3 = string[];
 export type Model3 = string;
 export type Judgemodel1 = string | null;
-export type Customstatement = string | null;
+export type Teamgenerationid = string | null;
+export type Id11 = string;
+/**
+ * @minItems 3
+ * @maxItems 5
+ */
+export type Agents9 = GeneratedPersona[];
+export type Problemid2 = string;
+export type Customstatement1 = string | null;
+export type Model4 = string;
 export type Revision2 = string;
 export type Path3 = string;
 export type Kind4 = "directory" | "file" | "link" | "submodule";
@@ -624,9 +650,11 @@ export interface HarnessContracts {
   snapshot: HarnessSnapshot;
   page: RecordPage;
   command: HarnessCommand;
-  usage: UsageReport;
+  usage: Usage;
   experimentCatalog: ExperimentCatalog;
   experimentConfig: ExperimentConfig;
+  teamGeneration: TeamGeneration;
+  teamGenerationRequest: TeamGenerationRequest;
   repositoryTree: RepositoryTree;
   repositoryFile: RepositoryFile;
   repositoryCommitDiff: RepositoryCommitDiff;
@@ -712,6 +740,22 @@ export interface HarnessSnapshot {
   error: Error1;
   createdAt: Createdat3;
   updatedAt: Updatedat1;
+}
+export interface GeneratedPersona {
+  id: Id9;
+  name: Name2;
+  role: Role2;
+  domain: Domain2;
+  introduction: Introduction1;
+  personality: Personality2;
+  traits: Traits2;
+  strengths: Strengths2;
+  weaknesses: Weaknesses1;
+  avatarBrief: Avatarbrief1;
+  avatarVersion: Avatarversion1;
+  generationId: Generationid;
+  avatarId: Avatarid;
+  systemPrompt: Systemprompt;
 }
 export interface Worker {
   agentId: Agentid3;
@@ -842,7 +886,7 @@ export interface RecordPage {
   hasMore: Hasmore;
 }
 export interface Record {
-  id: Id9;
+  id: Id10;
   sequence: Sequence1;
   kind: Kind3;
   agentId: Agentid9;
@@ -858,17 +902,18 @@ export interface HarnessCommand {
   action: Action1;
   expectedRevision: Expectedrevision1;
 }
-export interface UsageReport {
+export interface ExperimentUsageReport {
   agents: Agents6;
-  participants: Usage;
-  judge: Usage;
-  total: Usage;
+  participants: Usage1;
+  judge: Usage1;
+  total: Usage1;
   wallTimeMs: Walltimems;
+  teamGeneration: Usage1;
 }
 export interface Agents6 {
-  [k: string]: Usage;
+  [k: string]: Usage1;
 }
-export interface Usage {
+export interface Usage1 {
   callCount: Callcount;
   inputTokens: Inputtokens1;
   outputTokens: Outputtokens;
@@ -886,9 +931,19 @@ export interface Usage {
   estimatedCostUSD: Estimatedcostusd;
   unknownCostCalls: Unknowncostcalls;
 }
+export interface UsageReport {
+  agents: Agents7;
+  participants: Usage1;
+  judge: Usage1;
+  total: Usage1;
+  wallTimeMs: Walltimems1;
+}
+export interface Agents7 {
+  [k: string]: Usage1;
+}
 export interface ExperimentCatalog {
   version: Version3;
-  agents: Agents7;
+  agents: Agents8;
   problems: Problems1;
   models: Models2;
   defaultModel: Defaultmodel2;
@@ -896,10 +951,20 @@ export interface ExperimentCatalog {
 }
 export interface ExperimentConfig {
   problemId: Problemid1;
+  customStatement: Customstatement;
   participantIds: Participantids3;
   model: Model3;
   judgeModel: Judgemodel1;
-  customStatement: Customstatement;
+  teamGenerationId: Teamgenerationid;
+}
+export interface TeamGeneration {
+  id: Id11;
+  agents: Agents9;
+}
+export interface TeamGenerationRequest {
+  problemId: Problemid2;
+  customStatement: Customstatement1;
+  model: Model4;
 }
 export interface RepositoryTree {
   revision: Revision2;

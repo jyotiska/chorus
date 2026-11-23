@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Pencil,
   SlidersHorizontal,
+  Sparkles,
   Users,
   Search,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import {
   type HarnessCatalog,
   type HarnessSnapshot,
   type Persona,
+  type TeamGeneration,
 } from "@/lib/api/chorus/harness-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +28,51 @@ import {
 } from "@/components/ui/select";
 import { Portrait, ProfileDialog } from "@/lib/api/chorus/harness-workspace";
 import { harness, message, Sheet } from "./shell";
+
+function ModelPicker({
+  id,
+  label,
+  value,
+  select,
+  warning,
+  note,
+  sharedWarning,
+  options,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  select: (value: string) => void;
+  warning?: string;
+  note?: string | null;
+  sharedWarning?: string;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="setting-field">
+      <label htmlFor={id}>{label}</label>
+      <Select value={value} items={options} onValueChange={(value) => value !== null && select(value)}>
+        <SelectTrigger
+          id={id}
+          aria-invalid={Boolean(warning || sharedWarning) || undefined}
+          aria-describedby={[
+            warning ? `${id}-warning` : sharedWarning,
+            note ? `${id}-note` : undefined,
+          ].filter(Boolean).join(" ") || undefined}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="model-options" align="end" alignItemWithTrigger={false}>
+          {options.map((item) => (
+            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {warning && <p id={`${id}-warning`} role="status" className="notice">{warning}</p>}
+      {note && <p id={`${id}-note`} role="status" className="notice">{note}</p>}
+    </div>
+  );
+}
 
 export function Launcher({
   catalog,
@@ -47,8 +94,17 @@ export function Launcher({
   const [customStatement, setCustomStatement] = useState(
     previous?.problemId === "other" ? previousRun?.problem.statement ?? "" : "",
   );
+  const [generated, setGenerated] = useState<{
+    team: TeamGeneration;
+    problemId: string;
+    statement: string;
+  } | null>(() => {
+    const agents = previousRun?.agents.filter((agent) => "generationId" in agent) ?? [];
+    if (!previousRun || !experiment || !agents.length) return null;
+    return { team: { id: agents[0].generationId, agents }, problemId: previousRun.problem.id, statement: previousRun.problem.statement };
+  });
   const [roster, setRoster] = useState(
-    experiment && !custom
+    experiment && !custom && !generated
       ? problem.participantIds
       : (previous?.participantIds ?? problem.participantIds),
   );
@@ -67,6 +123,9 @@ export function Launcher({
   const [profile, setProfile] = useState<Persona | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState("");
+  const generationRequest = useRef<AbortController | null>(null);
   const teamDialog = useRef<HTMLDialogElement>(null);
   const statementField = useRef<HTMLTextAreaElement>(null);
   const focusStatement = useRef(false);
@@ -76,6 +135,10 @@ export function Launcher({
       statementField.current?.focus();
     }
   }, [custom, sheet]);
+  useEffect(() => () => {
+    generationRequest.current?.abort();
+    generationRequest.current = null;
+  }, []);
   const judging = experiment || judge;
   const selectedModel = catalog.models.find((item) => item.id === model);
   const selectedJudgeModel = catalog.models.find(
@@ -92,7 +155,11 @@ export function Launcher({
   const judgeWarning = judging && !judgeUsesAgentModel && selectedJudgeModel?.available === false
     ? selectedJudgeModel.unavailableReason || "This model is unavailable."
     : undefined;
-  const selected = catalog.agents.filter((agent) => roster.includes(agent.id));
+  const agents = [...(generated?.team.agents ?? []), ...catalog.agents];
+  const selected = agents.filter((agent) => roster.includes(agent.id));
+  const usingGenerated = selected.some((agent) => "generationId" in agent);
+  const statement = custom ? customStatement : problem.statement;
+  const staleTeam = usingGenerated && (generated?.problemId !== problem.id || generated.statement !== statement);
   const invalidCap =
     !experiment &&
     (!Number.isInteger(Number(cap)) || Number(cap) < 1 || Number(cap) > 100);
@@ -105,20 +172,19 @@ export function Launcher({
   const statementLimit = "customStatementMaxBytes" in catalog ? catalog.customStatementMaxBytes : 0;
   const statementBytes = custom ? new TextEncoder().encode(customStatement).length : 0;
   const statementError = custom && statementBytes > statementLimit ? "Shorten the problem statement to fit the limit." : "";
+  const briefError = custom && !customStatement.trim() ? "Enter a problem statement." : statementError;
   const reason = invalidRoster
     ? rosterRequirement
     : invalidCap
       ? "Choose 1–100 turns per agent."
-      : custom && !customStatement.trim()
-        ? "Enter a problem statement."
-        : statementError;
+      : briefError;
   const unavailable =
     selectedModel?.available === false ||
     (judging && selectedJudgeModel?.available === false);
   const launchLabel = experiment ? "Start experiment" : "Start session";
   const briefLabel = experiment ? "brief" : "problem";
   const agentCount = `${roster.length} ${roster.length === 1 ? "agent" : "agents"}`;
-  const visible = catalog.agents
+  const visible = agents
     .filter(
       (agent) =>
         (!domain || agent.domain === domain) &&
@@ -139,14 +205,46 @@ export function Launcher({
     setDomain("");
     setSheet(next);
   }
+  function cancelGeneration() {
+    generationRequest.current?.abort();
+    generationRequest.current = null;
+    setGenerating(false);
+    setGenerationError("");
+  }
   function toggle(id: string) {
+    if (generating) cancelGeneration();
     if (roster.includes(id)) {
       setRoster(roster.filter((value) => value !== id));
       setAdversaries(adversaries.filter((value) => value !== id));
     } else setRoster([...roster, id]);
   }
+  async function generate() {
+    if (busy || generationRequest.current || briefError || !selectedModel || modelWarning) return;
+    const controller = new AbortController();
+    generationRequest.current = controller;
+    setGenerating(true);
+    setGenerationError("");
+    setError("");
+    try {
+      const team = await harness.generateTeam({ problemId: problem.id, model, ...(custom ? { customStatement } : {}) }, controller.signal);
+      if (generationRequest.current !== controller) return;
+      setGenerated({ team, problemId: problem.id, statement });
+      setRoster(team.agents.map((agent) => agent.id));
+      setAdversaries([]);
+    } catch (error) {
+      if (generationRequest.current !== controller) return;
+      setGenerationError(error instanceof DOMException && error.name === "TimeoutError"
+        ? "Team generation took too long. Try Generate again."
+        : message(error));
+    } finally {
+      if (generationRequest.current === controller) {
+        generationRequest.current = null;
+        setGenerating(false);
+      }
+    }
+  }
   async function submit() {
-    if (busy || reason || unavailable) return;
+    if (busy || reason || unavailable || staleTeam || generationRequest.current) return;
     setBusy(true);
     setError("");
     try {
@@ -157,7 +255,8 @@ export function Launcher({
         judgeModel,
       };
       const run = experiment
-        ? await harness.createExperiment({ ...selection, ...(custom ? { customStatement } : {}) })
+        ? await harness.createExperiment({ ...selection, ...(custom ? { customStatement } : {}),
+            ...(usingGenerated && generated ? { teamGenerationId: generated.team.id } : {}) })
         : await harness.createRun({
             ...selection,
             adversaryIds: adversaries,
@@ -171,55 +270,18 @@ export function Launcher({
       setBusy(false);
     }
   }
-  const modelPicker = ({
-    id,
-    label,
-    value,
-    select,
-    warning,
-    note,
-    sharedWarning,
-  }: {
-    id: string;
-    label: string;
-    value: string;
-    select: (value: string) => void;
-    warning?: string;
-    note?: string | null;
-    sharedWarning?: string;
-  }) => (
-    <div className="setting-field">
-      <label htmlFor={id}>{label}</label>
-      <Select value={value} items={modelOptions} onValueChange={(value) => value !== null && select(value)}>
-        <SelectTrigger
-          id={id}
-          aria-invalid={Boolean(warning || sharedWarning) || undefined}
-          aria-describedby={[
-            warning ? `${id}-warning` : sharedWarning,
-            note ? `${id}-note` : undefined,
-          ].filter(Boolean).join(" ") || undefined}
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="model-options" align="end" alignItemWithTrigger={false}>
-          {modelOptions.map((item) => (
-            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {warning && <p id={`${id}-warning`} role="status" className="notice">{warning}</p>}
-      {note && <p id={`${id}-note`} role="status" className="notice">{note}</p>}
-    </div>
+  const judgePicker = (
+    <ModelPicker
+      id="judge-model"
+      label="Judge model"
+      value={judgeModel ?? model}
+      select={setJudgeModel}
+      warning={judgeWarning}
+      note={judgeUsesAgentModel ? undefined : selectedJudgeModel?.compatibilityNote}
+      sharedWarning={judgeUsesAgentModel && modelWarning ? "run-model-warning" : undefined}
+      options={modelOptions}
+    />
   );
-  const judgePicker = modelPicker({
-    id: "judge-model",
-    label: "Judge model",
-    value: judgeModel ?? model,
-    select: setJudgeModel,
-    warning: judgeWarning,
-    note: judgeUsesAgentModel ? undefined : selectedJudgeModel?.compatibilityNote,
-    sharedWarning: judgeUsesAgentModel && modelWarning ? "run-model-warning" : undefined,
-  });
   return (
     <section className="launcher">
       {!experiment && (
@@ -250,7 +312,7 @@ export function Launcher({
               placeholder="Describe what the team should deliver."
               aria-required="true" aria-invalid={Boolean(statementError)}
               aria-describedby="custom-statement-limit"
-              onChange={(event) => { setCustomStatement(event.target.value); setError(""); }} />
+              onChange={(event) => { cancelGeneration(); setCustomStatement(event.target.value); setError(""); }} />
             <p id="custom-statement-limit" role={statementError ? "status" : undefined}>
               {statementError && `${statementError} `}{statementBytes.toLocaleString()} / {statementLimit.toLocaleString()} UTF-8 bytes
             </p>
@@ -264,22 +326,37 @@ export function Launcher({
               <h2 id="experiment-team-title">Experiment team</h2>
               <span>{agentCount}</span>
             </div>
-            <button className="subtle-btn" aria-haspopup="dialog" onClick={() => open("team")}>
-              <Pencil aria-hidden="true" />
-              Edit team
-            </button>
+            <div className="experiment-team-actions">
+              <button type="button" className="subtle-btn" aria-haspopup="dialog" onClick={() => open("team")}>
+                <Pencil aria-hidden="true" />
+                Edit team
+              </button>
+              <button type="button" className="subtle-btn" disabled={generating || busy || Boolean(briefError || modelWarning) || !selectedModel}
+                onClick={() => void generate()}>
+                <Sparkles aria-hidden="true" />
+                {generating ? "Generating…" : "Generate"}
+              </button>
+            </div>
           </div>
           {selected.length > 0 && (
             <ul className="experiment-team-list" role="list" aria-label="Selected agents">
               {selected.map((agent) => (
                 <li key={agent.id}>
                   <span aria-hidden="true"><Portrait agent={agent} /></span>
-                  <span>{agent.name}</span>
+                  {"generationId" in agent ? (
+                    <button type="button" className="generated-agent-preview" aria-label={`View ${agent.name} profile`} onClick={() => setProfile(agent)}>
+                      {agent.name}
+                      <small>{agent.role}</small>
+                    </button>
+                  ) : <span>{agent.name}</span>}
                 </li>
               ))}
             </ul>
           )}
           {invalidRoster && <p role="status" className="notice">{rosterRequirement}</p>}
+          {generating && <p role="status" className="notice">Generating agents with {selectedModel?.label}…</p>}
+          {generationError && <p role="alert" className="notice">{generationError}</p>}
+          {staleTeam && !generating && <p role="status" className="notice">Generate a team for this brief or remove the generated agents in Edit team.</p>}
         </section>
       ) : <div className="team-line">
         <span className="field-label">
@@ -301,14 +378,15 @@ export function Launcher({
           <h3 id="model-heading"><SlidersHorizontal /> Run settings</h3>
         )}
         <div className={experiment ? "settings-fields experiment-settings-fields" : "settings-fields"}>
-          {modelPicker({
-            id: "run-model",
-            label: experiment ? "Agent model" : "Model",
-            value: model,
-            select: setModel,
-            warning: modelWarning,
-            note: selectedModel?.compatibilityNote,
-          })}
+          <ModelPicker
+            id="run-model"
+            label={experiment ? "Agent model" : "Model"}
+            value={model}
+            select={(value) => { if (value !== model) cancelGeneration(); setModel(value); }}
+            warning={modelWarning}
+            note={selectedModel?.compatibilityNote}
+            options={modelOptions}
+          />
           {experiment ? judgePicker : (
             <label>
               Turns per agent
@@ -347,7 +425,7 @@ export function Launcher({
         <button
           type="button"
           className="primary-btn"
-          disabled={busy || !!reason || unavailable}
+          disabled={busy || !!reason || unavailable || generating || staleTeam}
           onClick={() => void submit()}
         >
           {busy ? "Starting…" : launchLabel}
@@ -383,6 +461,7 @@ export function Launcher({
                     focusStatement.current = item.id === "other";
                     setError("");
                     if (item.id !== problem.id) {
+                      cancelGeneration();
                       setProblem(item);
                       if (!experiment) {
                         setRoster(item.participantIds);

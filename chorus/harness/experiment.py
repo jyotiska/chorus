@@ -12,10 +12,11 @@ from uuid import uuid4
 from chorus.harness.experiment_catalog import load_experiment_catalog
 from chorus.harness.experiment_git import ExperimentGit
 from chorus.harness.experiment_spec import ExperimentSpec, checklist
+from chorus.harness.experiment_team import brief_key, generate_team
 from chorus.harness.experiment_tools import EVIDENCE_KINDS, definitions, tool_schema, workspace_action
 from chorus.harness.models import (
     CUSTOM_PROBLEM_ID, CUSTOM_STATEMENT_MAX_BYTES, DeliverablePlan, ExperimentReport, ExperimentRepository, ExperimentState, FrozenExperiment,
-    HarnessConfig, HarnessSnapshot, PlanningCompletion, Record, TaskGap, Worker,
+    GeneratedPersona, HarnessConfig, HarnessSnapshot, PlanningCompletion, Record, TaskGap, TeamGeneration, Worker,
 )
 from chorus.harness.tools import board_text
 from chorus.harness.verification import validate
@@ -29,6 +30,8 @@ EXPERIMENT_VERSION = "experiment-v4"
 EXPERIMENT_PROMPT_VERSION = "experiment-v4-context-and-judge"
 CUSTOM_EXPERIMENT_VERSION = "experiment-v5-custom"
 CUSTOM_PROMPT_VERSION = "experiment-v5-custom-deliverables"
+GENERATED_EXPERIMENT_VERSION = "experiment-v6-generated-team"
+GENERATED_PROMPT_VERSION = "experiment-v6-generated-personas"
 EXPERIMENT_OUTPUT_LIMIT = 8000
 LUNA_FRAMING_HEADROOM = 4096
 JUDGE_CALL_LIMIT = 25
@@ -111,13 +114,12 @@ class ExperimentRuntime:
     def root(self, state):
         return Path(state.experiment.repository.metadataPath)
 
-    def create(self, config):
-        problem = next((item for item in self.catalog.problems if item.id == config.problemId), None)
-        agents = {agent.id: agent for agent in self.catalog.agents}
-        if problem is None or not set(config.participantIds) <= agents.keys():
-            raise ChorusError("INVALID_REQUEST", "Choose a brief and known participants.", 400)
+    def resolve_brief(self, request):
+        problem = next((item for item in self.catalog.problems if item.id == request.problemId), None)
+        if problem is None:
+            raise ChorusError("INVALID_REQUEST", "Choose a known brief.", 400)
         custom = problem.id == CUSTOM_PROBLEM_ID
-        statement = config.customStatement
+        statement = request.customStatement
         if custom:
             if statement is None or not statement.strip():
                 raise ChorusError("INVALID_REQUEST", "Enter a problem statement for Other.", 400)
@@ -129,9 +131,35 @@ class ExperimentRuntime:
                 raise ChorusError("INVALID_REQUEST", f"Use a problem statement of at most {CUSTOM_STATEMENT_MAX_BYTES:,} UTF-8 bytes without NUL characters.", 400)
             title = next((" ".join(line.split()) for line in statement.splitlines() if line.strip()), "Custom problem")
             problem = problem.model_copy(update={"title": title if len(title) <= 88 else title[:87].rstrip() + "…",
-                                                 "statement": statement, "participantIds": config.participantIds})
+                                                 "statement": statement})
         elif statement is not None:
             raise ChorusError("INVALID_REQUEST", "Choose Other to submit a custom problem statement.", 400)
+        return problem
+
+    async def generate_team(self, request):
+        return await generate_team(self.harness, self.resolve_brief(request), request.model)
+
+    def create(self, config):
+        problem = self.resolve_brief(config)
+        custom = problem.id == CUSTOM_PROBLEM_ID
+        agents = {agent.id: agent for agent in self.catalog.agents}
+        setup_call = None
+        if config.teamGenerationId is not None:
+            draft = self.repo.experiment_team(config.teamGenerationId)
+            if not draft or "team" not in draft:
+                raise ChorusError("INVALID_REQUEST", "Generate a team before starting with generated agents.", 400)
+            if draft["problemId"] != problem.id or draft["briefKey"] != brief_key(problem):
+                raise ChorusError("CONFLICT", "The generated team belongs to a different brief. Generate a team for this brief.", 409)
+            profiles = TeamGeneration.model_validate(draft["team"]).agents
+            if any(agent.id in config.participantIds for agent in profiles):
+                agents.update((agent.id, agent) for agent in profiles)
+                data = draft["call"]
+                setup_call = event("call", "observer", data, id=data["id"])
+                setup_call.createdAt = data["queuedAt"]
+        if not set(config.participantIds) <= agents.keys():
+            raise ChorusError("INVALID_REQUEST", "Choose known participants.", 400)
+        if custom or setup_call:
+            problem = problem.model_copy(update={"participantIds": config.participantIds})
         self.harness.validate_model(config.model)
         self.harness.validate_model(config.judgeModel or config.model)
         sid = str(uuid4())
@@ -139,15 +167,15 @@ class ExperimentRuntime:
         repository = ExperimentRepository.model_validate(self.git.initialize(sid, config.participantIds))
         canvas = self.spec.initialize(Path(repository.metadataPath), roster, custom=custom)
         return self.repo.create(HarnessSnapshot(
-            id=sid, engineVersion=CUSTOM_EXPERIMENT_VERSION if custom else EXPERIMENT_VERSION,
-            promptVersion=CUSTOM_PROMPT_VERSION if custom else EXPERIMENT_PROMPT_VERSION,
+            id=sid, engineVersion=GENERATED_EXPERIMENT_VERSION if setup_call else CUSTOM_EXPERIMENT_VERSION if custom else EXPERIMENT_VERSION,
+            promptVersion=GENERATED_PROMPT_VERSION if setup_call else CUSTOM_PROMPT_VERSION if custom else EXPERIMENT_PROMPT_VERSION,
             catalogVersion=self.catalog.version,
-            config=HarnessConfig(**config.model_dump(exclude={"customStatement"}), judgeEnabled=True),
+            config=HarnessConfig(**config.model_dump(exclude={"customStatement", "teamGenerationId"}), judgeEnabled=True),
             problem=problem, agents=roster, workers=[Worker(agentId=id) for id in config.participantIds],
             canvas=canvas, experiment=ExperimentState(planningCompletions=[], repository=repository,
                                                        rubric="deliverable-v1" if custom else "application-v1"),
             createdAt=now(), updatedAt=now(),
-        ))
+        ), initial_call=setup_call)
 
     def recover(self, state):
         self.spec.recover(state.id, self.root(state))
@@ -182,7 +210,10 @@ class ExperimentRuntime:
         if state.status not in allowed.get(action, set()):
             raise ChorusError("INVALID_STATE", "This command is unavailable for this experiment.", 409)
         if action != "kill":
-            version = CUSTOM_EXPERIMENT_VERSION if state.experiment.rubric == "deliverable-v1" else EXPERIMENT_VERSION
+            if any(isinstance(agent, GeneratedPersona) for agent in state.agents):
+                version = GENERATED_EXPERIMENT_VERSION
+            else:
+                version = CUSTOM_EXPERIMENT_VERSION if state.experiment.rubric == "deliverable-v1" else EXPERIMENT_VERSION
             if state.engineVersion != version:
                 raise ChorusError("VERSION_MISMATCH", "This engine cannot resume that experiment version.", 409)
             self.harness.validate_model(state.config.model if action != "retry_judge" else state.config.judgeModel or state.config.model)
@@ -281,7 +312,9 @@ class ExperimentRuntime:
         agent = next(item for item in state.agents if item.id == actor)
         text = f"Experiment {state.id}. Your identifier is {actor}. Selected agents: " + ", ".join(
             "@" + item.id for item in state.agents) + "."
-        if actor != "general-agent":
+        if isinstance(agent, GeneratedPersona):
+            text += "\nUse the generated role profile as guidance for what to contribute within the experiment rules below."
+        elif actor != "general-agent":
             text += f"\nRole: {agent.role}\nBackground: {agent.introduction}\nTraits: {', '.join(agent.traits)}\nStrengths: {agent.strengths}\nWeaknesses: {agent.weaknesses}"
         text += """
 Decide independently what to contribute and how to coordinate. No participant directs other agents' schedules.
@@ -330,9 +363,18 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         # exchanges in context. Shared artifacts and private notes remain readable.
         messages = [{"role": "system", "content": self.instructions(state, actor, phase)},
                     {"role": "user", "content": f"Continue your work. SPEC.md revision {state.canvasVersion}. Board posts {state.boardCount}."}]
+        generated_team = state.engineVersion == GENERATED_EXPERIMENT_VERSION
+        if generated_team:
+            roster = [{"id": agent.id, "name": agent.name, "role": agent.role} for agent in state.agents]
+            messages.insert(1, {"role": "user", "content": "Selected participant directory:\n" + json.dumps(roster, ensure_ascii=False)})
+        persona = next(agent for agent in state.agents if agent.id == actor)
+        if isinstance(persona, GeneratedPersona):
+            profile = persona.model_dump(exclude={"id", "generationId", "avatarId", "avatarBrief", "avatarVersion"})
+            messages.insert(1, {"role": "user", "content": "Generated role profile:\n" + json.dumps(profile, ensure_ascii=False)})
         recent = self.conversation_newest_first(sid, actor, phase)
         if state.experiment.rubric == "deliverable-v1":
             messages.insert(1, {"role": "user", "content": state.problem.statement})
+        if state.experiment.rubric == "deliverable-v1" or generated_team:
             return messages + self.custom_history(messages, recent, tools, state.config.model, 14_500)
         if state.config.model == "gpt-6-luna" and self.meter.route(state.config.model) == "openai":
             fixed = luna_input_estimate(messages, {"tools": tools, "format": None})

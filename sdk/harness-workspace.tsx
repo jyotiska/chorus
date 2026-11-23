@@ -221,14 +221,15 @@ const PortraitContext = createContext<PortraitRenderer | undefined>(undefined);
 export function Portrait({ agent }: { agent: Persona }) {
   const renderPortrait = useContext(PortraitContext);
   const portrait = experimentPortraits[agent.id];
-  if (renderPortrait && !portrait) return renderPortrait(agent, styles.portrait);
-  if (!portrait && !agent.avatarBrief) {
+  const artworkId = "avatarId" in agent ? agent.avatarId : portrait?.id;
+  if (renderPortrait && !artworkId) return renderPortrait(agent, styles.portrait);
+  if (!artworkId && !agent.avatarBrief) {
     const initials = agent.name.split(/[\s-]+/).map((word) => word[0]).join("").toUpperCase();
     return <svg className={styles.portrait} viewBox="0 0 40 50" aria-hidden="true"><rect width="40" height="50" rx="6" fill="#d3ddd6" /><text x="20" y="26" textAnchor="middle" dominantBaseline="middle" fill="#24332b" fontSize="12" fontWeight="600">{initials}</text></svg>;
   }
   // Artwork is local, same-origin, packaged with Chorus, and already optimized SVG.
   // eslint-disable-next-line @next/next/no-img-element
-  return <img className={styles.portrait} src={asset(portrait?.id ?? agent.id)} alt={`${agent.name} portrait`} width={48} height={60} style={portrait && { backgroundColor: portrait.background }} />;
+  return <img className={styles.portrait} src={asset(artworkId ?? agent.id)} alt={`${agent.name} portrait`} width={48} height={60} style={portrait && { backgroundColor: portrait.background }} />;
 }
 
 function Profile({ agent, showHeader = true }: { agent: Persona; showHeader?: boolean }) {
@@ -244,6 +245,7 @@ function Profile({ agent, showHeader = true }: { agent: Persona; showHeader?: bo
         <dt>Traits</dt><dd>{agent.traits.join(" · ")}</dd>
         <dt>Strengths</dt><dd>{agent.strengths}</dd>
         <dt>Weaknesses</dt><dd>{agent.weaknesses}</dd>
+        {"systemPrompt" in agent && <><dt>System prompt</dt><dd>{agent.systemPrompt}</dd></>}
       </dl>
     </>}
   </div>;
@@ -304,6 +306,8 @@ function UsageDetails({ usage, scope }: { usage: Usage; scope: string }) {
 
 export function SessionUsageView({ usage, error, retry }: { usage: HarnessUsage | null; error: string; retry: () => void }) {
   const headingId = useId();
+  const sections: [string, Usage][] = usage ? [["Participants", usage.participants], ["Final judge", usage.judge]] : [];
+  if (usage && "teamGeneration" in usage) sections.unshift(["Team generation", usage.teamGeneration]);
   return <div className={styles.usageView}>
     {error && <div className={styles.viewError}><RecordError message={`${usage ? "Could not refresh usage" : "Could not load usage"}. ${error}`} />
       <button type="button" onClick={retry}>Retry usage</button>
@@ -314,7 +318,7 @@ export function SessionUsageView({ usage, error, retry }: { usage: HarnessUsage 
         <UsageOverview usage={usage.total} wallTimeMs={usage.wallTimeMs} />
         <Metrics usage={usage.total} compact />
       </section>
-      {([["Participants", usage.participants], ["Final judge", usage.judge]] as const).map(([label, totals]) => (
+      {sections.map(([label, totals]) => (
         <section key={label} aria-label={label}>
           <h3>{label}</h3>
           <UsageOverview usage={totals} />

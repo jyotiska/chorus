@@ -56,6 +56,8 @@ The final judge reads frozen evidence and code; it cannot build or run the appli
 
 Custom runs snapshot the full user brief and publish a typed deliverable plan through the same SPEC lease. Build can write UTF-8 artifacts under `deliverables/`, in addition to the existing starter paths. The last planning completion locks the plan, and freeze checks its declared outputs against the committed `main` tree. Artifact downloads and the deliverable rubric use that same commit. Individual and collaboration scorecards retain their existing criteria. Custom runs use `experiment-v5-custom` and `experiment-v5-custom-deliverables`. Preset runs retain the `experiment-v4` runtime, saved-run recovery, and application rubric.
 
+The **Generate** setup action calls the selected Agent model once and validates three to five profiles for the current brief. Chorus stores the profiles and generation usage in a setup record keyed to the brief. Launch snapshots only the selected profiles and includes the generation call in session usage. Generated teams use `experiment-v6-generated-team` and `experiment-v6-generated-personas`. Plan and Build receive the saved role guidance under the harness's phase instructions, and the brief still selects the rubric. Existing catalog-only runs keep their original prompts and version checks.
+
 ### Benchmarks
 
 Five checked problems use a separate catalog of fifty personas and 2–50 selected agents. They are available through CLI/API and saved-session views.

@@ -8,6 +8,7 @@ export type HarnessCatalog = H["catalog"];
 export type ExperimentCatalog = H["experimentCatalog"];
 export type HarnessConfig = H["config"];
 export type ExperimentConfig = H["experimentConfig"];
+export type TeamGeneration = H["teamGeneration"];
 export type HarnessAction = H["command"]["action"];
 export type HarnessUsage = H["usage"];
 export type HarnessRecord = H["page"]["records"][number];
@@ -15,7 +16,7 @@ export type RepositoryTree = H["repositoryTree"];
 export type RepositoryFile = H["repositoryFile"];
 export type RepositoryCommitDiff = H["repositoryCommitDiff"];
 export type ExperimentTasks = H["experimentTasks"];
-export type Persona = HarnessCatalog["agents"][number];
+export type Persona = HarnessSnapshot["agents"][number];
 export type Usage = HarnessUsage["total"];
 const ajv = new Ajv({ strict: false, allErrors: true });
 ajv.addSchema(schema, "harness");
@@ -52,8 +53,14 @@ export class HarnessClient {
   async create(config: HarnessConfig): Promise<HarnessSnapshot> {
     return parse(await this.request("/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
   }
-  async createExperiment(config: Pick<ExperimentConfig, "problemId" | "participantIds" | "model" | "judgeModel"> & { customStatement?: string }): Promise<HarnessSnapshot> {
+  async createExperiment(config: Pick<ExperimentConfig, "problemId" | "participantIds" | "model" | "judgeModel"> & { customStatement?: string; teamGenerationId?: string }): Promise<HarnessSnapshot> {
     return parse(await this.request("/experiments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
+  }
+  async generateTeam(config: Omit<H["teamGenerationRequest"], "customStatement"> & { customStatement?: string }, signal: AbortSignal): Promise<TeamGeneration> {
+    return parse(await this.request("/experiments/teams", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config),
+      signal: AbortSignal.any([signal, AbortSignal.timeout(200_000)]),
+    }), "TeamGeneration");
   }
   async command(id: string, action: HarnessAction): Promise<HarnessSnapshot> {
     const commandId = crypto.randomUUID();
@@ -72,7 +79,10 @@ export class HarnessClient {
     if (agent) params.set("agent", agent);
     return parse(await this.request(`/sessions/${encodeURIComponent(id)}/records?${params}`), "RecordPage");
   }
-  async usage(id: string): Promise<HarnessUsage> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}/usage`), "UsageReport"); }
+  async usage(id: string): Promise<HarnessUsage> {
+    const value = await this.request(`/sessions/${encodeURIComponent(id)}/usage`);
+    return parse(value, value && typeof value === "object" && "teamGeneration" in value ? "ExperimentUsageReport" : "UsageReport");
+  }
   async record(id: string, recordId: string): Promise<HarnessRecord> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}/records/${encodeURIComponent(recordId)}`), "Record"); }
   async repositoryTree(id: string, branch: string, revision?: string): Promise<RepositoryTree> {
     const params = new URLSearchParams({ branch });

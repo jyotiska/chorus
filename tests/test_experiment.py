@@ -85,6 +85,71 @@ def test_custom_brief_request_and_archive_round_trip(tmp_path, starter, model):
         assert reopened.get(f"/api/v2/sessions/{sid}/export").json()["session"]["problem"] == created["problem"]
 
 
+def test_generated_team_uses_selected_model_and_survives_restart(tmp_path, starter):
+    calls = []
+    brief = "Plan a family trip to Bangkok.\nInclude rest breaks and accessible local transit."
+    roles = [("Lucía", "Itinerary planner"), ("Arun", "Transit researcher"), ("Sam O’Neil", "Accessibility reviewer")]
+    roster = {"agents": [dict(name=name, role=role, domain="Travel", introduction=f"Works as {role.lower()}.",
+                             personality="Collaborative and thorough.", traits=["Curious", "Methodical"],
+                             strengths="Checking practical constraints.", weaknesses="Can spend too long on details.",
+                             systemPrompt=f"As {role.lower()}, propose options that fit the brief and review the itinerary.")
+                         for name, role in roles]}
+
+    async def provider(model, messages, **options):
+        calls.append((model, messages, options))
+        if model == "qwen3.5:0.8b-mlx":
+            return result(content=json.dumps({"agents": roster["agents"][:2]}))
+        return result(content="```json\n" + json.dumps(roster) + "\n```")
+
+    database = str(tmp_path / "generated.sqlite3")
+    model = "qwen3.5:4b-mlx"
+    setup = {"problemId": "other", "customStatement": brief, "model": model}
+    with TestClient(create_app(database, provider, pacing=0)) as client:
+        invalid = client.post("/api/v2/experiments/teams", json={**setup, "customStatement": " "})
+        assert invalid.status_code == 400
+        assert not calls
+        invalid = client.post("/api/v2/experiments/teams", json={**setup, "model": "qwen3.5:0.8b-mlx"})
+        assert invalid.status_code == 502 and invalid.json()["code"] == "INVALID_MODEL_RESPONSE"
+        failed_id = calls[-1][2]["run_id"]
+        failed = client.app.state.harness.repo.experiment_team(failed_id)
+        assert failed["call"]["outcome"] == "INVALID_MODEL_RESPONSE" and failed["call"]["inputTokens"] == 20
+
+        response = client.post("/api/v2/experiments/teams", json=setup)
+        assert response.status_code == 201, response.text
+        team = response.json()
+        assert calls[-1][0] == model and calls[-1][2]["phase"] == "team_generation"
+        assert calls[-1][1][1] == {"role": "user", "content": brief}
+        assert len(calls) == 2
+        assert client.get("/api/v2/sessions").json() == []
+        assert len({agent["avatarId"] for agent in team["agents"]}) == 3
+        assert [agent["name"] for agent in team["agents"]] == [name for name, _ in roles]
+        for agent in team["agents"]:
+            assert client.get(f"/api/v2/assets/{agent['avatarId']}/portrait.svg").status_code == 200
+
+    with TestClient(create_app(database, provider, pacing=0)) as client:
+        selection = {**setup, "teamGenerationId": team["id"], "participantIds": [team["agents"][0]["id"], "general-agent"]}
+        stale = client.post("/api/v2/experiments", json={**selection, "customStatement": brief + " Add a budget."})
+        assert stale.status_code == 409
+        forged = client.post("/api/v2/experiments", json={**selection, "participantIds": ["fake-id"]})
+        assert forged.status_code == 400
+        response = client.post("/api/v2/experiments", json=selection)
+        assert response.status_code == 201, response.text
+        created = response.json()
+        sid = created["id"]
+        assert [agent["id"] for agent in created["agents"]] == selection["participantIds"]
+        assert created["agents"][0] == team["agents"][0]
+        assert created["problem"]["statement"] == brief
+        usage = client.get(f"/api/v2/sessions/{sid}/usage").json()
+        assert usage["teamGeneration"]["callCount"] == usage["total"]["callCount"] == 1
+        assert usage["participants"]["callCount"] == 0
+
+    with TestClient(create_app(database, provider, pacing=0)) as client:
+        record = client.get(f"/api/v2/sessions/{sid}/export").json()
+        assert record["session"]["agents"] == created["agents"]
+        assert record["records"]["call"][0]["data"]["model"] == model
+        assert len(calls) == 2
+
+
 def command(svc, sid, action):
     current = svc.repo.get(sid)
     return svc.command(sid, HarnessCommand(action=action, commandId=str(uuid4()), expectedRevision=current.revision))

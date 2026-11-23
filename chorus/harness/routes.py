@@ -7,8 +7,9 @@ from urllib.parse import quote
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import Response, StreamingResponse
 from chorus.harness.models import (
-    ExperimentCatalog, ExperimentConfig, ExperimentTasks, HarnessCatalog, HarnessCommand, HarnessConfig,
-    HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryCommitDiff, RepositoryFile, RepositoryTree, UsageReport,
+    ExperimentCatalog, ExperimentConfig, ExperimentTasks, ExperimentUsageReport, HarnessCatalog, HarnessCommand, HarnessConfig,
+    HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryCommitDiff, RepositoryFile, RepositoryTree, TeamGeneration,
+    TeamGenerationRequest, UsageReport,
 )
 from chorus.harness.accounting import usage_report
 from chorus.harness.experiment_spec import checklist
@@ -42,6 +43,11 @@ async def experiment_catalog(request: Request):
 @router.post("/experiments", response_model=HarnessSnapshot, status_code=201)
 async def create_experiment(request: Request, config: ExperimentConfig):
     return service(request).experiments.create(config)
+
+
+@router.post("/experiments/teams", response_model=TeamGeneration, status_code=201)
+async def create_experiment_team(request: Request, config: TeamGenerationRequest):
+    return await service(request).experiments.generate_team(config)
 
 
 @router.get("/assets/{agent_id}/{asset}")
@@ -155,7 +161,7 @@ async def record(request: Request, sid: str, record_id: str):
     return value
 
 
-@router.get("/sessions/{sid}/usage", response_model=UsageReport)
+@router.get("/sessions/{sid}/usage", response_model=ExperimentUsageReport | UsageReport)
 async def usage(request: Request, sid: str):
     return usage_report(service(request).repo, sid)
 
