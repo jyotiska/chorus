@@ -205,10 +205,13 @@ test("Other runs a pasted custom brief and restores its reviewed HTML and Markdo
   const start = page.getByRole("button", { name: "Start experiment" });
   await expect(input).toBeFocused();
   await expect(start).toBeDisabled();
+  await expect(page.getByText("UTF-8 bytes", { exact: false })).toHaveCount(0);
   await input.fill("é".repeat(6001));
-  await expect(page.getByText("Shorten the problem statement", { exact: false })).toBeVisible();
+  const limitError = page.getByText("Shorten the problem statement to fit the limit.", { exact: true });
+  await expect(limitError).toBeVisible();
   await expect(start).toBeDisabled();
   await input.fill(brief);
+  await expect(limitError).toHaveCount(0);
   await chooseBrief(/Build a task-tracking app like Linear/);
   await expect(input).toHaveCount(0);
   await chooseBrief(/^Other/);

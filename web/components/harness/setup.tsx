@@ -311,11 +311,9 @@ export function Launcher({
             <textarea id="custom-statement" rows={5} ref={statementField} value={customStatement}
               placeholder="Describe what the team should deliver."
               aria-required="true" aria-invalid={Boolean(statementError)}
-              aria-describedby="custom-statement-limit"
+              aria-describedby={statementError ? "custom-statement-error" : undefined}
               onChange={(event) => { cancelGeneration(); setCustomStatement(event.target.value); setError(""); }} />
-            <p id="custom-statement-limit" role={statementError ? "status" : undefined}>
-              {statementError && `${statementError} `}{statementBytes.toLocaleString()} / {statementLimit.toLocaleString()} UTF-8 bytes
-            </p>
+            {statementError && <p id="custom-statement-error" role="status">{statementError}</p>}
           </div>
         ) : <p>{problem.statement}</p>}
       </section>
