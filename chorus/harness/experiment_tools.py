@@ -6,10 +6,24 @@ import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from chorus.harness.experiment_paths import experiment_output_path
 from chorus.harness.tools import DEFINITIONS, I, LIMIT, S, parameters
 from chorus.services.errors import ChorusError
 
 EVIDENCE_KINDS = ("board", "change", "plan_completion", "vote", "summary", "conversation", "commit", "pr", "activity", "process")
+OUTPUTS = {"type": "array", "items": parameters(
+    kind={"type": "string", "enum": ["file", "repository", "unavailable"]},
+    path=S, format=S, formatSource={"type": "string", "enum": ["explicit", "inferred"]},
+    description=S, primary={"type": "boolean"}, required={"type": "boolean"},
+)}
+DELIVERABLE_PLAN_SET = (
+    "Publish the team's agreed deliverable plan at the current SPEC.md revision. Provide one primary required output. "
+    "For a file use its repo-relative path. For repository or unavailable use an empty path. "
+    "Use unavailable for unsupported requirements and explain the gap in description.",
+    parameters(revision=I, reason=S, outputs=OUTPUTS, acceptanceCriteria={"type": "array", "items": S},
+               assumptions={"type": "array", "items": S}),
+)
+DELIVERABLE_PLAN_READ = ("Read the agreed outputs, acceptance criteria and assumptions. During Judge this includes the checks on the frozen commit.", parameters())
 BUILD_TOOLS = {
     "workspace_list": ("List one directory inside your worktree. Use '.' for its root.", parameters(path=S)),
     "workspace_read": ("Read a UTF-8 file in your worktree.", parameters(path=S)),
@@ -49,21 +63,31 @@ JUDGE_TOOLS = {
 }
 
 
-def tool_schema(phase):
+def tool_schema(phase, *, custom=False):
     if phase == "judge":
-        return JUDGE_TOOLS
-    return {
+        return {**JUDGE_TOOLS, "deliverable_plan_read": DELIVERABLE_PLAN_READ} if custom else JUDGE_TOOLS
+    tools = {
         **PARTICIPANT_TOOLS,
         **(BUILD_TOOLS if phase == "build" else {
             "plan_complete": ("Declare that you have finished contributing to SPEC.md. This ends your planning work. Build starts once all selected agents have finished planning.", parameters()),
         }),
     }
+    if custom and phase == "plan":
+        tools["deliverable_plan_set"] = DELIVERABLE_PLAN_SET
+    if custom:
+        tools["deliverable_plan_read"] = DELIVERABLE_PLAN_READ
+    if custom and phase == "build":
+        tools["workspace_write"] = (
+            "Write a UTF-8 file inside deliverables/, frontend/, or backend/ in your worktree, creating parent directories as needed.",
+            BUILD_TOOLS["workspace_write"][1],
+        )
+    return tools
 
 
-def definitions(phase):
+def definitions(phase, *, custom=False):
     return [
         {"type": "function", "function": {"name": name, "description": description, "parameters": schema}}
-        for name, (description, schema) in tool_schema(phase).items()
+        for name, (description, schema) in tool_schema(phase, custom=custom).items()
     ]
 
 
@@ -81,7 +105,7 @@ def file_path(root: Path, relative: str) -> Path:
     return target
 
 
-def workspace_action(root, name, args, *, write=False):
+def workspace_action(root, name, args, *, write=False, custom=False):
     target = file_path(root, args["path"])
     if name == "workspace_list":
         if not target.is_dir():
@@ -108,7 +132,11 @@ def workspace_action(root, name, args, *, write=False):
     if not write:
         raise ChorusError("FORBIDDEN", "The judge checkout is read-only through file tools.", 403)
     content = args["content"].encode("utf-8")
-    if len(content) > 120000 or not args["path"].startswith(("frontend/", "backend/")):
+    if custom:
+        experiment_output_path(args["path"])
+        if len(content) > 120000 or "\0" in args["content"]:
+            raise ValueError("Write UTF-8 text of at most 120 KB without NUL characters.")
+    elif len(content) > 120000 or not args["path"].startswith(("frontend/", "backend/")):
         raise ValueError("Write at most 120 KB to a file inside frontend/ or backend/.")
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = None

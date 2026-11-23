@@ -27,7 +27,7 @@ test("experiment Results show the outcome, scannable scores and supporting recor
   };
   run.status = "completed";
   experiment.phase = "judge";
-  experiment.frozen = { mainCommit: experiment.repository.mainCommit, specRevision: 3, evidenceThrough: 2 };
+  experiment.frozen = { mainCommit: experiment.repository.mainCommit, specRevision: 3, evidenceThrough: 2, artifactChecks: [] };
   experiment.judgeAttempts = 1;
   experiment.report = {
     summary,

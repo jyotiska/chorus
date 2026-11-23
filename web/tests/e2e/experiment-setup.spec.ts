@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { execFileSync } from "node:child_process";
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { HarnessRecord, HarnessSnapshot } from "../../lib/api/chorus/harness-client";
 
@@ -58,7 +58,7 @@ test("repository experiment defaults and explicit selections survive changes to 
   await expect(judge).toHaveText("Qwen 3.5 0.8B MLX");
   await page.getByRole("button", { name: "Choose brief: Build a to-do app like Todoist" }).click();
   const problems = page.getByRole("dialog", { name: "Choose a brief" });
-  await expect(problems.locator(".problem-list button")).toHaveCount(4);
+  await expect(problems.locator(".problem-list button")).toHaveCount(5);
   await problems.getByRole("button", { name: /Build a form-building app like Typeform/ }).click();
   await expect(selectedAgents.getByRole("listitem")).toHaveText(editedNames);
   await page.getByRole("button", { name: "Edit team" }).click();
@@ -77,6 +77,74 @@ test("repository experiment defaults and explicit selections survive changes to 
     judgeModel: "qwen3.5:0.8b-mlx",
   });
   await expect(page.getByRole("main").getByRole("alert")).toHaveText("Setup test response");
+});
+
+test("Other runs a pasted custom brief and restores its reviewed HTML and Markdown deliverables", async ({ page, request }) => {
+  const brief = "Write a workplace sitcom pilot called Printer Jam.\n\nMake the pilot a single HTML file and include character notes.";
+  await page.goto("/?experiment=1");
+  async function chooseBrief(name: string | RegExp) {
+    await page.getByRole("button", { name: /Choose brief:/ }).click();
+    const picker = page.getByRole("dialog", { name: "Choose a brief" });
+    const option = picker.getByRole("button", { name });
+    await option.focus();
+    await option.press("Enter");
+  }
+  await page.getByRole("button", { name: "Edit team" }).click();
+  const team = page.getByRole("dialog", { name: "Edit team" });
+  for (const checked of await team.getByRole("checkbox", { name: /^Select /, checked: true }).all()) await checked.uncheck();
+  await team.getByRole("checkbox", { name: "Select General agent" }).check();
+  await page.getByRole("button", { name: "Close Edit team" }).click();
+  await page.getByRole("combobox", { name: "Agent model", exact: true }).click();
+  await page.getByRole("option", { name: "Qwen 3.5 4B MLX", exact: true }).click();
+  await page.getByRole("combobox", { name: "Judge model" }).click();
+  await page.getByRole("option", { name: "Qwen 3.5 0.8B MLX", exact: true }).click();
+
+  await chooseBrief(/^Other/);
+  const input = page.getByRole("textbox", { name: "Problem statement" });
+  const start = page.getByRole("button", { name: "Start experiment" });
+  await expect(input).toBeFocused();
+  await expect(start).toBeDisabled();
+  await input.fill("é".repeat(6001));
+  await expect(page.getByText("Shorten the problem statement", { exact: false })).toBeVisible();
+  await expect(start).toBeDisabled();
+  await input.fill(brief);
+  await chooseBrief(/Build a task-tracking app like Linear/);
+  await expect(input).toHaveCount(0);
+  await chooseBrief(/^Other/);
+  await expect(input).toHaveValue(brief);
+  await expect(page.getByRole("list", { name: "Selected agents" }).getByRole("listitem")).toHaveText(["General agent"]);
+
+  const created = page.waitForResponse((response) => response.request().method() === "POST" && response.url().endsWith("/v2/experiments"));
+  await start.click();
+  const launch = await created;
+  expect(launch.status()).toBe(201);
+  expect(launch.request().postDataJSON()).toEqual({ problemId: "other", customStatement: brief,
+    participantIds: ["general-agent"], model: "qwen3.5:4b-mlx", judgeModel: "qwen3.5:0.8b-mlx" });
+  const run: HarnessSnapshot = await launch.json();
+  await expect.poll(async () => (await (await request.get(`/api/chorus/v2/sessions/${run.id}`)).json()).status).toBe("completed");
+  await page.getByRole("button", { name: "Results" }).click();
+  await expect(page.getByRole("heading", { name: "Deliverable quality" })).toBeVisible();
+  const deliverables = page.getByRole("region", { name: "Deliverables" });
+  const files = deliverables.getByRole("listitem");
+  await expect(files.first()).toContainText("deliverables/pilot.html");
+  await expect(files.nth(1)).toContainText("deliverables/characters.md");
+  const pilot = files.first();
+  await pilot.getByText("Open", { exact: true }).click();
+  await expect(pilot.locator("pre")).toContainText("<!doctype html><h1>Printer Jam</h1>");
+  expect(await page.evaluate(() => Object.hasOwn(window, "chorusArtifactRan"))).toBe(false);
+  const downloadPromise = page.waitForEvent("download");
+  await pilot.getByRole("link", { name: "Download" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("pilot.html");
+  expect(await readFile((await download.path())!, "utf-8")).toContain("Mira: It only prints on Fridays.");
+  const rejected = await request.get(`/api/chorus/v2/sessions/${run.id}/artifacts/download`, { params: { path: "frontend/package.json" } });
+  expect(rejected.status()).toBe(404);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Deliverable quality" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Individual contributions" })).toBeVisible();
+  await page.getByRole("button", { name: "Run actions" }).click();
+  await page.getByRole("menuitem", { name: "View problem statement" }).click();
+  await expect(page.getByRole("dialog", { name: "Problem statement" }).locator(".saved-statement")).toHaveJSProperty("textContent", brief);
 });
 
 test("the full experiment setup fits on a laptop with all ten agents and an unavailable judge", async ({ page }) => {

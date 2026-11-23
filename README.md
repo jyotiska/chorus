@@ -30,17 +30,19 @@ You no longer need a separate `chorus-web` checkout. The merge keeps existing se
 
 ## What you can do
 
-### Build an app with a team
+### Run a repository experiment with a team
 
-The web home page offers four briefs: build an app like Todoist, Linear, Notion, or Typeform.
+The web home page offers four app briefs and **Other**. Choose **Other** to paste a custom problem statement, such as writing a sitcom pilot or planning a trip. Specify the format in the brief or let the team choose one during planning.
 
 Choose from ten agent roles. Six are selected to start, and you can change the team. Choose the model for the agents and, if you want, a different model for the final judge.
 
 Each experiment has three stages:
 
 1. **Plan:** The agents discuss the brief and write a shared plan and task lists in `SPEC.md`.
-2. **Build:** Each agent edits its own working copy of the code. Agents submit changes, review them, and combine them into the shared project.
-3. **Judge:** A model reviews the final saved code and the work records.
+2. **Build:** Each agent edits its own working copy of the repository. Agents submit changes, review them, and combine them into the shared project.
+3. **Judge:** A model reviews the final committed work and the work records, including each agent’s contribution.
+
+Custom experiments support text artifacts such as Markdown and HTML, as well as software changes. Results list the files checked at the final commit and let you open or download them. The plan and Results record requested outputs that require unavailable capabilities, such as image generation or live web research.
 
 The dark workspace keeps the Board beside `SPEC.md` when there’s room. Open **Participants** to see active tasks and blockers, **Repository** to inspect branch diffs, or **Results** to trace scores to their evidence. **Usage** shows model calls and costs, and **Archive** helps you find and reopen saved runs. [Chorus Web guide](web/README.md)
 

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { LegacyArchive, LiveSession } from "@/lib/api/chorus/harness-workspace";
 import {
   HarnessError,
+  type ExperimentCatalog,
   type HarnessCatalog,
   type HarnessSnapshot,
 } from "@/lib/api/chorus/harness-client";
@@ -14,11 +15,9 @@ import { Shell, harness, sessionHref, message } from "./shell";
 const storageKey = "chorus.harness.session";
 
 export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
-  const [catalog, setCatalog] = useState<HarnessCatalog | null>(null);
+  const [setup, setSetup] = useState<{ catalog: HarnessCatalog | ExperimentCatalog; experiment: boolean } | null>(null);
   const [snapshot, setSnapshot] = useState<HarnessSnapshot | null>(null);
-  const [previous, setPrevious] = useState<HarnessSnapshot["config"] | null>(
-    null,
-  );
+  const [previous, setPrevious] = useState<HarnessSnapshot | null>(null);
   const [legacy, setLegacy] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -54,11 +53,10 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
       localStorage.removeItem(storageKey);
       window.history.replaceState(window.history.state, "", "/");
     }
-    void (legacyCatalog && !params.has("experiment")
-      ? harness.catalog()
-      : harness.experimentCatalog())
-      .then((value) => {
-        if (alive) setCatalog(value);
+    const experiment = !legacyCatalog || params.has("experiment");
+    void (experiment ? harness.experimentCatalog() : harness.catalog())
+      .then((catalog) => {
+        if (alive) setSetup({ catalog, experiment });
       })
       .catch((e) => {
         if (alive) setError(message(e));
@@ -85,7 +83,7 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
     };
   }, [legacyCatalog]);
   async function start(run: HarnessSnapshot) {
-    setPrevious(run.config);
+    setPrevious(run);
     // A reload during Start must recover the already-created session.
     localStorage.setItem(storageKey, run.id);
     window.history.replaceState(window.history.state, "", sessionHref(run.id));
@@ -124,7 +122,7 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
         </div>
       </Shell>
     );
-  const experimentSetup = catalog ? catalog.version === "experiments-1" : !legacyCatalog;
+  const experimentSetup = setup?.experiment ?? !legacyCatalog;
   return (
     <Shell
       title={experimentSetup ? "New experiment" : "New session"}
@@ -137,8 +135,8 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
           <button onClick={() => location.reload()}>Retry connection</button>
         </div>
       )}
-      {!loading && catalog ? (
-        <Launcher catalog={catalog} previous={previous} start={start} />
+      {!loading && setup ? (
+        <Launcher catalog={setup.catalog} experiment={setup.experiment} previousRun={previous} start={start} />
       ) : (
         !error && (
           <p className="loading" role="status">

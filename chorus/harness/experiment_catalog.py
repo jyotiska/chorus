@@ -1,10 +1,10 @@
 """The business briefs and roster for repository experiments."""
 
 from chorus.harness.catalog import load_catalog
-from chorus.harness.models import HarnessCatalog, Persona, Problem
+from chorus.harness.models import CUSTOM_PROBLEM_ID, ExperimentCatalog, Persona, Problem
 
 
-EXPERIMENT_CATALOG_VERSION = "experiments-1"
+EXPERIMENT_CATALOG_VERSION = "experiments-2"
 DEFAULT_PARTICIPANT_IDS = (
     "frontend-engineer", "backend-engineer", "technical-architect",
     "product-manager", "designer", "qa-engineer",
@@ -19,7 +19,7 @@ def _profile(agent_id, role, background, traits, strengths, weaknesses):
     )
 
 
-def load_experiment_catalog() -> HarnessCatalog:
+def load_experiment_catalog() -> ExperimentCatalog:
     agents = [
         _profile(
             "frontend-engineer", "Front-end engineer",
@@ -98,6 +98,7 @@ def load_experiment_catalog() -> HarnessCatalog:
          "Create a workspace app similar to Notion to help people organize notes, documents, and shared knowledge in one place. Users should be able to create and edit pages, organize related information, and work together on content so it is easy to find and maintain."),
         ("typeform", "Build a form-building app like Typeform", "Forms and feedback",
          "Create a form-building app similar to Typeform to help people collect information and feedback. Users should be able to create forms with different kinds of questions, share them with respondents, and review submitted responses through a clear and approachable experience."),
+        (CUSTOM_PROBLEM_ID, "Other", "Custom brief", "Write your own problem statement."),
     ]
     problems = [
         Problem(id=problem_id, title=title, domain=domain, statement=statement,
@@ -105,7 +106,7 @@ def load_experiment_catalog() -> HarnessCatalog:
         for problem_id, title, domain, statement in briefs
     ]
     models = load_catalog()
-    return HarnessCatalog(
+    return ExperimentCatalog(
         version=EXPERIMENT_CATALOG_VERSION, agents=agents, problems=problems,
         models=models.models, defaultModel=models.defaultModel,
     )

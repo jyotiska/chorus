@@ -7,8 +7,11 @@ from uuid import uuid4
 from types import SimpleNamespace
 
 import pytest
+from httpx import ASGITransport, AsyncClient
+from fastapi.testclient import TestClient
 
-from chorus.harness.models import ExperimentConfig, HarnessCommand
+from chorus.api import create_app
+from chorus.harness.models import CUSTOM_STATEMENT_MAX_BYTES, ExperimentConfig, HarnessCommand
 from chorus.harness.experiment import event
 from chorus.harness.experiment_tools import definitions
 from chorus.harness.service import HarnessService
@@ -46,6 +49,42 @@ def create(svc, participants=PARTICIPANTS):
     return svc.experiments.create(ExperimentConfig(problemId="todoist", participantIds=participants))
 
 
+def test_custom_brief_request_and_archive_round_trip(tmp_path, starter, model):
+    database = str(tmp_path / "api.sqlite3")
+    selection = {"problemId": "other", "participantIds": ["general-agent"], "model": "qwen3.5:4b-mlx",
+                 "judgeModel": "qwen3.5:0.8b-mlx"}
+    brief = "\n  Plan a low-walking trip to Bangkok.\r\n\r\n Include rest breaks and local transit.  \n"
+    with TestClient(create_app(database, model, pacing=0)) as client:
+        catalog = client.get("/api/v2/experiments/catalog").json()
+        assert [problem["id"] for problem in catalog["problems"]] == ["todoist", "linear", "notion", "typeform", "other"]
+        assert catalog["customStatementMaxBytes"] == CUSTOM_STATEMENT_MAX_BYTES
+        benchmarks = client.get("/api/v2/catalog").json()
+        assert "customStatementMaxBytes" not in benchmarks
+        assert "other" not in [problem["id"] for problem in benchmarks["problems"]]
+        for invalid in (selection, {**selection, "customStatement": " \n "},
+                        {**selection, "customStatement": "é" * (CUSTOM_STATEMENT_MAX_BYTES // 2 + 1)},
+                        {**selection, "problemId": "linear", "customStatement": brief}):
+            response = client.post("/api/v2/experiments", json=invalid)
+            assert response.status_code == 400, response.text
+            assert response.json()["code"] == "INVALID_REQUEST"
+        assert client.get("/api/v2/sessions").json() == []
+        response = client.post("/api/v2/experiments", json={**selection, "customStatement": brief})
+        assert response.status_code == 201, response.text
+        created = response.json()
+        sid = created["id"]
+        assert created["problem"]["title"] == "Plan a low-walking trip to Bangkok."
+        assert created["problem"]["statement"] == brief
+        assert {key: created["config"][key] for key in selection} == selection
+        assert "customStatement" not in created["config"]
+        assert created["experiment"]["rubric"] == "deliverable-v1"
+        assert client.get(f"/api/v2/sessions/{sid}/artifacts/download", params={"path": "deliverables/itinerary.md"}).status_code == 404
+
+    with TestClient(create_app(database, model, pacing=0)) as reopened:
+        session = reopened.get(f"/api/v2/sessions/{sid}").json()
+        assert session["problem"]["statement"] == brief
+        assert reopened.get(f"/api/v2/sessions/{sid}/export").json()["session"]["problem"] == created["problem"]
+
+
 def command(svc, sid, action):
     current = svc.repo.get(sid)
     return svc.command(sid, HarnessCommand(action=action, commandId=str(uuid4()), expectedRevision=current.revision))
@@ -58,6 +97,103 @@ async def wait_until(svc, sid, predicate):
             if predicate(current):
                 return current
             await asyncio.sleep(.01)
+
+
+async def test_custom_travel_experiment_checks_frozen_deliverables_and_retries_judge(store, starter):
+    brief = "Make a three-day Bangkok travel plan.\nInclude a downloadable PDF and allow for minimal walking."
+    actor = "general-agent"
+    itinerary = "# Bangkok\n\n- Day 1: River ferry\n- Day 2: Palace\n- Day 3: Rest\n"
+    outputs = [
+        dict(kind="file", path="deliverables/itinerary.md", format="Markdown", formatSource="inferred",
+             description="Three-day itinerary", primary=True, required=True),
+        dict(kind="unavailable", path="", format="PDF", formatSource="explicit",
+             description="A PDF renderer is unavailable.", primary=False, required=True),
+        dict(kind="file", path="deliverables/transit.md", format="Markdown", formatSource="inferred",
+             description="Transit reference", primary=False, required=True),
+        dict(kind="file", path="deliverables/budget.json", format="JSON", formatSource="inferred",
+             description="Estimated budget", primary=False, required=False),
+    ]
+    plan = dict(outputs=outputs, acceptanceCriteria=["Three days with low walking"], assumptions=["Flexible travel dates"])
+    judge_reads = []
+    plan_reads = []
+    judge_attempts = 0
+
+    async def provider(model, messages, **options):
+        nonlocal judge_attempts
+        phase = options["phase"]
+        assert brief not in messages[0]["content"]
+        assert messages[1] == {"role": "user", "content": brief}
+        past = prior_tools(messages)
+        if phase == "plan":
+            assert model == "qwen3.5:4b-mlx"
+            if not past:
+                return result(tool("plan_complete"), tool("deliverable_plan_set", revision=1, reason="Stale edit.", **plan),
+                              tool("deliverable_plan_set", revision=0, reason="Plan the itinerary and record a PDF gap.", **plan))
+            assert [item.get("code") for item in past] == ["INVALID_STATE", "CONFLICT", None]
+            return result(tool("plan_complete"))
+        if phase == "build":
+            if not past:
+                return result(tool("deliverable_plan_read"), tool("deliverable_plan_set", revision=1, reason="Late edit.", **plan),
+                              tool("workspace_write", path=outputs[0]["path"], content=itinerary),
+                              tool("workspace_write", path=outputs[3]["path"], content="{invalid_json"),
+                              tool("git_commit", message="Draft itinerary and budget"),
+                              tool("pr_open", description="Draft the trip itinerary.", tasks=[]))
+            if len(past) == 6:
+                plan_reads.append(past[0]["plan"])
+                assert past[1]["code"] == "FORBIDDEN"
+                opened = next(item for item in past if item.get("status") == "open")
+                return result(tool("pr_merge", id=opened["id"]),
+                              tool("workspace_write", path=outputs[2]["path"], content="Worktree-only notes."),
+                              tool("git_commit", message="Draft transit notes outside the merged result"))
+            return result(tool("agent_finish", reason="Transit draft remains to be reviewed.", remaining=[]))
+        assert model == "qwen3.5:0.8b-mlx"
+        assert "Deliverable criteria in order" in messages[0]["content"]
+        if not past:
+            judge_attempts += 1
+            return result(tool("deliverable_plan_read"), tool("workspace_read", path=outputs[0]["path"]))
+        judge_reads.append(past)
+        if judge_attempts == 1:
+            return result(content="Invalid first review.")
+        content = {"score": 3, "explanation": "The itinerary covers all three days.", "evidenceIds": ["plan_completion:general-agent"]}
+        return result(content=json.dumps({"summary": "The itinerary is available. The PDF and transit guide remain open.",
+            "application": [content] * 5, "agents": [{"agentId": actor, "criteria": [content] * 5}],
+            "collaboration": [content] * 5, "missingWork": ["PDF and transit guide", "Invalid budget JSON"]}))
+
+    svc = HarnessService(store, provider)
+    app = create_app(call=provider)
+    app.state.harness = svc
+    try:
+        run = svc.experiments.create(ExperimentConfig(problemId="other", customStatement=brief, participantIds=[actor],
+                                                     model="qwen3.5:4b-mlx", judgeModel="qwen3.5:0.8b-mlx"))
+        command(svc, run.id, "start")
+        failed = await wait_until(svc, run.id, lambda state: state.status in {"judge_failed", "paused", "completed"})
+        assert failed.status == "judge_failed", failed.error
+        frozen = failed.experiment.frozen
+        assert "## Deliverable plan" in failed.canvas and "Three days with low walking" in failed.canvas
+        assert plan_reads == [plan]
+        assert [check.status for check in frozen.artifactChecks] == ["ready", "unavailable", "missing", "invalid"]
+        assert frozen.artifactChecks[0].size == len(itinerary.encode())
+        assert svc.experiments.git.artifact_bytes(run.id, frozen.mainCommit, outputs[0]["path"]) == itinerary.encode()
+        Path(failed.experiment.repository.path, outputs[0]["path"]).write_text("Uncommitted changes after freeze.")
+        command(svc, run.id, "retry_judge")
+        final = await wait_until(svc, run.id, lambda state: state.status != "reviewing")
+        assert final.status == "completed", final.error
+        assert final.experiment.frozen == frozen
+        assert final.experiment.report.application[0].score == 3
+        assert [scorecard.agentId for scorecard in final.experiment.report.agents] == [actor]
+        assert judge_reads[0] == judge_reads[1]
+        assert judge_reads[0][1]["content"] == itinerary
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+            url = f"/api/v2/sessions/{run.id}/artifacts/download"
+            download = await client.get(url, params={"path": outputs[0]["path"]})
+            assert download.status_code == 200
+            assert download.content == itinerary.encode()
+            assert download.headers["content-disposition"] == "attachment; filename*=UTF-8''itinerary.md"
+            assert download.headers["x-content-type-options"] == "nosniff"
+            for path in (outputs[2]["path"], outputs[3]["path"], "../SPEC.md", "frontend/package.json"):
+                assert (await client.get(url, params={"path": path})).status_code == 404
+    finally:
+        await svc.close()
 
 
 class LifecycleProvider:

@@ -1,9 +1,14 @@
 """Authoritative contracts for the independent-agent engine."""
 from __future__ import annotations
 
-from typing import Any, Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from typing import Annotated, Any, Literal
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 from chorus.harness import ENGINE_VERSION, PROMPT_VERSION
+from chorus.harness.experiment_paths import BINARY_OUTPUT_SUFFIXES, experiment_output_path
+
+
+CUSTOM_PROBLEM_ID = "other"
+CUSTOM_STATEMENT_MAX_BYTES = 12_000
 
 
 class Model(BaseModel):
@@ -49,6 +54,10 @@ class HarnessCatalog(Model):
     problems: list[Problem]
     models: list[ModelInfo]
     defaultModel: str = "gpt-6-luna"
+
+
+class ExperimentCatalog(HarnessCatalog):
+    customStatementMaxBytes: int = CUSTOM_STATEMENT_MAX_BYTES
 
 
 class HarnessConfig(Model):
@@ -149,6 +158,7 @@ class ExperimentConfig(Model):
     participantIds: list[str] = Field(min_length=1, max_length=10)
     model: str = "gpt-6-luna"
     judgeModel: str | None = None
+    customStatement: str | None = None
 
     @model_validator(mode="after")
     def distinct_participants(self):
@@ -206,10 +216,63 @@ class PlanningCompletion(Model):
     createdAt: str
 
 
+OutputDescription = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=240)]
+
+
+class Deliverable(Model):
+    kind: Literal["file", "repository", "unavailable"]
+    path: str
+    format: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=48)]
+    formatSource: Literal["explicit", "inferred"]
+    description: OutputDescription
+    primary: bool
+    required: bool
+
+    @model_validator(mode="after")
+    def output_path(self):
+        if self.kind == "file":
+            path = experiment_output_path(self.path)
+            if path.suffix.casefold() in BINARY_OUTPUT_SUFFIXES:
+                raise ValueError("Binary files are unsupported. Record this requirement as unavailable.")
+        elif self.path:
+            raise ValueError("Only a file deliverable has a path. Use an empty path for repository or unavailable outputs.")
+        if self.primary and not self.required:
+            raise ValueError("The primary output must be required.")
+        return self
+
+
+class DeliverablePlan(Model):
+    outputs: list[Deliverable] = Field(min_length=1, max_length=8)
+    acceptanceCriteria: list[OutputDescription] = Field(min_length=1, max_length=8)
+    assumptions: list[OutputDescription] = Field(max_length=6)
+
+    @model_validator(mode="after")
+    def distinct_outputs(self):
+        if sum(output.primary for output in self.outputs) != 1:
+            raise ValueError("Choose exactly one primary output.")
+        paths = [output.path.casefold() for output in self.outputs if output.kind == "file"]
+        if len(set(paths)) != len(paths) or any(
+            left.startswith(right + "/") for left in paths for right in paths if left != right
+        ):
+            raise ValueError("Use distinct file paths. A planned file cannot contain another file.")
+        if sum(output.kind == "repository" for output in self.outputs) > 1:
+            raise ValueError("Use one repository output for software changes.")
+        if len(self.model_dump_json().encode()) > 4_500:
+            raise ValueError("Use a concise deliverable plan of at most 4,500 bytes.")
+        return self
+
+
+class ArtifactCheck(Model):
+    status: Literal["ready", "missing", "invalid", "unavailable"]
+    detail: str
+    size: int | None = None
+
+
 class FrozenExperiment(Model):
     mainCommit: str
     specRevision: int
     evidenceThrough: int
+    artifactChecks: list[ArtifactCheck] = Field(default_factory=list)
 
 
 class CriterionScore(Model):
@@ -247,6 +310,8 @@ class ExperimentState(Model):
     frozen: FrozenExperiment | None = None
     judgeAttempts: int = 0
     report: ExperimentReport | None = None
+    rubric: Literal["application-v1", "deliverable-v1"] = "application-v1"
+    deliverablePlan: DeliverablePlan | None = None
 
 
 class HarnessSnapshot(Model):
@@ -335,6 +400,7 @@ class HarnessContracts(Model):
     page: RecordPage
     command: HarnessCommand
     usage: UsageReport
+    experimentCatalog: ExperimentCatalog
     experimentConfig: ExperimentConfig
     repositoryTree: RepositoryTree
     repositoryFile: RepositoryFile

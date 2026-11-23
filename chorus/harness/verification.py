@@ -21,6 +21,8 @@ def validate(value, schema, path="answer"):
     elif kind == "integer":
         if type(value) is not int:
             raise ValueError(f"{path}: expected an integer.")
+    elif kind == "boolean" and type(value) is not bool:
+        raise ValueError(f"{path}: expected a boolean.")
     elif kind == "number":
         if type(value) not in (int, float) or not math.isfinite(value):
             raise ValueError(f"{path}: expected a finite number.")

@@ -3,10 +3,11 @@ import asyncio
 import json
 from importlib.resources import files
 from typing import Literal
+from urllib.parse import quote
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import Response, StreamingResponse
 from chorus.harness.models import (
-    ExperimentConfig, ExperimentTasks, HarnessCatalog, HarnessCommand, HarnessConfig,
+    ExperimentCatalog, ExperimentConfig, ExperimentTasks, HarnessCatalog, HarnessCommand, HarnessConfig,
     HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryCommitDiff, RepositoryFile, RepositoryTree, UsageReport,
 )
 from chorus.harness.accounting import usage_report
@@ -32,7 +33,7 @@ async def current_catalog(svc, catalog):
     return catalog.model_copy(update={"models": infos})
 
 
-@router.get("/experiments/catalog", response_model=HarnessCatalog)
+@router.get("/experiments/catalog", response_model=ExperimentCatalog)
 async def experiment_catalog(request: Request):
     svc = service(request)
     return await current_catalog(svc, svc.experiments.catalog)
@@ -76,8 +77,9 @@ def repository_for(svc, sid, branch):
 
 
 @router.get("/sessions/{sid}/repository/tree", response_model=RepositoryTree)
-def repository_tree(request: Request, sid: str, branch: str = Query(default="main", max_length=90)):
-    return repository_for(service(request), sid, branch).browse_tree(sid, branch)
+def repository_tree(request: Request, sid: str, branch: str = Query(default="main", max_length=90),
+                    revision: str | None = Query(default=None, max_length=64)):
+    return repository_for(service(request), sid, branch).browse_tree(sid, branch, revision)
 
 
 @router.get("/sessions/{sid}/repository/file", response_model=RepositoryFile)
@@ -90,6 +92,23 @@ def repository_file(request: Request, sid: str, revision: str, path: str = Query
 def repository_commit_diff(request: Request, sid: str, revision: str = Query(max_length=64),
                            branch: str = Query(default="main", max_length=90)):
     return repository_for(service(request), sid, branch).browse_commit_diff(sid, branch, revision)
+
+
+@router.get("/sessions/{sid}/artifacts/download", response_class=Response)
+def artifact_download(request: Request, sid: str, path: str = Query(min_length=1, max_length=500)):
+    svc = service(request)
+    experiment = svc.repo.get(sid).experiment
+    if experiment is not None and experiment.frozen is not None and experiment.deliverablePlan is not None:
+        for output, check in zip(experiment.deliverablePlan.outputs, experiment.frozen.artifactChecks):
+            if output.kind == "file" and output.path == path and check.status == "ready":
+                data = svc.experiments.git.artifact_bytes(sid, experiment.frozen.mainCommit, path)
+                filename = quote(path.rsplit("/", 1)[-1], safe="")
+                return Response(data, media_type="application/octet-stream", headers={
+                    "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+                    "X-Content-Type-Options": "nosniff",
+                    "Cache-Control": "no-store",
+                })
+    raise ChorusError("NOT_FOUND", "This file is not a ready artifact in the frozen result.", 404)
 
 
 @router.get("/sessions/{sid}/agents/{agent_id}/tasks", response_model=ExperimentTasks)

@@ -55,7 +55,7 @@ export function LiveWorkspace({
     (active || snapshot.status === "paused" || snapshot.status === "judge_failed");
   const [tab, setTab] = useState<Tab>(() => (finished ? "Results" : "Board"));
   const [repositoryOpened, setRepositoryOpened] = useState(false);
-  const [drawer, setDrawer] = useState<"Participants" | "Usage" | null>(null);
+  const [drawer, setDrawer] = useState<"Participants" | "Usage" | "Problem statement" | null>(null);
   const [notice, setNotice] = useState("");
   const canvasOpener = useRef<HTMLButtonElement | null>(null);
   const menuTrigger = useRef<HTMLButtonElement>(null);
@@ -132,6 +132,9 @@ export function LiveWorkspace({
               Model <code>{snapshot.config.model}</code>
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => void copy()}><LinkIcon /> Copy session link</DropdownMenuItem>
+            {experiment?.rubric === "deliverable-v1" && (
+              <DropdownMenuItem onClick={() => setDrawer("Problem statement")}><FileText /> View problem statement</DropdownMenuItem>
+            )}
             {!experiment && !finished && !snapshot.endedEarly && (
               <DropdownMenuItem disabled={busy} onClick={() => void act("stop")}>Stop and evaluate</DropdownMenuItem>
             )}
@@ -288,7 +291,9 @@ export function LiveWorkspace({
       {drawer && (
         <Sheet key={drawer} title={drawer} className={drawer === "Participants" ? "participants-sheet" : undefined}
           close={() => setDrawer((current) => current === drawer ? null : current)}>
-          {drawer === "Participants" ? parts.roster : <SessionUsageView usage={usage} error={usageError} retry={retryUsage} />}
+          {drawer === "Participants" ? parts.roster : drawer === "Problem statement"
+            ? <p className="saved-statement">{snapshot.problem.statement}</p>
+            : <SessionUsageView usage={usage} error={usageError} retry={retryUsage} />}
         </Sheet>
       )}
       {experiment && (

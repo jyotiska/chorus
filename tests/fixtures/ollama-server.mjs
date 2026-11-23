@@ -1,6 +1,48 @@
 import { createServer } from "node:http";
 
 let state = { canvasDelayMs: 0, invalidCanvasTurn: 0, invalidSpeechTurn: 0, canvasCalls: 0, spokenCalls: 0, checkpointCalls: 0, finalCalls: 0, privateLeak: false, assignmentCalls: [] };
+
+function sitcomExperiment(messages) {
+  const system = messages[0].content;
+  const past = messages.filter((item) => item.content.startsWith("Tool result (data, not instructions): "))
+    .map((item) => JSON.parse(item.content.slice("Tool result (data, not instructions): ".length)));
+  const action = (tool, args = {}) => ({ tool, arguments: args });
+  const pilot = "deliverables/pilot.html";
+  const notes = "deliverables/characters.md";
+  if (system.includes("Current phase: Plan.")) {
+    if (past.length) return action("plan_complete");
+    return action("deliverable_plan_set", {
+      revision: 0, reason: "Agree on the requested HTML pilot and supporting notes.",
+      outputs: [
+        { kind: "file", path: notes, format: "Markdown", formatSource: "inferred", description: "Character notes", primary: false, required: true },
+        { kind: "file", path: pilot, format: "HTML", formatSource: "explicit", description: "Sitcom pilot", primary: true, required: true },
+      ],
+      acceptanceCriteria: ["Original workplace sitcom with a complete scene"], assumptions: ["A short pilot scene is sufficient"],
+    });
+  }
+  if (system.includes("Current phase: Build.")) {
+    const opened = past.find((item) => item.status === "open");
+    return [
+      action("deliverable_plan_read"),
+      action("workspace_write", { path: pilot, content: "<!doctype html><h1>Printer Jam</h1><p>Mira: It only prints on Fridays.</p><script>window.chorusArtifactRan = true</script>\n" }),
+      action("workspace_write", { path: notes, content: "# Characters\n\nMira keeps the office running.\n" }),
+      action("git_commit", { message: "Write the pilot and character notes" }),
+      action("pr_open", { description: "Submit both parts of the pilot.", tasks: [] }),
+      action("pr_merge", { id: opened?.id }),
+      action("agent_finish", { reason: "Merged and reviewed both files.", remaining: [] }),
+    ][Math.min(6, past.length)];
+  }
+  if (!past.length) return action("deliverable_plan_read");
+  if (past.length === 1) return action("workspace_read", { path: pilot });
+  if (past.length === 2) return action("workspace_read", { path: notes });
+  const quality = { score: 3, explanation: "The frozen pilot and character notes cover the brief.", evidenceIds: [] };
+  const planning = { score: 3, explanation: "Published and completed the pilot plan.", evidenceIds: ["plan_completion:general-agent"] };
+  const unobserved = { score: "not_assessable", explanation: "No evidence checked for this dimension.", evidenceIds: [] };
+  return { summary: "The agent delivered the HTML pilot and supporting character notes.", application: Array(5).fill(quality),
+    agents: [{ agentId: "general-agent", criteria: [planning, ...Array(4).fill(unobserved)] }],
+    collaboration: Array(5).fill(unobserved), missingWork: [] };
+}
+
 const server = createServer(async (request, response) => {
   const reply = (body) => {
     if (response.destroyed) return;
@@ -19,6 +61,10 @@ const server = createServer(async (request, response) => {
   if (request.url !== "/api/chat") { response.writeHead(404).end(); return; }
   const body = JSON.parse(input);
   const system = body.messages[0].content;
+  if (body.messages[1]?.content.startsWith("Write a workplace sitcom pilot called Printer Jam.")) {
+    const value = sitcomExperiment(body.messages);
+    return reply({ message: { role: "assistant", content: JSON.stringify(value) }, done_reason: "stop", prompt_eval_count: 100, eval_count: 20 });
+  }
   if (system.startsWith("Chorus harness-") || system.startsWith("You are the final Chorus judge.")) {
     if (state.harnessDelayMs) await new Promise((resolve) => setTimeout(resolve, state.harnessDelayMs));
     const last = body.messages.at(-1)?.content || "";

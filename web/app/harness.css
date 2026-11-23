@@ -387,6 +387,31 @@
   line-height: 1.65;
   white-space: pre-line;
 }
+.custom-statement {
+  display: grid;
+  gap: 6px;
+}
+.custom-statement label {
+  font-size: 13px;
+  font-weight: 500;
+}
+.custom-statement textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 9px 10px;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  background: var(--raised);
+  color: var(--text);
+}
+.custom-statement textarea:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.saved-statement {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .team-line {
   gap: 10px;
   min-height: 70px;

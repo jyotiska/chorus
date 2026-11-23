@@ -602,7 +602,8 @@ function SpecTimeline({ snapshot }: { snapshot: HarnessSnapshot }) {
         <span><strong>{who}</strong> {record.kind === "vote" ? "voted complete" : "finished planning"} at v{text(data.specRevision)}</span>
         <Timestamp value={record.createdAt} format="relative" />
       </div>;
-      const scope = data.section === "tasks" ? "Tasks" : data.section === "product" ? "Product spec" : "";
+      const scope = data.section === "tasks" ? "Tasks" : data.section === "product" ? "Product spec"
+        : data.section === "deliverables" ? "Deliverable plan" : "";
       return <details key={record.id} id={record.id} className={styles.specEdit}>
         <summary>
           <span><strong>{who}</strong><small>{[scope, data.taskOwnerId ? `Owner ${name(data.taskOwnerId)}` : ""].filter(Boolean).join(" · ")}</small></span>
@@ -776,10 +777,16 @@ function PullRequestDetails({ change, agentName }: {
   );
 }
 
-function RepositoryBrowser({ snapshot, repository, visible }: {
+function RepositoryFileContents({ file }: { file: RepositoryFile }) {
+  return file.status === "text" ? <pre tabIndex={0}><code>{file.content || "(empty file)"}</code></pre>
+    : <p className={styles.muted}>{file.status === "binary" ? "Binary file." : "File exceeds the 128 KB preview limit."}</p>;
+}
+
+function RepositoryBrowser({ snapshot, repository, visible, frozenRevision }: {
   snapshot: HarnessSnapshot;
   repository: RepositoryMetadata;
   visible: boolean;
+  frozenRevision?: string;
 }) {
   const { id, agents } = snapshot;
   const commits = useRecords(snapshot, "commit", undefined, visible);
@@ -810,19 +817,20 @@ function RepositoryBrowser({ snapshot, repository, visible }: {
   const fileKey = JSON.stringify([branch, treeRevision, path]);
   const file = preview?.key === fileKey ? preview : undefined;
   const commitDiff = diff?.key === diffKey ? diff : undefined;
+  const requestedRevision = branch === "main" ? frozenRevision : undefined;
   const agentName = (agentId: string) => agents.find((agent) => agent.id === agentId)?.name ?? agentId;
   const worktree = repository.worktrees.find((item) => item.branch === branch);
 
   useEffect(() => {
     if (!visible) return;
     let current = true;
-    void client.repositoryTree(id, branch).then((data) => {
+    void client.repositoryTree(id, branch, requestedRevision).then((data) => {
       if (current) setListing({ branch, data });
     }).catch((error: unknown) => {
       if (current) setListing({ branch, error: error instanceof Error ? error.message : "Could not load the file tree." });
     });
     return () => { current = false; };
-  }, [id, branch, branchVersion, refresh, visible]);
+  }, [id, branch, branchVersion, requestedRevision, refresh, visible]);
 
   useEffect(() => {
     if (!visible || view !== "files" || !treeRevision || !path) return;
@@ -906,11 +914,7 @@ function RepositoryBrowser({ snapshot, repository, visible }: {
           <section className={styles.repositoryPreview} aria-label="File preview">
             <h3>{path ? <code>{path}</code> : "File preview"}</h3>
             <RecordError message={file?.error ?? ""} />
-            {path ? file?.data ? file.data.status === "text" ? (
-              <pre tabIndex={0}><code>{file.data.content || "(empty file)"}</code></pre>
-            ) : (
-              <p className={styles.muted}>{file.data.status === "binary" ? "Binary file." : "File exceeds the 128 KB preview limit."}</p>
-            ) : !file?.error && <p role="status">Loading file…</p> : (
+            {path ? file?.data ? <RepositoryFileContents file={file.data} /> : !file?.error && <p role="status">Loading file…</p> : (
               <p className={styles.muted}>Select a file to read its committed contents.</p>
             )}
           </section>
@@ -1256,6 +1260,7 @@ type ExperimentReport = NonNullable<NonNullable<HarnessSnapshot["experiment"]>["
 type EvidenceSelection = { criterion: string; ids: string[] };
 
 const applicationCriteria = ["Runnability", "Core functionality", "Usability", "Integration and persistence", "Implementation quality"];
+const deliverableCriteria = ["Brief coverage", "Correctness or internal consistency", "Completeness", "Clarity and usability", "Format and presentation quality"];
 const collaborationCriteria = ["Shared specification", "Task distribution", "Dependency handling", "Feedback and disagreement", "Integrated outcome"];
 const contributionCriteria = ["Planning contribution", "Delivered contribution", "Quality and correctness", "Verification and handoff", "Collaboration"];
 
@@ -1341,9 +1346,62 @@ function ExperimentScorecard({ scores, criteria, label, openEvidence }: {
   );
 }
 
+function ArtifactFilePreview({ id, revision, path }: { id: string; revision: string; path: string }) {
+  const [state, setState] = useState<{ data?: RepositoryFile; error?: string }>({});
+  useEffect(() => {
+    let active = true;
+    void client.repositoryFile(id, "main", revision, path).then((data) => {
+      if (active) setState({ data });
+    }).catch((error: unknown) => {
+      if (active) setState({ error: error instanceof Error ? error.message : "Could not open this artifact." });
+    });
+    return () => { active = false; };
+  }, [id, revision, path]);
+  if (state.data) return <RepositoryFileContents file={state.data} />;
+  return state.error ? <RecordError message={state.error} /> : <p role="status">Loading file…</p>;
+}
+
+type ExperimentState = NonNullable<HarnessSnapshot["experiment"]>;
+type PlannedOutput = NonNullable<ExperimentState["deliverablePlan"]>["outputs"][number];
+type ArtifactCheck = NonNullable<ExperimentState["frozen"]>["artifactChecks"][number];
+const artifactStatus = { ready: "Ready", missing: "Missing", invalid: "Invalid", unavailable: "Unavailable" };
+
+function ResultArtifact({ snapshot, revision, output, check }: {
+  snapshot: HarnessSnapshot;
+  revision: string;
+  output: PlannedOutput;
+  check: ArtifactCheck;
+}) {
+  const [open, setOpen] = useState(false);
+  const label = output.path || (output.kind === "repository" ? "Repository changes" : output.format);
+  return <li className={styles.resultArtifact}>
+    <div className={styles.resultsSectionHeading}>
+      <strong>{label}</strong>
+      <small>{[output.primary ? "Primary" : output.required ? "Required" : "Optional", artifactStatus[check.status]].join(" · ")}</small>
+    </div>
+    <p>{output.description}</p>
+    <p className={styles.resultsNote}>{check.detail}</p>
+    {check.status === "ready" && (
+      <div className={styles.artifactActions}>
+        <details onToggle={(event) => setOpen(event.currentTarget.open)}>
+          <summary>{output.kind === "file" ? "Open" : "Open frozen repository"}</summary>
+          {open && (output.kind === "file" ? <ArtifactFilePreview id={snapshot.id} revision={revision} path={output.path} />
+            : <RepositoryBrowser snapshot={snapshot} repository={snapshot.experiment!.repository} visible frozenRevision={revision} />)}
+        </details>
+        {output.kind === "file" && <a href={client.artifactDownload(snapshot.id, output.path)} download>Download</a>}
+      </div>
+    )}
+  </li>;
+}
+
 function ExperimentResults({ snapshot }: { snapshot: HarnessSnapshot }) {
   const experiment = snapshot.experiment!;
   const report = experiment.report;
+  const custom = experiment.rubric === "deliverable-v1";
+  const qualityLabel = custom ? "Deliverable quality" : "Application quality";
+  const frozen = experiment.frozen;
+  const artifacts = experiment.deliverablePlan?.outputs.map((output, index) => ({ output, check: frozen?.artifactChecks[index], index }))
+    .sort((a, b) => Number(b.output.primary) - Number(a.output.primary));
   const [evidence, setEvidence] = useState<EvidenceSelection | null>(null);
   const contextFailures = snapshot.workers.filter((worker) => worker.state === "failed" && worker.failureCode === "CONTEXT_LIMIT");
   const agentName = (id: string) => snapshot.agents.find((agent) => agent.id === id)?.name ?? id;
@@ -1372,9 +1430,17 @@ function ExperimentResults({ snapshot }: { snapshot: HarnessSnapshot }) {
           {report ? "Evaluated main commit" : "Frozen main commit"}{" "}
           <code title={experiment.frozen.mainCommit}>{experiment.frozen.mainCommit.slice(0, 12)}</code>
           {" · "}SPEC.md v{experiment.frozen.specRevision}
-          {report && " · Code and records review"}
+          {report && (custom ? " · Deliverables and records review" : " · Code and records review")}
         </p>
       )}
+      {frozen && artifacts?.length ? (
+        <section className={styles.resultsSection} aria-labelledby="final-deliverables">
+          <h3 id="final-deliverables">Deliverables</h3>
+          <ul className={styles.resultArtifacts}>
+            {artifacts.map(({ output, check, index }) => check && <ResultArtifact key={index} snapshot={snapshot} revision={frozen.mainCommit} output={output} check={check} />)}
+          </ul>
+        </section>
+      ) : null}
       {contextFailures.length > 0 && (
         <p className={styles.resultsNote}>Context limit exceeded by {contextFailures.map((worker) => agentName(worker.agentId)).join(", ")} during {experiment.frozen ? "Build" : "Plan"}.</p>
       )}
@@ -1384,12 +1450,12 @@ function ExperimentResults({ snapshot }: { snapshot: HarnessSnapshot }) {
       {report && (
         <>
           <div className={styles.resultsScorecards}>
-            <section className={styles.resultsSection} aria-labelledby="application-quality">
+            <section className={styles.resultsSection} aria-labelledby="experiment-quality">
               <div className={styles.resultsSectionHeading}>
-                <h3 id="application-quality">Application quality</h3>
+                <h3 id="experiment-quality">{qualityLabel}</h3>
                 <ScoreTotal scores={report.application.map(({ score }) => score)} />
               </div>
-              <ExperimentScorecard label="Application quality scores" scores={report.application} criteria={applicationCriteria} openEvidence={setEvidence} />
+              <ExperimentScorecard label={`${qualityLabel} scores`} scores={report.application} criteria={custom ? deliverableCriteria : applicationCriteria} openEvidence={setEvidence} />
             </section>
             <section className={styles.resultsSection} aria-labelledby="experiment-collaboration">
               <div className={styles.resultsSectionHeading}>

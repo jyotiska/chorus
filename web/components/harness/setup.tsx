@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -11,6 +11,7 @@ import {
   Search,
 } from "lucide-react";
 import {
+  type ExperimentCatalog,
   type HarnessCatalog,
   type HarnessSnapshot,
   type Persona,
@@ -28,20 +29,26 @@ import { harness, message, Sheet } from "./shell";
 
 export function Launcher({
   catalog,
+  experiment,
   start,
-  previous,
+  previousRun,
 }: {
-  catalog: HarnessCatalog;
-  previous: HarnessSnapshot["config"] | null;
+  catalog: HarnessCatalog | ExperimentCatalog;
+  experiment: boolean;
+  previousRun: HarnessSnapshot | null;
   start: (run: HarnessSnapshot) => Promise<void>;
 }) {
-  const experiment = catalog.version === "experiments-1";
+  const previous = previousRun?.config;
   const [problem, setProblem] = useState(
     catalog.problems.find((item) => item.id === previous?.problemId) ??
       catalog.problems[0],
   );
+  const custom = experiment && problem.id === "other";
+  const [customStatement, setCustomStatement] = useState(
+    previous?.problemId === "other" ? previousRun?.problem.statement ?? "" : "",
+  );
   const [roster, setRoster] = useState(
-    experiment
+    experiment && !custom
       ? problem.participantIds
       : (previous?.participantIds ?? problem.participantIds),
   );
@@ -61,6 +68,14 @@ export function Launcher({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const teamDialog = useRef<HTMLDialogElement>(null);
+  const statementField = useRef<HTMLTextAreaElement>(null);
+  const focusStatement = useRef(false);
+  useEffect(() => {
+    if (!sheet && custom && focusStatement.current) {
+      focusStatement.current = false;
+      statementField.current?.focus();
+    }
+  }, [custom, sheet]);
   const judging = experiment || judge;
   const selectedModel = catalog.models.find((item) => item.id === model);
   const selectedJudgeModel = catalog.models.find(
@@ -87,11 +102,16 @@ export function Launcher({
   const rosterRequirement = experiment
     ? "Choose at least one agent."
     : "Choose between 2 and 50 agents.";
+  const statementLimit = "customStatementMaxBytes" in catalog ? catalog.customStatementMaxBytes : 0;
+  const statementBytes = custom ? new TextEncoder().encode(customStatement).length : 0;
+  const statementError = custom && statementBytes > statementLimit ? "Shorten the problem statement to fit the limit." : "";
   const reason = invalidRoster
     ? rosterRequirement
     : invalidCap
       ? "Choose 1–100 turns per agent."
-      : "";
+      : custom && !customStatement.trim()
+        ? "Enter a problem statement."
+        : statementError;
   const unavailable =
     selectedModel?.available === false ||
     (judging && selectedJudgeModel?.available === false);
@@ -137,7 +157,7 @@ export function Launcher({
         judgeModel,
       };
       const run = experiment
-        ? await harness.createExperiment(selection)
+        ? await harness.createExperiment({ ...selection, ...(custom ? { customStatement } : {}) })
         : await harness.createRun({
             ...selection,
             adversaryIds: adversaries,
@@ -223,7 +243,19 @@ export function Launcher({
           <span>{problem.title}</span>
           <ChevronDown aria-hidden="true" />
         </Button>
-        <p>{problem.statement}</p>
+        {custom ? (
+          <div className="custom-statement">
+            <label htmlFor="custom-statement">Problem statement</label>
+            <textarea id="custom-statement" rows={5} ref={statementField} value={customStatement}
+              placeholder="Describe what the team should deliver."
+              aria-required="true" aria-invalid={Boolean(statementError)}
+              aria-describedby="custom-statement-limit"
+              onChange={(event) => { setCustomStatement(event.target.value); setError(""); }} />
+            <p id="custom-statement-limit" role={statementError ? "status" : undefined}>
+              {statementError && `${statementError} `}{statementBytes.toLocaleString()} / {statementLimit.toLocaleString()} UTF-8 bytes
+            </p>
+          </div>
+        ) : <p>{problem.statement}</p>}
       </section>
       {experiment ? (
         <section className="experiment-team" aria-labelledby="experiment-team-title">
@@ -348,6 +380,8 @@ export function Launcher({
                 <button
                   key={item.id}
                   onClick={(event) => {
+                    focusStatement.current = item.id === "other";
+                    setError("");
                     if (item.id !== problem.id) {
                       setProblem(item);
                       if (!experiment) {

@@ -301,6 +301,10 @@ export type Worktrees = ExperimentWorktree[];
 export type Maincommit1 = string;
 export type Specrevision1 = number;
 export type Evidencethrough = number;
+export type Status4 = "ready" | "missing" | "invalid" | "unavailable";
+export type Detail = string;
+export type Size = number | null;
+export type Artifactchecks = ArtifactCheck[];
 export type Judgeattempts = number;
 export type Summary3 = string;
 export type Score = number | ("not_assessable" | "not_applicable");
@@ -327,12 +331,34 @@ export type Agents5 = AgentScorecard[];
  */
 export type Collaboration = CriterionScore[];
 export type Missingwork = string[];
+export type Rubric = "application-v1" | "deliverable-v1";
+export type Kind2 = "file" | "repository" | "unavailable";
+export type Path2 = string;
+export type Format = string;
+export type Formatsource = "explicit" | "inferred";
+export type Description1 = string;
+export type Primary = boolean;
+export type Required = boolean;
+/**
+ * @minItems 1
+ * @maxItems 8
+ */
+export type Outputs = Deliverable1[];
+/**
+ * @minItems 1
+ * @maxItems 8
+ */
+export type Acceptancecriteria = string[];
+/**
+ * @maxItems 6
+ */
+export type Assumptions = string[];
 export type Error1 = string;
 export type Createdat3 = string;
 export type Updatedat1 = string;
 export type Id9 = string;
 export type Sequence1 = number;
-export type Kind2 = string;
+export type Kind3 = string;
 export type Agentid9 = string;
 export type Turn1 = number;
 export type Createdat4 = string;
@@ -360,6 +386,12 @@ export type Reportedcostusd = number;
 export type Estimatedcostusd = number;
 export type Unknowncostcalls = number;
 export type Walltimems = number;
+export type Version3 = string;
+export type Agents7 = Persona[];
+export type Problems1 = Problem1[];
+export type Models2 = ModelInfo1[];
+export type Defaultmodel2 = string;
+export type Customstatementmaxbytes = number;
 export type Problemid1 = string;
 /**
  * @minItems 1
@@ -368,13 +400,14 @@ export type Problemid1 = string;
 export type Participantids3 = string[];
 export type Model3 = string;
 export type Judgemodel1 = string | null;
+export type Customstatement = string | null;
 export type Revision2 = string;
-export type Path2 = string;
-export type Kind3 = "directory" | "file" | "link" | "submodule";
+export type Path3 = string;
+export type Kind4 = "directory" | "file" | "link" | "submodule";
 export type Entries = RepositoryEntry[];
 export type Truncated = boolean;
-export type Status4 = "text" | "binary" | "too_large";
-export type Size = number;
+export type Status5 = "text" | "binary" | "too_large";
+export type Size1 = number;
 export type Content = string | null;
 export type Patch = string;
 export type Truncated1 = boolean;
@@ -592,6 +625,7 @@ export interface HarnessContracts {
   page: RecordPage;
   command: HarnessCommand;
   usage: UsageReport;
+  experimentCatalog: ExperimentCatalog;
   experimentConfig: ExperimentConfig;
   repositoryTree: RepositoryTree;
   repositoryFile: RepositoryFile;
@@ -740,6 +774,8 @@ export interface ExperimentState {
   frozen: FrozenExperiment | null;
   judgeAttempts: Judgeattempts;
   report: ExperimentReport | null;
+  rubric: Rubric;
+  deliverablePlan: DeliverablePlan | null;
 }
 export interface PlanningCompletion {
   agentId: Agentid6;
@@ -762,6 +798,12 @@ export interface FrozenExperiment {
   mainCommit: Maincommit1;
   specRevision: Specrevision1;
   evidenceThrough: Evidencethrough;
+  artifactChecks: Artifactchecks;
+}
+export interface ArtifactCheck {
+  status: Status4;
+  detail: Detail;
+  size: Size;
 }
 export interface ExperimentReport {
   summary: Summary3;
@@ -779,6 +821,20 @@ export interface AgentScorecard {
   agentId: Agentid8;
   criteria: Criteria;
 }
+export interface DeliverablePlan {
+  outputs: Outputs;
+  acceptanceCriteria: Acceptancecriteria;
+  assumptions: Assumptions;
+}
+export interface Deliverable1 {
+  kind: Kind2;
+  path: Path2;
+  format: Format;
+  formatSource: Formatsource;
+  description: Description1;
+  primary: Primary;
+  required: Required;
+}
 export interface RecordPage {
   records: Records;
   cursor: Cursor;
@@ -788,7 +844,7 @@ export interface RecordPage {
 export interface Record {
   id: Id9;
   sequence: Sequence1;
-  kind: Kind2;
+  kind: Kind3;
   agentId: Agentid9;
   turn: Turn1;
   createdAt: Createdat4;
@@ -830,11 +886,20 @@ export interface Usage {
   estimatedCostUSD: Estimatedcostusd;
   unknownCostCalls: Unknowncostcalls;
 }
+export interface ExperimentCatalog {
+  version: Version3;
+  agents: Agents7;
+  problems: Problems1;
+  models: Models2;
+  defaultModel: Defaultmodel2;
+  customStatementMaxBytes: Customstatementmaxbytes;
+}
 export interface ExperimentConfig {
   problemId: Problemid1;
   participantIds: Participantids3;
   model: Model3;
   judgeModel: Judgemodel1;
+  customStatement: Customstatement;
 }
 export interface RepositoryTree {
   revision: Revision2;
@@ -842,12 +907,12 @@ export interface RepositoryTree {
   truncated: Truncated;
 }
 export interface RepositoryEntry {
-  path: Path2;
-  kind: Kind3;
+  path: Path3;
+  kind: Kind4;
 }
 export interface RepositoryFile {
-  status: Status4;
-  size: Size;
+  status: Status5;
+  size: Size1;
   content: Content;
 }
 export interface RepositoryCommitDiff {

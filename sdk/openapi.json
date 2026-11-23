@@ -951,7 +951,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HarnessCatalog"
+                  "$ref": "#/components/schemas/ExperimentCatalog"
                 }
               }
             }
@@ -1348,6 +1348,23 @@
               "default": "main",
               "title": "Branch"
             }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
           }
         ],
         "responses": {
@@ -1550,6 +1567,79 @@
                 }
               }
             }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/artifacts/download": {
+      "get": {
+        "summary": "Artifact Download",
+        "operationId": "artifact_download_api_v2_sessions__sid__artifacts_download_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "title": "Path"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
           },
           "400": {
             "content": {
@@ -2341,6 +2431,43 @@
         ],
         "title": "AgentScorecard"
       },
+      "ArtifactCheck": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "missing",
+              "invalid",
+              "unavailable"
+            ],
+            "title": "Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "detail",
+          "size"
+        ],
+        "title": "ArtifactCheck"
+      },
       "CallMetrics": {
         "properties": {
           "id": {
@@ -2663,6 +2790,156 @@
         ],
         "title": "CriterionScore"
       },
+      "Deliverable": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "file",
+              "repository",
+              "unavailable"
+            ],
+            "title": "Kind"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "format": {
+            "type": "string",
+            "maxLength": 48,
+            "minLength": 1,
+            "title": "Format"
+          },
+          "formatSource": {
+            "type": "string",
+            "enum": [
+              "explicit",
+              "inferred"
+            ],
+            "title": "Formatsource"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Description"
+          },
+          "primary": {
+            "type": "boolean",
+            "title": "Primary"
+          },
+          "required": {
+            "type": "boolean",
+            "title": "Required"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "path",
+          "format",
+          "formatSource",
+          "description",
+          "primary",
+          "required"
+        ],
+        "title": "Deliverable"
+      },
+      "DeliverablePlan": {
+        "properties": {
+          "outputs": {
+            "items": {
+              "$ref": "#/components/schemas/Deliverable"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Outputs"
+          },
+          "acceptanceCriteria": {
+            "items": {
+              "type": "string",
+              "maxLength": 240,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Acceptancecriteria"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string",
+              "maxLength": 240,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Assumptions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "outputs",
+          "acceptanceCriteria",
+          "assumptions"
+        ],
+        "title": "DeliverablePlan"
+      },
+      "ExperimentCatalog": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "default": "1"
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/Persona"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/Problem"
+            },
+            "type": "array",
+            "title": "Problems"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/chorus__harness__models__ModelInfo"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "defaultModel": {
+            "type": "string",
+            "title": "Defaultmodel",
+            "default": "gpt-6-luna"
+          },
+          "customStatementMaxBytes": {
+            "type": "integer",
+            "title": "Customstatementmaxbytes",
+            "default": 12000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "version",
+          "agents",
+          "problems",
+          "models",
+          "defaultModel",
+          "customStatementMaxBytes"
+        ],
+        "title": "ExperimentCatalog"
+      },
       "ExperimentConfig": {
         "properties": {
           "problemId": {
@@ -2693,6 +2970,17 @@
               }
             ],
             "title": "Judgemodel"
+          },
+          "customStatement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customstatement"
           }
         },
         "additionalProperties": false,
@@ -2863,6 +3151,25 @@
                 "type": "null"
               }
             ]
+          },
+          "rubric": {
+            "type": "string",
+            "enum": [
+              "application-v1",
+              "deliverable-v1"
+            ],
+            "title": "Rubric",
+            "default": "application-v1"
+          },
+          "deliverablePlan": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliverablePlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -2875,7 +3182,9 @@
           "repository",
           "frozen",
           "judgeAttempts",
-          "report"
+          "report",
+          "rubric",
+          "deliverablePlan"
         ],
         "title": "ExperimentState"
       },
@@ -3023,6 +3332,13 @@
           "evidenceThrough": {
             "type": "integer",
             "title": "Evidencethrough"
+          },
+          "artifactChecks": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactCheck"
+            },
+            "type": "array",
+            "title": "Artifactchecks"
           }
         },
         "additionalProperties": false,
@@ -3030,7 +3346,8 @@
         "required": [
           "mainCommit",
           "specRevision",
-          "evidenceThrough"
+          "evidenceThrough",
+          "artifactChecks"
         ],
         "title": "FrozenExperiment"
       },

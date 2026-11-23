@@ -150,6 +150,44 @@
       "title": "AgentScorecard",
       "type": "object"
     },
+    "ArtifactCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "ready",
+            "missing",
+            "invalid",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size"
+        }
+      },
+      "required": [
+        "status",
+        "detail",
+        "size"
+      ],
+      "title": "ArtifactCheck",
+      "type": "object"
+    },
     "CallMetrics": {
       "additionalProperties": false,
       "properties": {
@@ -482,6 +520,156 @@
       "title": "CriterionScore",
       "type": "object"
     },
+    "Deliverable": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "file",
+            "repository",
+            "unavailable"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "format": {
+          "maxLength": 48,
+          "minLength": 1,
+          "title": "Format",
+          "type": "string"
+        },
+        "formatSource": {
+          "enum": [
+            "explicit",
+            "inferred"
+          ],
+          "title": "Formatsource",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 240,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "primary": {
+          "title": "Primary",
+          "type": "boolean"
+        },
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind",
+        "path",
+        "format",
+        "formatSource",
+        "description",
+        "primary",
+        "required"
+      ],
+      "title": "Deliverable",
+      "type": "object"
+    },
+    "DeliverablePlan": {
+      "additionalProperties": false,
+      "properties": {
+        "outputs": {
+          "items": {
+            "$ref": "#/$defs/Deliverable"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Outputs",
+          "type": "array"
+        },
+        "acceptanceCriteria": {
+          "items": {
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Acceptancecriteria",
+          "type": "array"
+        },
+        "assumptions": {
+          "items": {
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 6,
+          "title": "Assumptions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "outputs",
+        "acceptanceCriteria",
+        "assumptions"
+      ],
+      "title": "DeliverablePlan",
+      "type": "object"
+    },
+    "ExperimentCatalog": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "default": "1",
+          "title": "Version",
+          "type": "string"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Persona"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "problems": {
+          "items": {
+            "$ref": "#/$defs/Problem"
+          },
+          "title": "Problems",
+          "type": "array"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/chorus__harness__models__ModelInfo"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "defaultModel": {
+          "default": "gpt-6-luna",
+          "title": "Defaultmodel",
+          "type": "string"
+        },
+        "customStatementMaxBytes": {
+          "default": 12000,
+          "title": "Customstatementmaxbytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "version",
+        "agents",
+        "problems",
+        "models",
+        "defaultModel",
+        "customStatementMaxBytes"
+      ],
+      "title": "ExperimentCatalog",
+      "type": "object"
+    },
     "ExperimentConfig": {
       "additionalProperties": false,
       "properties": {
@@ -514,13 +702,26 @@
           ],
           "default": null,
           "title": "Judgemodel"
+        },
+        "customStatement": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customstatement"
         }
       },
       "required": [
         "problemId",
         "participantIds",
         "model",
-        "judgeModel"
+        "judgeModel",
+        "customStatement"
       ],
       "title": "ExperimentConfig",
       "type": "object"
@@ -690,6 +891,26 @@
             }
           ],
           "default": null
+        },
+        "rubric": {
+          "default": "application-v1",
+          "enum": [
+            "application-v1",
+            "deliverable-v1"
+          ],
+          "title": "Rubric",
+          "type": "string"
+        },
+        "deliverablePlan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeliverablePlan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -700,7 +921,9 @@
         "repository",
         "frozen",
         "judgeAttempts",
-        "report"
+        "report",
+        "rubric",
+        "deliverablePlan"
       ],
       "title": "ExperimentState",
       "type": "object"
@@ -850,12 +1073,20 @@
         "evidenceThrough": {
           "title": "Evidencethrough",
           "type": "integer"
+        },
+        "artifactChecks": {
+          "items": {
+            "$ref": "#/$defs/ArtifactCheck"
+          },
+          "title": "Artifactchecks",
+          "type": "array"
         }
       },
       "required": [
         "mainCommit",
         "specRevision",
-        "evidenceThrough"
+        "evidenceThrough",
+        "artifactChecks"
       ],
       "title": "FrozenExperiment",
       "type": "object"
@@ -1112,6 +1343,9 @@
         "usage": {
           "$ref": "#/$defs/UsageReport"
         },
+        "experimentCatalog": {
+          "$ref": "#/$defs/ExperimentCatalog"
+        },
         "experimentConfig": {
           "$ref": "#/$defs/ExperimentConfig"
         },
@@ -1135,6 +1369,7 @@
         "page",
         "command",
         "usage",
+        "experimentCatalog",
         "experimentConfig",
         "repositoryTree",
         "repositoryFile",

@@ -10,21 +10,25 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from difflib import unified_diff
 from pathlib import Path
+from string import punctuation
 from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
-from chorus.harness.models import LeaseView, Record
+from chorus.harness.models import DeliverablePlan, LeaseView, Record
 from chorus.services.canvas import check_blocks, normalize, parser, sections
 from chorus.services.errors import ChorusError
 from chorus.storage import now
 
 
 PRODUCT = ("SPEC.md", "Product specification")
+DELIVERABLES = ("SPEC.md", "Deliverable plan")
 TASKS = ("SPEC.md", "Task Distribution")
 CHANGES = ("SPEC.md", "Change log")
 PRODUCT_HISTORY = (*CHANGES, "Product specification history")
+DELIVERABLE_HISTORY = (*CHANGES, "Deliverable plan history")
 TASK_HISTORY = (*CHANGES, "Task history")
 CHECKBOX = re.compile(r"^\[([ xX])\][ \t]+(\S.*)$", re.DOTALL)
+MARKDOWN_ESCAPES = str.maketrans({character: "\\" + character for character in punctuation})
 
 
 def checklist(markdown, *, required=False):
@@ -85,17 +89,38 @@ def _history_entry(revision, actor, reason, diff, at):
     return f"**Revision {revision}** · `{actor}` · {at}\n\n> {escaped}\n\n{fence}diff\n{diff}\n{fence}"
 
 
+def _deliverable_markdown(plan):
+    def plain(value):
+        return " ".join(value.split()).translate(MARKDOWN_ESCAPES)
+
+    lines = []
+    for output in sorted(plan.outputs, key=lambda output: not output.primary):
+        label = output.path or ("Repository changes" if output.kind == "repository" else "Unavailable output")
+        priority = "primary" if output.primary else "required" if output.required else "optional"
+        lines.append(f"- **{plain(label)}** ({priority}, {plain(output.format)}, {output.formatSource}) · {plain(output.description)}")
+    lines.extend(["", "### Acceptance criteria", "", *(f"- {plain(item)}" for item in plan.acceptanceCriteria)])
+    if plan.assumptions:
+        lines.extend(["", "### Assumptions", "", *(f"- {plain(item)}" for item in plan.assumptions)])
+    return "\n".join(lines)
+
+
 class ExperimentSpec:
     def __init__(self, repo, authorize):
         self.repo = repo
         self.authorize = authorize
 
-    def initialize(self, root, agents):
+    def initialize(self, root, agents, *, custom=False):
         root = Path(root)
         root.mkdir(mode=0o700, parents=True, exist_ok=True)
-        headings = ["# SPEC.md", "## Product specification", "## Task Distribution"]
+        headings = ["# SPEC.md", "## Product specification"]
+        if custom:
+            headings.append("## Deliverable plan")
+        headings.append("## Task Distribution")
         headings.extend(f"### {_agent_heading(agent)}" for agent in agents)
-        headings.extend(["## Change log", "### Product specification history", "### Task history"])
+        headings.extend(["## Change log", "### Product specification history"])
+        if custom:
+            headings.append("### Deliverable plan history")
+        headings.append("### Task history")
         headings.extend(f"#### {_agent_heading(agent)}" for agent in agents)
         document = "\n\n".join(headings) + "\n"
         with self._lockfile(root) as handle:
@@ -273,7 +298,7 @@ class ExperimentSpec:
             self._clear(sid, handle, lease, generation=generation)
             return {"released": True}
 
-    def edit(self, sid, root, actor, generation, *, action_id, token, base_version, section, markdown, reason, task_owner=None, verification=""):
+    def edit(self, sid, root, actor, generation, *, action_id, token, base_version, section, markdown, reason, task_owner=None, verification="", deliverable_plan: DeliverablePlan | None = None):
         with self._lockfile(root) as handle:
             state = self.repo.get(sid)
             self._check_generation(state, generation)
@@ -281,6 +306,8 @@ class ExperimentSpec:
             operation = {"section": section, "taskOwnerId": task_owner, "baseVersion": base_version, "markdown": markdown, "reason": reason}
             if verification:
                 operation["verification"] = verification
+            if deliverable_plan is not None:
+                operation["deliverablePlan"] = deliverable_plan.model_dump(mode="json")
             operation_hash = hashlib.sha256(json.dumps(operation, sort_keys=True).encode()).hexdigest()
             key = f"change:{action_id}"
             previous = self.repo.record(sid, key)
@@ -291,10 +318,14 @@ class ExperimentSpec:
                 return {"version": previous.data["afterVersion"], "changeId": key}
 
             self.authorize(state, actor, True)
+            if section == "deliverables" and (deliverable_plan is None or state.experiment.phase != "plan" or state.experiment.rubric != "deliverable-v1"):
+                raise ChorusError("FORBIDDEN", "The deliverable plan can only be published during custom planning.", 403)
             lease = self._require_lease(sid, actor, generation, token)
             if lease["revision"] != base_version or state.canvasVersion != base_version:
                 raise ChorusError("CONFLICT", "SPEC.md changed. Reread the current revision before editing.", 409)
             path, history = self._paths(state, section, task_owner)
+            if deliverable_plan is not None:
+                markdown = _deliverable_markdown(deliverable_plan)
             markdown = markdown.replace("\r\n", "\n").replace("\r", "\n").strip()
             reason = " ".join(reason.split())
             if not 1 <= len(reason) <= 400:
@@ -307,7 +338,7 @@ class ExperimentSpec:
             before = _body(state.canvas, path)
             if state.experiment is not None and section == "tasks":
                 self.validate_checklist_edit(state, actor, task_owner, before, markdown, verification)
-            if markdown == before:
+            if markdown == before and (deliverable_plan is None or deliverable_plan == state.experiment.deliverablePlan):
                 return {"version": base_version, "unchanged": True}
 
             version = base_version + 1
@@ -330,8 +361,10 @@ class ExperimentSpec:
                 self.authorize(current, actor, True)
                 if current.canvasVersion != base_version:
                     raise ChorusError("CONFLICT", "SPEC.md changed before the edit was committed.", 409)
-                if section == "tasks" and state.experiment is not None and current.experiment.phase != state.experiment.phase:
-                    raise ChorusError("CONFLICT", "The experiment phase changed. Reread the checklist before editing.", 409)
+                if section in {"tasks", "deliverables"} and state.experiment is not None and current.experiment.phase != state.experiment.phase:
+                    raise ChorusError("CONFLICT", "The experiment phase changed. Reread SPEC.md before editing.", 409)
+                if deliverable_plan is not None:
+                    current.experiment.deliverablePlan = deliverable_plan
                 current.canvas, current.canvasVersion = document, version
                 current.changeCount += 1
 
@@ -362,6 +395,8 @@ class ExperimentSpec:
     def _paths(state, section, task_owner):
         if section == "product" and task_owner is None:
             return PRODUCT, PRODUCT_HISTORY
+        if section == "deliverables" and task_owner is None:
+            return DELIVERABLES, DELIVERABLE_HISTORY
         agent = next((agent for agent in state.agents if agent.id == task_owner), None)
         if section == "tasks" and agent is not None:
             heading = _agent_heading(agent)

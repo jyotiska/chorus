@@ -31,7 +31,7 @@ flowchart LR
 
 ### App experiments
 
-The web home page creates app experiments: four briefs and ten roles, with six selected initially. The engine copies the bundled or explicitly configured frontend/backend starter into an isolated Git repository and assigns worktrees.
+The web home page creates repository experiments with four app briefs and an **Other** option for a custom problem statement. There are ten roles, with six selected initially. The engine copies the bundled or explicitly configured frontend/backend starter into an isolated Git repository and assigns worktrees.
 
 ```mermaid
 stateDiagram-v2
@@ -53,6 +53,8 @@ stateDiagram-v2
 `SPEC.md` is authoritative shared planning/task state. Agents edit code in their assigned worktrees, create local PR records and merge reviewed contributions into the primary branch. These are local operations, not GitHub pull requests. Tool permissions depend on actor and phase. Git operations disable external hooks/configuration and validate paths/branch identity.
 
 The final judge reads frozen evidence and code; it cannot build or run the application. Its review is not a deterministic correctness result. App workers currently have no overall call/time/spend limit; operational limits are planned separately from completion rules.
+
+Custom runs snapshot the full user brief and publish a typed deliverable plan through the same SPEC lease. Build can write UTF-8 artifacts under `deliverables/`, in addition to the existing starter paths. The last planning completion locks the plan, and freeze checks its declared outputs against the committed `main` tree. Artifact downloads and the deliverable rubric use that same commit. Individual and collaboration scorecards retain their existing criteria. Custom runs use `experiment-v5-custom` and `experiment-v5-custom-deliverables`. Preset runs retain the `experiment-v4` runtime, saved-run recovery, and application rubric.
 
 ### Benchmarks
 

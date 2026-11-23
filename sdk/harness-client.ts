@@ -5,6 +5,7 @@ import type { Contracts } from "./contracts.generated";
 type H = Contracts["harness"];
 export type HarnessSnapshot = H["snapshot"];
 export type HarnessCatalog = H["catalog"];
+export type ExperimentCatalog = H["experimentCatalog"];
 export type HarnessConfig = H["config"];
 export type ExperimentConfig = H["experimentConfig"];
 export type HarnessAction = H["command"]["action"];
@@ -38,7 +39,7 @@ export class HarnessClient {
     return value;
   }
   async catalog(): Promise<HarnessCatalog> { return parse(await this.request("/catalog"), "HarnessCatalog"); }
-  async experimentCatalog(): Promise<HarnessCatalog> { return parse(await this.request("/experiments/catalog"), "HarnessCatalog"); }
+  async experimentCatalog(): Promise<ExperimentCatalog> { return parse(await this.request("/experiments/catalog"), "ExperimentCatalog"); }
   async list(): Promise<HarnessSnapshot[]> {
     const value = await this.request("/sessions");
     if (!Array.isArray(value)) throw new Error("Invalid Chorus session list.");
@@ -51,7 +52,7 @@ export class HarnessClient {
   async create(config: HarnessConfig): Promise<HarnessSnapshot> {
     return parse(await this.request("/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
   }
-  async createExperiment(config: Pick<ExperimentConfig, "problemId" | "participantIds" | "model" | "judgeModel">): Promise<HarnessSnapshot> {
+  async createExperiment(config: Pick<ExperimentConfig, "problemId" | "participantIds" | "model" | "judgeModel"> & { customStatement?: string }): Promise<HarnessSnapshot> {
     return parse(await this.request("/experiments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
   }
   async command(id: string, action: HarnessAction): Promise<HarnessSnapshot> {
@@ -73,11 +74,16 @@ export class HarnessClient {
   }
   async usage(id: string): Promise<HarnessUsage> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}/usage`), "UsageReport"); }
   async record(id: string, recordId: string): Promise<HarnessRecord> { return parse(await this.request(`/sessions/${encodeURIComponent(id)}/records/${encodeURIComponent(recordId)}`), "Record"); }
-  async repositoryTree(id: string, branch: string): Promise<RepositoryTree> {
-    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/tree?${new URLSearchParams({ branch })}`), "RepositoryTree");
+  async repositoryTree(id: string, branch: string, revision?: string): Promise<RepositoryTree> {
+    const params = new URLSearchParams({ branch });
+    if (revision) params.set("revision", revision);
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/tree?${params}`), "RepositoryTree");
   }
   async repositoryFile(id: string, branch: string, revision: string, path: string): Promise<RepositoryFile> {
     return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/file?${new URLSearchParams({ branch, revision, path })}`), "RepositoryFile");
+  }
+  artifactDownload(id: string, path: string): string {
+    return `${this.base}/sessions/${encodeURIComponent(id)}/artifacts/download?${new URLSearchParams({ path })}`;
   }
   async repositoryCommitDiff(id: string, branch: string, revision: string): Promise<RepositoryCommitDiff> {
     return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/commit-diff?${new URLSearchParams({ branch, revision })}`), "RepositoryCommitDiff");

@@ -5,6 +5,7 @@ import subprocess
 import pytest
 
 from chorus.harness.experiment_git import ExperimentGit
+from chorus.harness.experiment_tools import workspace_action
 from chorus.services.errors import ChorusError
 
 
@@ -94,6 +95,37 @@ def test_repository_browser_reads_only_committed_objects_on_selected_branch(expe
         harness.browse_commit_diff("run-one", "main", commit)
     with pytest.raises(ChorusError, match="Choose a commit"):
         harness.browse_commit_diff("run-one", "agents/designer", "HEAD")
+
+
+def test_custom_writes_and_artifact_reads_stay_in_the_assigned_worktree_and_commit(experiment):
+    harness, _, view, paths = experiment
+    root = paths["designer"]
+    path = "deliverables/guide.md"
+    original = "# Complete guide\n"
+    with pytest.raises(ValueError, match="inside frontend/ or backend/"):
+        workspace_action(root, "workspace_write", {"path": path, "content": original}, write=True)
+    with pytest.raises(ValueError, match="relative"):
+        workspace_action(root, "workspace_write", {"path": "deliverables/../SPEC.md", "content": original}, write=True, custom=True)
+    workspace_action(root, "workspace_write", {"path": path, "content": original}, write=True, custom=True)
+    (root / "deliverables" / "link").symlink_to(paths["qa-engineer"])
+    with pytest.raises(ValueError, match="Symlinks"):
+        workspace_action(root, "workspace_write", {"path": "deliverables/link/guide.md", "content": original}, write=True, custom=True)
+    (root / "deliverables" / "link").unlink()
+    harness.commit("run-one", "designer", "Add a guide")
+    pr = harness.open_pr("run-one", "designer", "Guide", [])
+    harness.merge_pr("run-one", "designer", pr)
+    frozen = harness.main_commit("run-one")
+
+    (root / path).write_text("Later work.")
+    (root / "frontend" / "later.txt").write_text("Later work.")
+    harness.commit("run-one", "designer", "Add later work")
+    pr = harness.open_pr("run-one", "designer", "Later work", [])
+    harness.merge_pr("run-one", "designer", pr)
+    assert harness.main_commit("run-one") != frozen != view["baselineCommit"]
+    assert harness.artifact_bytes("run-one", frozen, path) == original.encode()
+    tree = harness.browse_tree("run-one", "main", frozen)
+    assert tree.revision == frozen
+    assert "frontend/later.txt" not in {item.path for item in tree.entries}
 
 
 def test_commit_sync_restores_only_its_own_stash_and_judge_uses_frozen_copy(experiment):

@@ -16,7 +16,8 @@ from tempfile import NamedTemporaryFile, TemporaryFile, mkdtemp
 from typing import BinaryIO
 from uuid import uuid4
 
-from chorus.harness.models import RepositoryCommitDiff, RepositoryEntry, RepositoryFile, RepositoryTree
+from chorus.harness.models import ArtifactCheck, RepositoryCommitDiff, RepositoryEntry, RepositoryFile, RepositoryTree
+from chorus.harness.experiment_paths import experiment_output_path
 from chorus.services.errors import ChorusError
 
 
@@ -405,6 +406,70 @@ class ExperimentGit:
         with self._locked(session_id) as session:
             return self._head(session / "repository", "refs/heads/main")
 
+    @staticmethod
+    def _artifact_entry(repo: Path, commit: str, path: str):
+        result = _git(repo, "ls-tree", "-z", commit, "--", f":(top,literal){path}", binary=True).stdout
+        if not result:
+            return None
+        mode, kind, oid = result.split(b"\t", 1)[0].split()
+        return mode, kind, oid.decode("ascii")
+
+    @staticmethod
+    def _artifact_blob(repo: Path, entry) -> bytes:
+        mode, kind, oid = entry
+        if kind != b"blob" or mode not in {b"100644", b"100755"}:
+            raise ValueError("The path is not a regular file.")
+        if int(_git(repo, "cat-file", "-s", oid).stdout) > 120_000:
+            raise ValueError("The file exceeds the 120 KB artifact limit.")
+        return _git(repo, "cat-file", "blob", oid, binary=True).stdout
+
+    def artifact_checks(self, session_id, baseline, commit, plan) -> list[ArtifactCheck]:
+        with self._locked(session_id) as session:
+            repo = session / "repository"
+            checks = []
+            for output in plan.outputs:
+                if output.kind == "unavailable":
+                    check = ArtifactCheck(status="unavailable", detail="The experiment lacks the capability required for this output.")
+                elif output.kind == "repository":
+                    changed = _git(repo, "diff", "--name-only", baseline, commit, "--", "frontend/", "backend/").stdout
+                    check = (ArtifactCheck(status="ready", detail="Software changes are present in the frozen commit.") if changed
+                             else ArtifactCheck(status="missing", detail="No software changes were merged into main."))
+                else:
+                    check = self._check_artifact_file(repo, baseline, commit, output.path)
+                checks.append(check)
+            return checks
+
+    def _check_artifact_file(self, repo, baseline, commit, path):
+        entry = self._artifact_entry(repo, commit, path)
+        if entry is None or entry == self._artifact_entry(repo, baseline, path):
+            return ArtifactCheck(status="missing", detail="No new or changed file was merged at this path.")
+        try:
+            data = self._artifact_blob(repo, entry)
+            content = data.decode("utf-8")
+            if "\0" in content or not content.strip():
+                raise ValueError("The file must contain nonempty UTF-8 text without NUL characters.")
+            if path.casefold().endswith(".json"):
+                json.loads(content)
+        except UnicodeDecodeError:
+            return ArtifactCheck(status="invalid", detail="The file is not UTF-8 text.")
+        except (json.JSONDecodeError, RecursionError):
+            return ArtifactCheck(status="invalid", detail="The file is not valid JSON.")
+        except ValueError as error:
+            return ArtifactCheck(status="invalid", detail=str(error))
+        return ArtifactCheck(status="ready", detail="Present in the frozen commit.", size=len(data))
+
+    def artifact_bytes(self, session_id: str, commit: str, path: str) -> bytes:
+        experiment_output_path(path)
+        with self._locked(session_id) as session:
+            repo = session / "repository"
+            entry = self._artifact_entry(repo, commit, path)
+            if entry is None:
+                raise ChorusError("NOT_FOUND", "Artifact file not found.", 404)
+            try:
+                return self._artifact_blob(repo, entry)
+            except ValueError as error:
+                raise ChorusError("NOT_FOUND", "Artifact file is unavailable.", 404) from error
+
     def unmerged_commits(self, session_id: str, commits: set[str]) -> set[str]:
         if not commits:
             return set()
@@ -419,10 +484,14 @@ class ExperimentGit:
             raise ChorusError("NOT_FOUND", "Experiment branch not found.", 404)
         return ExperimentGit._head(repo, f"refs/heads/{branch}")
 
-    def browse_tree(self, session_id: str, branch: str) -> RepositoryTree:
+    def browse_tree(self, session_id: str, branch: str, revision: str | None = None) -> RepositoryTree:
         with self._locked(session_id) as session:
             repo = session / "repository"
-            revision = self._browse_head(repo, branch)
+            head = self._browse_head(repo, branch)
+            if revision is None:
+                revision = head
+            elif not _OBJECT_ID.fullmatch(revision) or not self._ancestor(repo, revision, head):
+                raise ChorusError("NOT_FOUND", "That revision is not on the selected branch.", 404)
             output = _git(repo, "ls-tree", "-r", "-t", "-z", revision, binary=True).stdout
         entries = []
         for row in output.rstrip(b"\0").split(b"\0")[:_MAX_TREE_ENTRIES]:
