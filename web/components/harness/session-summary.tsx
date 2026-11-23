@@ -1,34 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Clock3 } from "lucide-react";
 import type {
   HarnessSnapshot,
   HarnessUsage,
-  Usage,
 } from "@/lib/api/chorus/harness-client";
-
-const usd = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 6,
-});
-
-function tokens(count: number, unknown: number, calls: number) {
-  if (unknown === 0) return count.toLocaleString();
-  return unknown === calls ? "Unknown" : `${count.toLocaleString()} (partial)`;
-}
-
-function cost(total: Usage) {
-  const { reportedCostUSD, estimatedCostUSD, unknownCostCalls, callCount } =
-    total;
-  if (unknownCostCalls > 0 && unknownCostCalls === callCount) return "Unknown";
-  const amounts: string[] = [];
-  if (reportedCostUSD || !estimatedCostUSD)
-    amounts.push(usd.format(reportedCostUSD));
-  if (estimatedCostUSD) amounts.push(`${usd.format(estimatedCostUSD)} est.`);
-  return amounts.join(" + ") + (unknownCostCalls ? " (partial)" : "");
-}
 
 function Elapsed({ ms, ticking }: { ms?: number; ticking: boolean }) {
   const [sample, setSample] = useState<{
@@ -57,86 +34,54 @@ function Elapsed({ ms, ticking }: { ms?: number; ticking: boolean }) {
   );
 }
 
-export function SessionSummary({
+export function RunProgress({
   snapshot,
   usage,
+  active,
 }: {
   snapshot: HarnessSnapshot;
   usage: HarnessUsage | null;
+  active: boolean;
 }) {
-  const total = usage?.total;
-  const completed = snapshot.workers.reduce(
-    (sum, worker) => sum + worker.turnsCompleted,
-    0,
-  );
-  const cap = snapshot.config.maxTurnsPerAgent * snapshot.agents.length;
   const experiment = snapshot.experiment;
-  const stopped = snapshot.workers.filter((worker) => ["finished", "failed"].includes(worker.state)).length;
-  const failed = snapshot.workers.filter((worker) => worker.state === "failed").length;
-  const finished =
-    ["completed", "stopped", "killed", "judge_failed"].includes(snapshot.status);
+  const failed = snapshot.workers.filter(({ state }) => state === "failed").length;
+  let progress: string;
+
+  if (!experiment) {
+    const completed = snapshot.workers.reduce((sum, worker) => sum + worker.turnsCompleted, 0);
+    const cap = snapshot.config.maxTurnsPerAgent * snapshot.agents.length;
+    progress = `${completed} / ${cap} turns`;
+  } else if (experiment.phase === "plan") {
+    progress = experiment.planningCompletions
+      ? `${experiment.planningCompletions.length} / ${snapshot.agents.length} finished`
+      : `${experiment.votes.length} / ${experiment.majority} votes`;
+  } else {
+    const stopped = snapshot.workers.filter(({ state }) => state === "finished" || state === "failed").length;
+    progress = `${stopped} / ${snapshot.agents.length} stopped`;
+  }
+
   return (
-    <dl className="session-summary" aria-label="Session totals" tabIndex={0}>
-      <div>
-        <dt>Elapsed</dt>
-        <dd>
-          <Elapsed ms={usage?.wallTimeMs} ticking={!finished} />
-        </dd>
-      </div>
-      {experiment ? experiment.phase === "plan" ? (
-        experiment.planningCompletions ? (
-          <div><dt>Planning progress</dt><dd>{experiment.planningCompletions.length} / {snapshot.agents.length} finished</dd></div>
-        ) : (
-          <div><dt>Planning votes</dt><dd>{experiment.votes.length} / {experiment.majority} needed</dd></div>
-        )
-      ) : (
-        <div><dt>Agents stopped</dt><dd>{stopped} / {snapshot.agents.length}{failed ? ` · ${failed} failed` : ""}</dd></div>
-      ) : (
-        <div title="Completed turns across all agents / combined turn cap"><dt>Turns completed</dt><dd>{completed} / {cap}</dd></div>
+    <>
+      {experiment && (
+        <div className="run-phases" role="group" aria-label="Experiment phase">
+          {(["plan", "build", "judge"] as const).map((phase) => (
+            <span key={phase} aria-current={experiment.phase === phase ? "step" : undefined}>
+              {phase[0].toUpperCase() + phase.slice(1)}
+            </span>
+          ))}
+        </div>
       )}
-      <div>
-        <dt>Tokens</dt>
-        <dd className="token-counts">
-          <span>
-            {total
-              ? tokens(
-                  total.inputTokens,
-                  total.unknownInputCalls,
-                  total.callCount,
-                )
-              : "—"}{" "}
-            <small>in</small>
-          </span>
-          <span>
-            {total
-              ? tokens(
-                  total.outputTokens,
-                  total.unknownOutputCalls,
-                  total.callCount,
-                )
-              : "—"}{" "}
-            <small>out</small>
-          </span>
-          <span title="Included in input tokens">
-            {total
-              ? tokens(
-                  total.cachedTokens,
-                  total.unknownCacheCalls,
-                  total.callCount,
-                )
-              : "—"}{" "}
-            <small>cached</small>
-          </span>
-        </dd>
-      </div>
-      <div>
-        <dt>Model calls</dt>
-        <dd>{total?.callCount.toLocaleString() ?? "—"}</dd>
-      </div>
-      <div>
-        <dt>Session cost</dt>
-        <dd>{total ? cost(total) : "—"}</dd>
-      </div>
-    </dl>
+      <span className="run-progress">{progress}</span>
+      <span className="run-elapsed" title="Elapsed time">
+        <Clock3 aria-hidden="true" />
+        <span className="sr-only">Elapsed time </span>
+        <Elapsed ms={usage?.wallTimeMs} ticking={active} />
+      </span>
+      {failed > 0 && (
+        <span className="run-failures" role="status">
+          {failed} {failed === 1 ? "agent" : "agents"} failed
+        </span>
+      )}
+    </>
   );
 }

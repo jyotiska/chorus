@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
-  Check,
   CheckCheck,
+  CircleStop,
   Columns2,
   Ellipsis,
   FileText,
@@ -17,16 +17,18 @@ import {
   Users,
 } from "lucide-react";
 import {
-  Metrics,
+  SessionUsageView,
   ExperimentRepositoryView,
   OpenCanvasContext,
   type WorkspaceParts,
   type RunControls,
 } from "@/lib/api/chorus/harness-workspace";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { message, sessionHref, Shell, Sheet } from "./shell";
-import { SessionSummary } from "./session-summary";
+import { RunProgress } from "./session-summary";
 
 type Tab = "Board" | "Canvas" | "Repository" | "Results";
+const splitPreferenceKey = "chorus.harness.boardSplit";
 
 export function LiveWorkspace({
   parts,
@@ -37,34 +39,48 @@ export function LiveWorkspace({
   controls: RunControls;
   initialError: string;
 }) {
-  const { snapshot, usage, act, busy, leave } = controls;
+  const { snapshot, usage, usageError, retryUsage, act, busy, leave } = controls;
   const experiment = snapshot.experiment;
   const documentName = experiment ? "SPEC.md" : "Canvas";
   const finished =
     ["completed", "stopped", "killed", "judge_failed"].includes(snapshot.status);
+  let outcome = "Run finished";
+  if (snapshot.status === "killed") outcome = "Killed";
+  else if (snapshot.status === "judge_failed") outcome = "Judge failed";
+  else if (experiment) outcome = "Report ready";
+  else if (snapshot.verification) outcome = `Solution ${snapshot.verification.status}`;
   const active =
     snapshot.status === "running" || snapshot.status === "reviewing";
+  const canKill = experiment &&
+    (active || snapshot.status === "paused" || snapshot.status === "judge_failed");
   const [tab, setTab] = useState<Tab>(() => (finished ? "Results" : "Board"));
+  const [repositoryOpened, setRepositoryOpened] = useState(false);
   const [drawer, setDrawer] = useState<"Participants" | "Usage" | null>(null);
   const [notice, setNotice] = useState("");
   const canvasOpener = useRef<HTMLButtonElement | null>(null);
-  const menu = useRef<HTMLDivElement>(null);
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  const confirmKill = useRef(false);
+  const killDialog = useRef<HTMLDialogElement>(null);
   const boardButton = useRef<HTMLButtonElement>(null);
   const canvasButton = useRef<HTMLButtonElement>(null);
   const panes = useRef<HTMLDivElement>(null);
   const [roomForBoth, setRoomForBoth] = useState(false);
-  const [splitChoice, setSplitChoice] = useState<boolean | null>(null);
+  const [splitChoice, setSplitChoice] = useState(
+    () => typeof window === "undefined" || localStorage.getItem(splitPreferenceKey) !== "closed",
+  );
   useEffect(() => {
     if (!panes.current) return;
     const observer = new ResizeObserver(([entry]) =>
-      setRoomForBoth(entry.contentRect.width >= 660),
+      setRoomForBoth(entry.contentRect.width >= 820),
     );
     observer.observe(panes.current);
     return () => observer.disconnect();
   }, []);
-  const split = tab === "Board" && (splitChoice ?? roomForBoth);
+  const split = tab === "Board" && roomForBoth && splitChoice;
+  const splitLabel = split
+    ? experiment ? "Close SPEC.md" : "Close canvas"
+    : "Open beside board";
   async function copy() {
-    menu.current?.hidePopover();
     try {
       await navigator.clipboard.writeText(
         new URL(sessionHref(snapshot.id), location.origin).href,
@@ -97,83 +113,45 @@ export function LiveWorkspace({
           Resume
         </button>
       )}
-      {experiment && ["running", "reviewing", "paused", "stopping", "judge_failed"].includes(snapshot.status) && (
-        <button className="kill-experiment" disabled={busy || snapshot.status === "stopping"} onClick={() => void act("kill")}>
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M4 17l16 5m0-5L4 22" stroke="currentColor" strokeWidth="2" />
-            <circle cx="4" cy="17" r="1.7" />
-            <circle cx="20" cy="17" r="1.7" />
-            <circle cx="4" cy="22" r="1.7" />
-            <circle cx="20" cy="22" r="1.7" />
-            <path fillRule="evenodd" d="M12 1a8 8 0 0 0-8 8c0 3 1.8 5 4 5.7V17h2v-1.5h1V17h2v-1.5h1V17h2v-2.3c2.2-.7 4-2.7 4-5.7a8 8 0 0 0-8-8ZM8.5 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM12 11l-1.4 2.4h2.8L12 11Z" />
-          </svg>
-          {snapshot.status === "stopping" ? "Stopping…" : "Kill experiment"}
-        </button>
-      )}
       {experiment && snapshot.status === "judge_failed" && (
         <button disabled={busy} onClick={() => void act("retry_judge")}>Retry judge</button>
       )}
-      <button
-        className="icon-btn"
-        aria-label="Run actions"
-        popoverTarget="run-menu"
-      >
-        <Ellipsis />
-      </button>
-      <div id="run-menu" ref={menu} popover="auto" className="run-menu">
-        <button onClick={() => void copy()}>
-          <LinkIcon />
-          Copy session link
-        </button>
-        {!experiment && !finished && !snapshot.endedEarly && (
-          <button
-            disabled={busy}
-            onClick={() => {
-              menu.current?.hidePopover();
-              void act("stop");
-            }}
-          >
-            Stop and evaluate
-          </button>
-        )}
-      </div>
+      <DropdownMenu onOpenChangeComplete={(open) => {
+        if (!open && confirmKill.current) {
+          confirmKill.current = false;
+          menuTrigger.current?.focus();
+          killDialog.current?.showModal();
+        }
+      }}>
+        <DropdownMenuTrigger ref={menuTrigger} className="icon-btn" aria-label="Run actions" title="Run actions">
+          <Ellipsis />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="run-actions-menu">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="run-menu-model" title={snapshot.config.model}>
+              Model <code>{snapshot.config.model}</code>
+            </DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => void copy()}><LinkIcon /> Copy session link</DropdownMenuItem>
+            {!experiment && !finished && !snapshot.endedEarly && (
+              <DropdownMenuItem disabled={busy} onClick={() => void act("stop")}>Stop and evaluate</DropdownMenuItem>
+            )}
+            {canKill && <DropdownMenuItem variant="destructive" disabled={busy} onClick={() => { confirmKill.current = true; }}>
+              <CircleStop /> Kill experiment
+            </DropdownMenuItem>}
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
   return (
     <Shell
       title={snapshot.problem.title}
-      context={`${experiment ? "Experiment" : "Session"} / ${snapshot.config.model}`}
-      status={snapshot.status}
       snapshot={snapshot}
+      headerDetails={<RunProgress snapshot={snapshot} usage={usage} active={active} />}
       actions={actions}
       onNew={() => void newSession()}
       busy={busy}
     >
-      {experiment && (
-        <div className="workspace-tabs">
-          <nav aria-label="Experiment phase">
-            {(["plan", "build", "judge"] as const).map((phase) => (
-              <span key={phase} aria-current={experiment.phase === phase ? "step" : undefined} aria-live={phase === "plan" ? "polite" : undefined}>
-                {phase === "plan" && experiment.phase !== "plan" ? (
-                  <><Check aria-hidden="true" />Plan complete</>
-                ) : phase[0].toUpperCase() + phase.slice(1)}
-              </span>
-            ))}
-          </nav>
-          {snapshot.status === "killed" && <strong role="status">Killed</strong>}
-          {snapshot.status === "stopping" && <strong role="status">Stopping…</strong>}
-        </div>
-      )}
-      <SessionSummary snapshot={snapshot} usage={usage} />
-      <div
-        className="agent-strip"
-        role="region"
-        aria-label="Live agents"
-        aria-hidden={drawer === "Participants" || undefined}
-        inert={drawer === "Participants"}
-      >
-        {parts.roster}
-      </div>
       <div className="workspace-tabs">
         <nav aria-label="Session views">
           <button
@@ -196,46 +174,57 @@ export function LiveWorkspace({
             {documentName}
           </button>
           {experiment && (
-            <button aria-current={tab === "Repository" ? "page" : undefined} onClick={() => setTab("Repository")}>
+            <button aria-current={tab === "Repository" ? "page" : undefined} onClick={() => {
+              setRepositoryOpened(true);
+              setTab("Repository");
+            }}>
               <GitBranch />
               Repository
             </button>
           )}
           <button
+            className="results-tab"
+            aria-label="Results"
+            title={finished ? outcome : undefined}
             aria-current={tab === "Results" ? "page" : undefined}
             onClick={() => setTab("Results")}
           >
             <CheckCheck />
             Results
             {finished && tab !== "Results" && (
-              <span className="result-outcome" role="status">
-                {experiment ? (snapshot.status === "killed" ? "Killed" : snapshot.status === "judge_failed" ? "Judge failed" : "Report ready") : snapshot.verification
-                  ? `Solution ${snapshot.verification.status}`
-                  : "Run finished"}
+              <span className="result-outcome" data-state={snapshot.status} role="status">
+                <span className="sr-only">{outcome}</span>
               </span>
             )}
           </button>
         </nav>
         <div className="inspect-buttons">
-          {tab === "Board" && (
+          {tab === "Board" && roomForBoth && (
             <button
-              aria-label={split ? (experiment ? "Close SPEC.md" : "Close canvas") : "Open beside board"}
+              aria-label={splitLabel}
+              title={splitLabel}
               aria-pressed={split}
-              onClick={() => setSplitChoice(!split)}
+              onClick={() => {
+                setSplitChoice(!split);
+                localStorage.setItem(splitPreferenceKey, split ? "closed" : "open");
+              }}
             >
               <Columns2 />
-              <span className="split-label">
-                {split ? (experiment ? "Close SPEC.md" : "Close canvas") : "Open beside board"}
-              </span>
             </button>
           )}
-          <button onClick={() => setDrawer("Participants")}>
+          <button
+            aria-label={`Participants (${snapshot.agents.length})`}
+            aria-haspopup="dialog"
+            title="Participants"
+            onClick={() => setDrawer("Participants")}
+          >
             <Users />
-            Participants <small>{snapshot.agents.length}</small>
+            <span className="inspect-label">Participants</span>
+            <small>{snapshot.agents.length}</small>
           </button>
-          <button onClick={() => setDrawer("Usage")}>
+          <button aria-label="Usage" aria-haspopup="dialog" title="Usage" onClick={() => setDrawer("Usage")}>
             <Gauge />
-            Usage
+            <span className="inspect-label">Usage</span>
           </button>
         </div>
       </div>
@@ -264,7 +253,7 @@ export function LiveWorkspace({
             {parts.board}
           </OpenCanvasContext.Provider>
         </div>
-        <div className="canvas-pane" hidden={tab !== "Canvas" && !split}>
+        <div className="canvas-pane spec-pane" hidden={tab !== "Canvas" && !split}>
           {tab === "Canvas" && (
             <div className="pane-tools">
               <button
@@ -290,36 +279,43 @@ export function LiveWorkspace({
         <div className="report-pane" hidden={tab !== "Results"}>
           {parts.report}
         </div>
-        {experiment && tab === "Repository" && (
-          <div className="report-pane"><ExperimentRepositoryView snapshot={snapshot} /></div>
+        {experiment && repositoryOpened && (
+          <div className="repository-pane" hidden={tab !== "Repository"}>
+            <ExperimentRepositoryView snapshot={snapshot} visible={tab === "Repository"} />
+          </div>
         )}
       </div>
       {drawer && (
-        <Sheet title={drawer} close={() => setDrawer(null)}>
-          {drawer === "Participants" ? (
-            parts.roster
-          ) : usage ? (
-            <div className="usage-view">
-              <p>{(usage.wallTimeMs / 1000).toFixed(1)} s wall time</p>
-              {(["participants", "judge", "total"] as const).map((key) => (
-                <section key={key}>
-                  <h3>
-                    {
-                      {
-                        participants: "Participants",
-                        judge: "Final judge",
-                        total: "Whole session",
-                      }[key]
-                    }
-                  </h3>
-                  <Metrics usage={usage[key]} />
-                </section>
-              ))}
-            </div>
-          ) : (
-            <p role="status">Loading usage…</p>
-          )}
+        <Sheet key={drawer} title={drawer} className={drawer === "Participants" ? "participants-sheet" : undefined}
+          close={() => setDrawer((current) => current === drawer ? null : current)}>
+          {drawer === "Participants" ? parts.roster : <SessionUsageView usage={usage} error={usageError} retry={retryUsage} />}
         </Sheet>
+      )}
+      {experiment && (
+        <dialog
+          ref={killDialog}
+          className="kill-confirmation"
+          aria-labelledby="kill-title"
+          aria-describedby="kill-description"
+          role="alertdialog"
+        >
+          <h2 id="kill-title">Kill experiment?</h2>
+          <p id="kill-description">Active work will stop. The repository and recorded activity will be preserved.</p>
+          <form method="dialog">
+            <button className="subtle-btn" autoFocus>Cancel</button>
+            <button
+              className="danger-btn"
+              type="button"
+              disabled={!canKill || busy}
+              onClick={() => {
+                killDialog.current?.close();
+                void act("kill");
+              }}
+            >
+              Kill experiment
+            </button>
+          </form>
+        </dialog>
       )}
       {parts.inspector}
     </Shell>

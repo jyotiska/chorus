@@ -42,7 +42,9 @@ Each experiment has three stages:
 2. **Build:** Each agent edits its own working copy of the code. Agents submit changes, review them, and combine them into the shared project.
 3. **Judge:** A model reviews the final saved code and the work records.
 
-You can follow the discussion, read the plan, inspect code changes, and see each agent’s task progress. Unfinished tasks remain visible with explanations. **Kill experiment** stops the work and keeps its files and records. If judging fails, **Retry judge** reviews the same saved result.
+The dark workspace keeps the Board beside `SPEC.md` when there’s room. Open **Participants** to see active tasks and blockers, **Repository** to inspect branch diffs, or **Results** to trace scores to their evidence. **Usage** shows model calls and costs, and **Archive** helps you find and reopen saved runs. [Chorus Web guide](web/README.md)
+
+**Kill experiment** stops the work and keeps its files and records. If judging fails, **Retry judge** reviews the same saved result.
 
 App experiments need Git. Small frontend and backend starter projects are included. To use your own reviewed starter projects, set `CHORUS_EXPERIMENT_SCAFFOLD` in `.env` to a folder containing `frontend/` and `backend/`.
 

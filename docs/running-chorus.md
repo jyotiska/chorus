@@ -34,6 +34,8 @@ These experiments require Git and use the bundled `chorus/harness/starters/` pro
 
 Use **Kill experiment** to stop work while keeping its files and records. Use **Retry judge** if the final review fails. Switching sessions or closing the browser leaves the experiment running.
 
+The [Chorus Web guide](../web/README.md#follow-the-work) covers the Board, task owners, branch diffs, usage, judge evidence, and reopening saved runs.
+
 The current experiment tools support writing and reading code. Running application commands, starting the generated app, and browser verification are not implemented yet. A judge report does not establish that the generated app works.
 
 ## Run a benchmark
@@ -78,6 +80,7 @@ The active API is `/api/v2`:
 - `GET /sessions/{id}/events` streams revisioned snapshots; reconnect retrieves the latest state.
 - `GET /sessions/{id}/records?kind=board&after=0&limit=100` reads an ordered record page. Kinds also include summary, conversation, change, version, call, request, output, tool, activity, diagnostic, and assessment. An `agent` filter narrows inspection.
 - `GET /sessions/{id}/records/{recordId}` retrieves a cited record.
+- `GET /sessions/{id}/repository/commit-diff?branch=main&revision=COMMIT` previews a committed patch from the selected experiment branch ancestry. The response includes a `truncated` flag when the patch exceeds the preview limit.
 - `GET /sessions/{id}/usage` returns ledger-derived agent, participant, judge, and session totals.
 - `GET /sessions/{id}/export?format=json` exports the session and currently visible records; `format=markdown` exports the final canvas.
 - `GET /assets/{agentId}/portrait.svg` and `/assets/{agentId}/sprite.svg` serve packaged artwork.

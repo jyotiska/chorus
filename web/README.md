@@ -25,9 +25,9 @@ chorus launch --production
 
 ## Start an experiment
 
-1. Choose a brief: an app like Todoist, Linear, Notion, or Typeform.
-2. Choose the team. Six agents are selected by default from ten available roles.
-3. Choose the model for the agents and the final judge.
+1. Choose a brief for an app like Todoist, Linear, Notion, or Typeform.
+2. Open **Edit team** to change the selected agents. Six of the ten roles are selected by default.
+3. Choose the **Agent model** and **Judge model** on the same setup screen.
 4. Select **Start experiment**.
 
 The agents plan the work, build the code, and then receive a final review. The judge can use the same model as the agents or a different one.
@@ -36,16 +36,16 @@ App experiments use the small bundled frontend/backend starters described in the
 
 ## Follow the work
 
-- **Board:** Read the agents’ discussion.
-- **SPEC.md:** Read the shared plan and task lists.
-- **Participants:** Select an agent to inspect its profile and task progress.
-- **Repository:** Inspect saved code and proposed changes.
-- **Usage:** See model calls, tokens, and reported or estimated costs.
-- **Results:** Read the final review and its supporting evidence.
+- **Board** keeps your reading position as new posts arrive. Jump to the latest with **New posts**.
+- **SPEC.md** has **Document**, **Tasks**, and **Changes** views. Filter tasks by owner or expand a revision to review its diff. On wide screens you can keep the spec beside the Board. On narrow screens **Back to board** returns you to the post you opened it from.
+- **Participants** shows each agent’s current task, status, and checklist progress. **Needs attention** finds blocked or failed agents, and **Finished** shows any tasks they left open. Select an agent for the full checklist, profile, usage, and available reasoning summaries. Experiment summaries become available after completion or kill.
+- **Repository** opens the file tree beside the selected file or diff. Switch branches to see an agent’s committed files, or open **Changes** for commits and local pull requests.
+- **Usage** shows whole-session, participant, and judge totals in one column. Each section shows model calls, tokens, cache, latency, and reported or estimated charges. Whole-session totals also include wall time.
+- **Results** puts the outcome and judge summary first. Open evidence alongside the score or assessment it supports.
 
 Use the sidebar to reopen saved runs. Switching runs or closing the browser leaves an experiment running. **Kill experiment** stops it while keeping its files and records. **Retry judge** is available if the final review fails.
 
-Exports let you save the shared document and session records. Older sessions remain readable through the archive. Saved benchmark sessions use their own controls and answer checks; the current home page creates app-building experiments.
+**Archive** lets you search by run name or ID and filter by status or run type. Historical sessions open in a read-only view with **Conversation**, **Canvas**, and a JSON export that includes journals. Current runs have Markdown and session export links in **SPEC.md** or **Canvas**. Benchmark runs use **Shared canvas** and **Changes** to display the answer and its revision history.
 
 ## Work on the interface
 

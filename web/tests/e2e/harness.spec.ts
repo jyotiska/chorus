@@ -201,27 +201,48 @@ test("actual tool loop completes with concise mentions, summaries, usage, and fi
     page.getByRole("dialog", { name: "Drew details" }),
   ).toBeVisible();
   const inspector = page.getByRole("dialog", { name: "Drew details" });
-  await page.getByRole("tab", { name: "Reasoning summaries" }).click();
+  await inspector.getByRole("tab", { name: "Profile" }).press("End");
+  await expect(inspector.getByRole("tab", { name: "Reasoning summaries" })).toBeFocused();
   await expect(
     page.getByText("Published validated work only.", { exact: true }),
   ).toBeVisible();
-  await expect(inspector.getByRole("tab")).toHaveText(["Profile", "Reasoning summaries"]);
+  await expect(inspector.getByRole("tab")).toHaveText(["Profile", "Usage", "Reasoning summaries"]);
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "Close Participants" }).click();
   await page.getByRole("button", { name: "Usage", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Whole session" }),
   ).toBeVisible();
+  const usageDialog = page.getByRole("dialog", { name: "Usage" });
+  await expect(usageDialog.getByText("Session cost", { exact: true })).toBeInViewport();
+  const usageSections = ["Whole session", "Participants", "Final judge"].map((name) =>
+    usageDialog.getByRole("region", { name, exact: true }));
+  for (const section of usageSections) {
+    for (const metric of ["Input tokens", "Cache coverage", "Mean / p95 latency", "Reported cost"]) {
+      await expect(section.getByText(metric, { exact: true })).toBeVisible();
+    }
+  }
+  await expect(usageDialog.locator("details")).toHaveCount(0);
+  const [whole, participantsUsage, judgeUsage] = await Promise.all(usageSections.map((section) => section.boundingBox()));
+  expect(participantsUsage!.y).toBeGreaterThanOrEqual(whole!.y + whole!.height);
+  expect(judgeUsage!.y).toBeGreaterThanOrEqual(participantsUsage!.y + participantsUsage!.height);
+  expect(judgeUsage!.x).toBe(participantsUsage!.x);
+  await page.screenshot({ path: "test-results/usage-desktop.png", animations: "disabled" });
   await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Usage", exact: true }),
   ).toBeFocused();
   await page.getByRole("button", { name: "Canvas", exact: true }).click();
+  const benchmarkCanvas = page.getByRole("region", { name: "Benchmark canvas" });
+  await expect(benchmarkCanvas.getByRole("region", { name: "Canvas document" })).toBeVisible();
+  await benchmarkCanvas.getByRole("button", { name: "Changes" }).press("Enter");
   await page.getByText("Canvas changelog", { exact: true }).waitFor();
   await page.locator(".canvas-pane details").first().locator("summary").click();
   await expect(
     page.locator(".canvas-pane details[open] pre").first(),
   ).toBeVisible();
+  await expect(benchmarkCanvas.getByLabel("Unified diff").locator("[data-line=added]").first()).toBeVisible();
+  await page.screenshot({ path: "test-results/benchmark-canvas-changes.png" });
   for (const [label, format] of [
     ["Export canvas", "markdown"],
     ["Export complete session", "json"],
@@ -248,16 +269,11 @@ test("actual tool loop completes with concise mentions, summaries, usage, and fi
   ).json();
   expect(usage.total.callCount).toBeGreaterThan(usage.participants.callCount);
   expect(usage.total.unknownInputCalls).toBe(0);
-  const summary = page.getByLabel("Session totals", { exact: true });
-  await expect(summary.locator(".token-counts > span").first()).toHaveText(
-    `${usage.total.inputTokens.toLocaleString()} in`,
-  );
-  await expect(
-    summary
-      .locator("div")
-      .filter({ has: page.locator("dt", { hasText: "Turns completed" }) })
-      .locator("dd"),
-  ).toHaveText("5 / 5");
+  await expect(page.getByText("5 / 5 turns", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Usage", exact: true }).click();
+  const summary = page.getByRole("region", { name: "Whole session" });
+  await expect(summary.getByText(usage.total.inputTokens.toLocaleString(), { exact: true }).first()).toBeVisible();
+  await page.keyboard.press("Escape");
   const exported = await (
     await request.get(`/api/chorus/v2/sessions/${id}/export`)
   ).json();
@@ -287,32 +303,23 @@ test("fifty-agent roster is complete, artwork loads, and narrow screens contain 
   await expect(
     page.getByRole("heading", { name: "Message board" }),
   ).toBeInViewport();
-  const strip = page.getByRole("region", { name: "Live agents" });
-  const agents = strip.getByRole("button");
+  const participants = page.getByRole("button", { name: /^Participants/ });
+  await participants.click();
+  const roster = page.getByRole("dialog", { name: "Participants" });
+  const agents = roster.getByRole("button").filter({ has: page.getByRole("progressbar") });
   await expect(agents).toHaveCount(50);
-  expect(
-    await agents.evaluateAll(
-      (buttons) =>
-        new Set(buttons.map((b) => b.getBoundingClientRect().top)).size,
-    ),
-  ).toBe(1);
   await agents.last().click();
   await expect(page.getByRole("dialog", { name: /details$/ })).toBeVisible();
   await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Close Participants" }).click();
   await page.setViewportSize({ width: 768, height: 900 });
-  const board = await page
-    .getByRole("heading", { name: "Message board" })
-    .boundingBox();
-  const canvas = await page
-    .getByRole("heading", { name: "Shared canvas" })
-    .boundingBox();
-  expect(canvas!.x).toBeGreaterThan(board!.x + board!.width);
-  expect(Math.abs(board!.y - canvas!.y)).toBeLessThan(12);
-  await page.getByRole("button", { name: /^Participants/ }).click();
+  await expect(page.getByRole("heading", { name: "Message board" })).toBeInViewport();
+  await expect(page.getByRole("heading", { name: "Shared canvas" })).toBeHidden();
+  await participants.click();
   await expect(page.getByRole("progressbar")).toHaveCount(50);
-  await expect(
-    page.getByRole("img", { name: "Alex portrait", exact: true }),
-  ).toHaveAttribute("src", /\/api\/chorus\/v2\/assets\/alex\/portrait\.svg/);
+  const portrait = roster.locator('img[alt="Alex portrait"]');
+  await expect(portrait).toHaveAttribute("src", /\/api\/chorus\/v2\/assets\/alex\/portrait\.svg/);
+  await expect.poll(() => portrait.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   if (baseURL?.includes(":3100")) {
     await expect(
       page.getByRole("img", { name: /animated sprite/ }),
@@ -341,7 +348,7 @@ test("fifty-agent roster is complete, artwork loads, and narrow screens contain 
   });
 });
 
-test("each session opens beside the board, with phone navigation and stop controls", async ({
+test("the desktop split preference persists, with phone navigation and stop controls", async ({
   page,
   request,
   context,
@@ -371,15 +378,17 @@ test("each session opens beside the board, with phone navigation and stop contro
   await page.locator(`.run-list a[href="/?session=${second}"]`).click();
   await expect(page).toHaveURL(new RegExp(second));
   await expect(
-    page.getByRole("button", { name: "Close canvas" }),
+    page.getByRole("button", { name: "Open beside board" }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Close canvas" }),
+    page.getByRole("button", { name: "Open beside board" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Open beside board" }).click();
+  await expect(page.getByRole("heading", { name: "Shared canvas" })).toBeInViewport();
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: "Run actions" }).click();
-  await page.getByRole("button", { name: "Copy session link" }).click();
+  await page.getByRole("menuitem", { name: "Copy session link" }).click();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
     page.url(),
   );
@@ -407,7 +416,7 @@ test("each session opens beside the board, with phone navigation and stop contro
   }
   await page.goto(`/?session=${second}`);
   await page.getByRole("button", { name: "Run actions" }).click();
-  await page.getByRole("button", { name: "Stop and evaluate" }).click();
+  await page.getByRole("menuitem", { name: "Stop and evaluate" }).click();
   await page
     .getByRole("button", { name: "Results", exact: true })
     .filter({ has: page.getByRole("status") })
@@ -417,12 +426,11 @@ test("each session opens beside the board, with phone navigation and stop contro
     page.getByText("Narrative judge disabled for this run."),
   ).toBeVisible();
   await page.getByRole("button", { name: "Board", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Open beside board", exact: true })
-    .click();
   await expect(
     page.getByRole("heading", { name: "Message board" }),
   ).toBeInViewport();
+  await expect(page.getByRole("button", { name: "Open beside board", exact: true })).toBeHidden();
+  await page.getByRole("button", { name: "Canvas", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Shared canvas" }),
   ).toBeInViewport();
@@ -451,7 +459,12 @@ test("a long board holds the reading position through incoming posts and a phone
     status: count === 45 ? "ready" : "running",
   });
   const endpoint = `**/api/chorus/v2/sessions/${source.id}`;
+  let failedUsageRequest = false;
   await page.route(endpoint + "/usage", async (route) => {
+    if (!failedUsageRequest) {
+      failedUsageRequest = true;
+      return route.fulfill({ status: 502, json: { code: "BACKEND_UNAVAILABLE", error: "Usage temporarily offline.", requestId: "usage-test" } });
+    }
     const usage = await (await route.fetch()).json();
     Object.assign(usage.total, {
       callCount: 3,
@@ -494,10 +507,20 @@ test("a long board holds the reading position through incoming posts and a phone
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/?session=${source.id}`);
-  const totals = page.getByLabel("Session totals", { exact: true });
-  await expect(totals).toContainText("40 (partial)");
-  await expect(totals).toContainText("Unknown");
+  await page.getByRole("button", { name: "Usage", exact: true }).click();
+  const drawer = page.getByRole("dialog", { name: "Usage" });
+  await expect(drawer.getByRole("alert")).toContainText("Usage temporarily offline.");
+  await drawer.getByRole("button", { name: "Retry usage" }).click();
+  const totals = page.getByRole("region", { name: "Whole session" });
+  await expect(totals.getByText("$0.01 + $0.002 est. (partial)")).toBeVisible();
+  await expect(totals.getByText("40 (partial)")).toBeVisible();
+  const outputTokens = totals
+    .locator("div")
+    .filter({ has: page.getByText("Output tokens", { exact: true }) })
+    .locator("dd");
+  await expect(outputTokens).toHaveText("Unknown");
   await expect(totals).toContainText("$0.01 + $0.002 est. (partial)");
+  await page.keyboard.press("Escape");
   const row = page
     .getByRole("article")
     .filter({ hasText: "Contribution 25 is ready" });

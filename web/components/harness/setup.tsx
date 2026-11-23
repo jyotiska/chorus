@@ -70,6 +70,13 @@ export function Launcher({
     value: item.id,
     label: item.label + (item.available === false ? " · unavailable" : ""),
   }));
+  const modelWarning = selectedModel?.available === false
+    ? selectedModel.unavailableReason || "This model is unavailable."
+    : undefined;
+  const judgeUsesAgentModel = selectedJudgeModel?.id === selectedModel?.id;
+  const judgeWarning = judging && !judgeUsesAgentModel && selectedJudgeModel?.available === false
+    ? selectedJudgeModel.unavailableReason || "This model is unavailable."
+    : undefined;
   const selected = catalog.agents.filter((agent) => roster.includes(agent.id));
   const invalidCap =
     !experiment &&
@@ -89,6 +96,7 @@ export function Launcher({
     selectedModel?.available === false ||
     (judging && selectedJudgeModel?.available === false);
   const launchLabel = experiment ? "Start experiment" : "Start session";
+  const briefLabel = experiment ? "brief" : "problem";
   const agentCount = `${roster.length} ${roster.length === 1 ? "agent" : "agents"}`;
   const visible = catalog.agents
     .filter(
@@ -143,54 +151,86 @@ export function Launcher({
       setBusy(false);
     }
   }
-  const judgePicker = (
+  const modelPicker = ({
+    id,
+    label,
+    value,
+    select,
+    warning,
+    note,
+    sharedWarning,
+  }: {
+    id: string;
+    label: string;
+    value: string;
+    select: (value: string) => void;
+    warning?: string;
+    note?: string | null;
+    sharedWarning?: string;
+  }) => (
     <div className="setting-field">
-      <label htmlFor="judge-model">Judge model</label>
-      <Select
-        value={judgeModel ?? model}
-        items={modelOptions}
-        onValueChange={(value) => value !== null && setJudgeModel(value)}
-      >
-        <SelectTrigger id="judge-model">
+      <label htmlFor={id}>{label}</label>
+      <Select value={value} items={modelOptions} onValueChange={(value) => value !== null && select(value)}>
+        <SelectTrigger
+          id={id}
+          aria-invalid={Boolean(warning || sharedWarning) || undefined}
+          aria-describedby={[
+            warning ? `${id}-warning` : sharedWarning,
+            note ? `${id}-note` : undefined,
+          ].filter(Boolean).join(" ") || undefined}
+        >
           <SelectValue />
         </SelectTrigger>
-        <SelectContent align="end" alignItemWithTrigger={false} className="min-w-[min(18rem,var(--available-width))]">
+        <SelectContent className="model-options" align="end" alignItemWithTrigger={false}>
           {modelOptions.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
+            <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
           ))}
         </SelectContent>
       </Select>
+      {warning && <p id={`${id}-warning`} role="status" className="notice">{warning}</p>}
+      {note && <p id={`${id}-note`} role="status" className="notice">{note}</p>}
     </div>
   );
+  const judgePicker = modelPicker({
+    id: "judge-model",
+    label: "Judge model",
+    value: judgeModel ?? model,
+    select: setJudgeModel,
+    warning: judgeWarning,
+    note: judgeUsesAgentModel ? undefined : selectedJudgeModel?.compatibilityNote,
+    sharedWarning: judgeUsesAgentModel && modelWarning ? "run-model-warning" : undefined,
+  });
   return (
     <section className="launcher">
-      <div className="launcher-intro">
-        <h2>{experiment ? "Set up an experiment" : "Set up a session"}</h2>
-        <p>Choose a problem and the agents who will work on it.</p>
-      </div>
-      <div className="problem-field">
-        <span className="field-label">Problem</span>
+      {!experiment && (
+        <div className="launcher-intro">
+          <h2>Set up a session</h2>
+          <p>Choose a problem and the agents who will work on it.</p>
+        </div>
+      )}
+      <section className="problem-field" aria-labelledby="problem-heading">
+        {experiment ? <h2 id="problem-heading">Brief</h2> : (
+          <span id="problem-heading" className="field-label">Problem</span>
+        )}
         <Button
           variant="outline"
           aria-haspopup="dialog"
           id="choose-problem"
           className="problem-trigger"
-          aria-label={`Choose problem: ${problem.title}`}
+          aria-label={`Choose ${briefLabel}: ${problem.title}`}
           onClick={() => open("problem")}
         >
           <span>{problem.title}</span>
           <ChevronDown aria-hidden="true" />
         </Button>
         <p>{problem.statement}</p>
-      </div>
+      </section>
       {experiment ? (
         <section className="experiment-team" aria-labelledby="experiment-team-title">
           <div className="experiment-team-header">
-            <div>
-              <h3 id="experiment-team-title">Experiment team</h3>
-              <p><strong>{agentCount}</strong> selected</p>
+            <div className="experiment-team-title">
+              <h2 id="experiment-team-title">Experiment team</h2>
+              <span>{agentCount}</span>
             </div>
             <button className="subtle-btn" aria-haspopup="dialog" onClick={() => open("team")}>
               <Pencil aria-hidden="true" />
@@ -207,6 +247,7 @@ export function Launcher({
               ))}
             </ul>
           )}
+          {invalidRoster && <p role="status" className="notice">{rosterRequirement}</p>}
         </section>
       ) : <div className="team-line">
         <span className="field-label">
@@ -223,30 +264,19 @@ export function Launcher({
           Edit team
         </button>
       </div>}
-      <section className="run-settings">
-        <h3>
-          <SlidersHorizontal /> Run settings
-        </h3>
+      <section className="run-settings" aria-labelledby="model-heading">
+        {experiment ? <h2 id="model-heading">Models</h2> : (
+          <h3 id="model-heading"><SlidersHorizontal /> Run settings</h3>
+        )}
         <div className={experiment ? "settings-fields experiment-settings-fields" : "settings-fields"}>
-          <div className="setting-field">
-            <label htmlFor="run-model">Model</label>
-            <Select
-              value={model}
-              items={modelOptions}
-              onValueChange={(value) => value !== null && setModel(value)}
-            >
-              <SelectTrigger id="run-model">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent alignItemWithTrigger={false}>
-                {modelOptions.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {modelPicker({
+            id: "run-model",
+            label: experiment ? "Agent model" : "Model",
+            value: model,
+            select: setModel,
+            warning: modelWarning,
+            note: selectedModel?.compatibilityNote,
+          })}
           {experiment ? judgePicker : (
             <label>
               Turns per agent
@@ -261,16 +291,6 @@ export function Launcher({
             </label>
           )}
         </div>
-        {selectedModel?.available === false && (
-          <p role="status" className="notice">
-            {selectedModel.unavailableReason}
-          </p>
-        )}
-        {selectedModel?.compatibilityNote && (
-          <p role="status" className="notice">
-            {selectedModel.compatibilityNote}
-          </p>
-        )}
         {!experiment && (
           <label className="judge">
             <input
@@ -282,19 +302,15 @@ export function Launcher({
           </label>
         )}
         {!experiment && judge && judgePicker}
-        {judging &&
-          selectedJudgeModel?.id !== selectedModel?.id &&
-          selectedJudgeModel?.available === false && (
-            <p role="status" className="notice">{selectedJudgeModel.unavailableReason}</p>
-          )}
       </section>
-      {reason && (
+      {!experiment && reason && (
         <p role="status" className="notice">
           {reason}
         </p>
       )}
-      {error && <p role="alert">{error}</p>}
+      {!experiment && error && <p role="alert">{error}</p>}
       <div className="launch-foot">
+        {experiment && error && <p role="alert">{error}</p>}
         {!experiment && <span>{invalidCap ? "Turn limit required" : `Up to ${roster.length * Number(cap)} contribution cycles`}</span>}
         <button
           type="button"
@@ -308,7 +324,7 @@ export function Launcher({
       </div>
       {sheet && (
         <Sheet
-          title={sheet === "team" ? "Edit team" : "Choose a problem"}
+          title={sheet === "team" ? "Edit team" : `Choose a ${briefLabel}`}
           dialogRef={teamDialog}
           close={() => setSheet(null)}
         >
@@ -317,11 +333,11 @@ export function Launcher({
             <input
               autoFocus
               aria-label={
-                sheet === "team" ? "Search agents" : "Search problems"
+                sheet === "team" ? "Search agents" : `Search ${briefLabel}s`
               }
               value={query}
               placeholder={
-                sheet === "team" ? "Search agents…" : "Search problems…"
+                sheet === "team" ? "Search agents…" : `Search ${briefLabel}s…`
               }
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -349,7 +365,7 @@ export function Launcher({
                   {item.id === problem.id && <Check />}
                 </button>
               ))}
-              {!matches.length && <p>No matching problems.</p>}
+              {!matches.length && <p>No matching {briefLabel}s.</p>}
             </div>
           ) : (
             <>

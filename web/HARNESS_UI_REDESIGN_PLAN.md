@@ -1,5 +1,7 @@
 # Chorus Web · Final UI redesign plan
 
+This plan captures the original design direction. The [Chorus Web guide](README.md) describes the current experiment setup, workspace views, and saved-run navigation.
+
 ## Approved direction
 
 Build a dark-only workspace around the approved Setup, Live run, Results and Phone wireframes. The primary journey is **read a contribution → inspect the shared answer or its evidence → return to the same post**. A two-agent run and a 50-agent run should put the first contribution in the same place.

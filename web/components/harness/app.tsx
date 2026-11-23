@@ -120,13 +120,15 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
     return (
       <Shell title="Historical session" archive onNew={leave}>
         <div className="archive-record">
-          <LegacyArchive key={legacy} id={legacy} newSessionHref="/?new=1" />
+          <LegacyArchive key={legacy} id={legacy} newSessionHref="/?new=1" archiveHref={legacyCatalog ? "/archive?experiment=1" : "/archive"} />
         </div>
       </Shell>
     );
+  const experimentSetup = catalog ? catalog.version === "experiments-1" : !legacyCatalog;
   return (
     <Shell
-      title="New session"
+      title={experimentSetup ? "New experiment" : "New session"}
+      experimentSetup={experimentSetup}
       onNew={() => document.getElementById("choose-problem")?.click()}
     >
       {error && (

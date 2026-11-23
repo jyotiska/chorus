@@ -36,11 +36,13 @@ export function Mark() {
 
 export function Sheet({
   title,
+  className,
   dialogRef,
   close,
   children,
 }: {
   title: string;
+  className?: string;
   dialogRef?: RefObject<HTMLDialogElement | null>;
   close: () => void;
   children: ReactNode;
@@ -52,7 +54,7 @@ export function Sheet({
   }, [ref]);
   return (
     <dialog
-      className="sheet"
+      className={className ? `sheet ${className}` : "sheet"}
       ref={ref}
       aria-label={title}
       onClose={close}
@@ -84,28 +86,35 @@ export function Sheet({
   );
 }
 
+export type RunHistory = {
+  runs: HarnessSnapshot[];
+  loading: boolean;
+  error: string;
+  retry: () => void;
+};
+
 type Props = {
-  children: ReactNode;
+  children: ReactNode | ((history: RunHistory) => ReactNode);
   title: string;
   actions?: ReactNode;
-  status?: string;
-  context?: string;
+  headerDetails?: ReactNode;
   snapshot?: HarnessSnapshot;
   onNew?: () => void;
   busy?: boolean;
   archive?: boolean;
+  experimentSetup?: boolean;
 };
 
 export function Shell({
   children,
   title,
-  status,
-  context,
   actions,
+  headerDetails,
   snapshot,
   onNew,
   busy,
   archive,
+  experimentSetup,
 }: Props) {
   const [list, setList] = useState<HarnessSnapshot[]>([]);
   const [error, setError] = useState("");
@@ -113,7 +122,9 @@ export function Shell({
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const status = snapshot?.status;
   const active = status === "running" || status === "reviewing";
+  const compact = Boolean(snapshot || experimentSetup || archive);
   useEffect(() => {
     let mounted = true;
     void harness
@@ -137,6 +148,10 @@ export function Shell({
       ? [snapshot, ...list.filter((item) => item.id !== snapshot.id)]
       : list
   ).toSorted((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  function retryHistory() {
+    setError("");
+    setAttempt((value) => value + 1);
+  }
   const rail = (
     <>
       <div className="rail-brand">
@@ -153,7 +168,9 @@ export function Shell({
       {onNew ? (
         <button className="new-session" disabled={busy} onClick={onNew}>
           <Plus />
-          {active ? "Pause and return to setup" : "New session"}
+          {experimentSetup || snapshot?.experiment
+            ? "New experiment"
+            : active ? "Pause and return to setup" : "New session"}
         </button>
       ) : (
         <Link className="new-session" href="/?new=1">
@@ -192,7 +209,7 @@ export function Shell({
           </p>
         )}
         {error && (
-          <button title={error} onClick={() => setAttempt((n) => n + 1)}>
+          <button title={error} onClick={retryHistory}>
             Retry history
           </button>
         )}
@@ -208,7 +225,7 @@ export function Shell({
   );
   return (
     <div
-      className={`chorus-shell ${shared.darkWorkspace} ${collapsed ? "rail-collapsed" : ""}`}
+      className={`chorus-shell ${shared.darkWorkspace}${compact ? " compact-shell" : ""}${snapshot ? " live-shell" : ""}${experimentSetup ? " experiment-setup" : ""}${collapsed ? " rail-collapsed" : ""}`}
     >
       <aside className="desktop-rail">{rail}</aside>
       {mobileOpen && (
@@ -234,27 +251,34 @@ export function Shell({
               >
                 <PanelLeftOpen />
               </button>
-              <div className="collapsed-brand" aria-label="Chorus">
-                <Mark />
-                <strong>Chorus</strong>
-              </div>
+              {!compact && (
+                <div className="collapsed-brand" aria-label="Chorus">
+                  <Mark />
+                  <strong>Chorus</strong>
+                </div>
+              )}
             </>
           )}
           <div className="header-titles">
-            <div className="header-meta">
-              <span className="header-context">{context || "Workspace"}</span>
+            {!compact && <span className="header-context">Workspace</span>}
+            <h1 title={snapshot ? title : undefined}>{title}</h1>
+          </div>
+          {snapshot && (
+            <div className="run-header-details">
               {status && (
                 <span className={`run-status ${status}`} role="status">
                   <i className={`status-dot ${status}`} aria-hidden="true" />
-                  {status}
+                  {status.replaceAll("_", " ")}
                 </span>
               )}
+              {headerDetails}
             </div>
-            <h1>{title}</h1>
-          </div>
+          )}
           <div className="header-actions">{actions}</div>
         </header>
-        {children}
+        {typeof children === "function" ? children({
+          runs: list, loading: !loaded && !error, error, retry: retryHistory,
+        }) : children}
       </main>
     </div>
   );
