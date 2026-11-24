@@ -66,13 +66,26 @@ def launch(
     browser: bool = typer.Option(True, "--browser/--no-browser"),
     production: bool = typer.Option(False, "--production", help="Use the prebuilt web interface instead of development mode."),
 ) -> None:
-    """Start the engine and web interface together; Ctrl-C stops both."""
+    """Start the engine and web interface together. Stop with Ctrl-C or chorus stop."""
     from chorus.cli.launcher import LaunchError, launch_application
     try:
         launch_application(api_port=api_port, web_port=web_port, browser=browser, production=production)
     except LaunchError as error:
         console.print(str(error), style="red", markup=False)
         raise typer.Exit(1) from None
+
+
+@app.command()
+def stop(project_name: str | None = typer.Option(None, "--project-name", "-p", help="Stop a named Docker Compose project.")) -> None:
+    """Shut down the Chorus engine and web interface."""
+    from chorus.cli.launcher import LaunchError, stop_application
+
+    try:
+        stopped = stop_application(project_name)
+    except LaunchError as error:
+        console.print(str(error), style="red", markup=False)
+        raise typer.Exit(1) from None
+    console.print("Chorus stopped." if stopped else "Chorus is already stopped.")
 
 
 @app.command()
@@ -157,7 +170,7 @@ def harness_run(problem: str, participants: str = typer.Option("", "--participan
     catalog = harness_request("GET", "/catalog")
     selected = next((p for p in catalog["problems"] if p["id"] == problem), None)
     if selected is None:
-        raise typer.BadParameter("Choose a problem from chorus catalog scenarios.")
+        raise typer.BadParameter("Choose a problem from chorus catalog --kind scenarios.")
     config = HarnessConfig(problemId=problem, participantIds=[p.strip() for p in participants.split(",")] if participants else selected["participantIds"], model=model, maxTurnsPerAgent=turns_per_agent, judgeEnabled=judge, adversaryIds=[p.strip() for p in adversaries.split(",")] if adversaries else [])
     snapshot = harness_request("POST", "/sessions", config.model_dump())
     sid, cursor = snapshot["id"], 0
