@@ -29,7 +29,7 @@ Under Compose, one app container supervises the production Next.js web process a
 
 `chorus/harness/` is current execution code. `chorus/services/` also contains the older engine, and `/api/v1` remains readable for historical sessions; production legacy writes are disabled. Do not infer current behavior from old templates or catalogs.
 
-## Two kinds of run
+## Run types
 
 ### App experiments
 
@@ -81,6 +81,18 @@ stateDiagram-v2
 ```
 
 Workers run independently with per-agent turn/call/tool budgets. Board posts and accepted canvas edits commit independently. The shared canvas requires a fenced exclusive lease. A model judge cannot overrule the deterministic answer checker. Do not apply these benchmark turn limits to app experiments.
+
+### DeepSWE repository benchmarks
+
+The source launcher offers the pinned `ts-pattern-match-each` repository task. Each trial has a fresh Git workspace, a shared call limit and deadline, an integrated patch, and a binary verifier reward. Configurable runs use `deepswe-v5`. A numbered worker slot owns its worktree and binds a model and guidance mode. An empty-body session request uses the fixed default team (`deepswe-v5-fixed-team`).
+
+During Build, workers can inspect their Git status and read a file at a merged main revision. Finishing requires a clean worktree, completed Git synchronization and a branch tip already integrated into main. A reviewer can finish without contributing a patch. The call limit and deadline still freeze the current main. Historical v1–v4 scores and frozen patches remain available, including retries of failed verification. Resuming an older unfinished solving campaign requires its original engine and prompt versions.
+
+Each trial starts with the pinned repository and public task statement. Solver context is confined to the current session. Grading begins after the submission is frozen. Version 4 included task-specific feedback during solving and should be identified separately in comparisons.
+
+After Build, the engine freezes the submitted Git tree and patch digest. The Pier adapter replays the patch against the pinned base and checks the collected artifact against the submitted tree. A separate Docker verifier built from the upstream test files grades it. Submission errors and missing grades produce a retryable verification failure. Retry reads the original patch. New results include a bounded compiler diagnostic when Jest reports a suite failed to start.
+
+The web launcher creates a campaign even for one trial. SQLite migration 5 adds its manifest, frozen rosters, version pins and trial slots. Each slot acquires its session ID in the same transaction that creates the session. The Python campaign service runs conditions in seeded repeat blocks, one trial at a time per campaign. Restart pauses unfinished campaigns for explicit resume. Reports recompute scores from accepted rewards, count ungraded slots separately and compare only matched repeats on compatible task and verifier pins. [Setup and integration plan](deep-swe-integration-plan.md)
 
 ## Data and live updates
 

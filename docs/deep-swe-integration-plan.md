@@ -1,70 +1,78 @@
 # DeepSWE integration plan for Chorus
 
-Run a DeepSWE task with a named Chorus roster, see whether the final patch passes, and inspect what each agent contributed. Run a batch with the same task IDs across configurations and compare the percentage resolved at the same total budget. Start with one TypeScript task and use the same execution path for single tasks, batches, and repeats.
+The research goal is to measure whether a different Chorus team, model, or prompting choice solves more of the same repository tasks at a given budget. The source launcher supports one pinned TypeScript task, configurable participant slots, and repeated campaigns. The six-agent setup is the default. An empty-body API request still selects the fixed default team. Configured runs use `deepswe-v5` with saved guidance and per-worker model selections. Campaign manifests, trial links and grades persist in SQLite. The multi-task registry and Compose verifier deployment in milestone 5 remain future work. First-release participants are Chorus agents and teams.
 
-## What a run looks like
+## What the researcher sees
 
-The first interface is the Chorus Runs CLI and its existing browser viewer. The commands below show the proposed interface and run from the `chorus-runs` checkout with the Chorus engine running.
+1. Choose **DeepSWE** as the problem source on the Chorus home screen. The launcher shows the pinned `ts-pattern-match-each` task, its public instructions, an editable roster, team and worker model choices, and the run limits. The existing app and **Other** briefs are available from the default source.
+2. Start the run and follow **Plan → Build → Verify** in the existing session workspace. The board, shared plan, worktrees, and local PRs show how the team worked. Reopen the same session from its URL or the archive.
+3. Open **Results** to see **Passed**, **Failed**, or **Ungraded**, the frozen patch, test totals when available, and agent usage. A verifier error includes a retry action that uses the same saved patch.
 
-```sh
-# Discover supported tasks in the pinned DeepSWE release.
-python3 runs.py deepswe list --language typescript
+## Milestone 1 · Calibrate the grader
 
-# Run one task once with a named roster and explicit limits.
-python3 runs.py deepswe run --id match-each-smoke --task ts-pattern-match-each \
-  --roster coding-team --max-calls 60 --timeout-minutes 30
+Use a pinned DeepSWE checkout, the TypeScript task's pinned repository base and image digest, and a pinned Pier installation. A trusted operator configures these locally on a Docker-capable host. Use a compatible Linux host if the task image cannot run locally.
 
-# Preview, then run a saved task × configuration × repeat matrix.
-python3 runs.py plan examples/deepswe-pilot.json --dry-run
-python3 runs.py batch examples/deepswe-pilot.json
-python3 runs.py status deepswe-pilot
-python3 runs.py view
+Run the upstream reference and empty controls without model calls. Run the patch replay adapter against the reference, empty, and incorrect submissions. Require rewards of **1**, **0**, and **0** respectively, and verify the replayed Git tree. Exercise the error path for verifier failures and missing or invalid rewards. Only a valid binary verifier reward can produce a pass or fail. [Datacurve run guide](https://deepswe.datacurve.ai/run) · [Task configuration](https://github.com/datacurve-ai/deep-swe/blob/main/tasks/ts-pattern-match-each/task.toml)
+
+## Milestone 2 · Ship and verify one default-team run
+
+- Use a versioned repository-benchmark mode in the Python harness and the existing session storage. Save the task revision, image and base pins, selected model and frozen team, call and time limits, submitted Git tree and patch digest, and grading result.
+- Reuse the board, planning lease, worktrees and local PRs. Keep the plan and verifier data outside the task repository. Allow repository-relative inspection and edits with the existing path and symlink protections. The agents inspect and edit files through Chorus tools. Pier executes the verifier in its isolated environment.
+- Use a shared model-call limit and solving deadline. Reaching the call limit stops new dispatch while admitted calls may publish before the deadline. Freeze integrated main and its evidence before grading. Keep unmerged work inspectable in its worktree.
+- Keep model credentials and SQLite in the engine. Start Pier with a restricted environment and a deadline. Retain a frozen patch and provide an actionable setup message when the grader is unavailable. Keep web proxy behavior transport-only.
+- Exercise an end-to-end run with the six default agents, a scripted model provider, a real local Git merge, and a verifier fixture. Check browser reload and saved results, grading recovery, and that an ordinary app or custom run can still launch with DeepSWE unavailable. Calibrate with real Docker separately from routine CI.
+
+## Milestone 3 · Make one task configurable
+
+**Start with the existing dropdown.** Today it already offers **App or open-ended problem** and **DeepSWE**. Keep the four preset briefs, **Other** and its editable statement together in the default source. Inside DeepSWE, replace the read-only roster with a condition editor. Switching sources should restore each draft, including an unfinished custom statement. Preserve the five checked-answer problems through their existing CLI/API, and historical sessions through the archive and direct links. Adding a web entry for checked-answer problems can ship independently. [Web launcher](../web/components/harness/setup.tsx) · [Browser regressions](../web/tests/e2e/experiment-setup.spec.ts)
+
+**Extend session creation.** The empty-body create endpoint uses the original roster, default model, 120-call limit and 30-minute solving window. The same endpoint accepts a typed request carrying a registered task revision, participant slots, default model, per-slot model overrides and shared limits. An empty request should still create the current default run. Return eligible models and profiles in the catalog, validate choices in Python, snapshot the effective configuration, and regenerate the SDK. Keep old sessions readable and grading retries bound to their original task and patch. [Routes](../chorus/harness/routes.py) · [State models](../chorus/harness/models.py) · [Client](../sdk/harness-client.ts)
+
+**Separate worker identity from guidance.** Each slot has a unique actor ID and worktree. The user can choose neutral instructions, a role alone, or a full selected profile for each slot. Three neutral workers can therefore run the same prompt with distinct IDs. Today the prompt suppresses traits for the literal ID `general-agent`. Replace that special case on the new execution version, and apply the chosen guidance to both prompts and peer-visible roster descriptions. Resolve the slot's actual model for context sizing, dispatch and accounting. Reuse the current shared call reservation and deadline. Record the effective settings, prompt version and profile snapshot with the trial. [Prompt and worker loop](../chorus/harness/experiment.py) · [Model dispatch and usage](../chorus/harness/accounting.py)
+
+**Acceptance.** Launch one neutral agent, three neutral agents, and a mixed-profile team against the same pinned task. With scripted providers, inspect the actual messages, model IDs, worktrees and call ledger. Verify solo merge and freeze, independent neutral identities, and the same shared ceiling under simultaneous calls. Reopen an older fixed-team run and a custom brief.
+
+## Milestone 4 · Run and compare a campaign
+
+**Smallest useful study.** Choose the calibrated TypeScript task, one neutral agent as baseline, three collaborating neutral agents as the variant, and three fresh attempts each. Hold the model, tools, task revision, total calls and solving deadline fixed. Preview **6 trials** and, using the current default, **at most 720 solving calls**. These are ceilings, not spend predictions. This study measures repeatability on one task. A later study can duplicate the three-agent condition and change only profile guidance or only the model.
+
+**One trial, one session.** Add a Python campaign service under the current engine and additive SQLite campaign/trial records. Store a frozen manifest containing resolved task IDs and pins, named conditions, effective participant settings, tool and engine versions, shared budgets, repeat count and ordering seed. Create one slot per task × condition × repeat, and atomically link the unique slot key to its session. Start every slot from a clean baseline. Interleave conditions in seeded blocks and run one session at a time initially. Reuse the existing session commands, patch endpoint, usage ledger and grade record. The browser can close without stopping the queue. On restart, reconnect by slot key, respect paused/cancelled state and retry a failed grade on its original patch. A new solving attempt gets a new trial ID. [Storage and revisions](../chorus/harness/storage.py) · [Session lifecycle](../chorus/harness/experiment.py)
+
+**One owner for the queue.** Expose preview, launch, status, resume/cancel and comparison through the v2 API. Keep the canonical client in the SDK and regenerate the web copy. The sibling Chorus Runs planner has useful ordering and reporting logic, but currently hard-codes one model, a 2–50-agent roster and checked-answer problems. Reuse those ideas in Chorus, and let that CLI submit or import via the API if needed. A standard web installation should require only Chorus and its configured verifier. [Chorus Runs planner](../../chorus-runs/campaign.py) · [Integration architecture](chorus-architecture.md)
+
+**Score and coverage.** Accept the verifier's binary reward for the integrated patch. Within each task, average rewards across repeats. Average those task rates with equal weight and display the result as a percentage. For example, a solo result of 1/3 and a team result of 2/3 on the same task gives a team advantage of **33.3 percentage points**. This is illustrative arithmetic. A missing reward, infrastructure failure or cancellation is ungraded. Display graded/planned counts, reasons and per-slot outcomes. For a provisional delta, use only task/repeat slots graded in both conditions and show omissions. Mark a result complete when all planned slots have valid grades. Show actual tokens, elapsed time, and cost with its reported, estimated or unknown status. An equal call cap can yield different costs.
+
+**Results and history.** Provide **Repeat campaign** and **Compare with previous** actions. Show which settings changed, matched task coverage, per-task gains/losses/ties, and links to each patch and session. Refuse a paired delta across incompatible task or verifier revisions. Export the resolved manifest and trial outcomes with stable IDs. Label results **Chorus on DeepSWE** because the published leaderboard uses a different agent harness. [Datacurve evaluation protocol](https://deepswe.datacurve.ai/run)
+
+**Acceptance.** Complete and reload the six-slot fixture study, reconcile an interrupted launch, retry an ungraded frozen patch and reproduce the displayed totals from the export. A retry must add neither a solving session nor an extra observation. Exercise a partially graded campaign, and verify that the UI reports its smaller comparison denominator.
+
+## Milestone 5 · Expand to multiple tasks and deployment targets
+
+Replace the single task constant and local profile lookup with a registry indexed by dataset commit and task ID. Register base tree, public instructions, image/verifier digests, platform and Pier version for each eligible task. Resolve verification from the run's saved pins even after the default task changes. Gate eligibility on reference, empty and incorrect replay controls. Allow explicit task lists or a reproducible seeded subset, and show the resolved IDs before launch. A two-task, two-condition, two-repeat fixture should produce eight unique sessions and a task-weighted aggregate. Keep hidden tests and reference patches outside agent worktrees. [Current profile and grading adapter](../chorus/harness/deepswe.py) · [Frozen patches](../chorus/harness/experiment_git.py)
+
+Use the source installation for the initial study. For Compose, put Pier on a dedicated benchmark worker or extend the trusted controller with a narrow grading operation. Keep Docker access off the web/API container and pin the worker platform and images. Test the real reference/empty controls on that deployment before offering it in the picker. Register public build or test tools separately if added, and save their version as a condition variable so historical comparisons expose the tool change. [Current Compose layout](../compose.yaml)
+
+## Local verifier setup
+
+The first implementation uses a source installation of Chorus with access to a Linux Docker daemon. Check out the DeepSWE release and fetch the matching repository base into a separate local Git repository. Resolve the image references from the pinned task manifest to immutable digests for your worker's platform. For the TypeScript pilot, set both pins to the upstream task image digest. The worker pins the FROM line of the official tests/Dockerfile and builds the separate verifier with its test files. Install `datacurve-pier==0.3.1` in a separate Python 3.12 virtual environment. Keep the checkouts and profile outside the Chorus repository.
+
+```toml
+dataset = "/absolute/path/to/deep-swe"
+dataset_commit = "<full DeepSWE checkout commit>"
+repository = "/absolute/path/to/the/task-repository"
+base_commit = "<full base commit recorded in task.toml>"
+image = "<task environment image including its tag>@sha256:<digest>"
+verifier_image = "<verifier environment image including its tag>@sha256:<digest>"
+platform = "linux/amd64"
+pier = "/absolute/path/to/pier-venv/bin/pier"
 ```
 
-`coding-team` is a named roster in the run configuration. Dry-run shows the exact task IDs, roster and model for each condition, trial count, and maximum calls before dispatch. A batch can list task IDs explicitly or use a language filter and fixed sample seed, then save the resolved task list. A one-task run creates a one-trial campaign so it can be inspected, resumed, and exported through the same interface. The command prints the outcome, test counts, and session link when the trial finishes.
+From the Chorus root, run the controls before starting a model-backed run. The DeepSWE launcher reports a missing profile, unavailable Docker daemon, or unavailable default model.
 
-## Where the integration belongs
+```bash
+export CHORUS_DEEPSWE_PROFILE=/absolute/path/to/deepswe.toml
+.venv/bin/python -m chorus.harness.deepswe
+.venv/bin/chorus launch
+```
 
-- **Chorus engine** owns task selection and validation, workspace preparation, roles and tools, budget enforcement, the frozen patch, and the recorded grade. Add a repository experiment type alongside app experiments. Reuse the Plan and Build phases, per-agent Git worktrees and local pull requests, and frozen evidence. Current app prompts assume a Next.js and Express starter, and the write tool restricts edits to `frontend/` and `backend/`. Give repository experiments their own task prompt and repository-relative file permissions. [Experiment runtime](../chorus/harness/experiment.py) · [Workspace tools](../chorus/harness/experiment_tools.py)
-- **Pier** runs the official DeepSWE task and verifier. Use the pinned custom-agent interface for a small patch submission adapter. Chorus generates the patch, and the adapter applies and commits it in the pristine task environment. Pier's collection hook then hands the committed diff to the separate verifier. [DeepSWE task and result format](https://github.com/datacurve-ai/deep-swe#task-format) · [Pier custom-agent option](https://github.com/datacurve-ai/pier/blob/main/src/pier/cli/jobs.py)
-- **Chorus Runs** owns the campaign manifest, sequential queue, repeat scheduling, report, and comparisons. Add a repository-task path to the current runner and viewer. Reuse their trial linking and export mechanisms. Persist source refs, grades and artifact digests in the run records and keep bulk patches and logs in the ignored or external artifact store configured for the study. [Chorus Runs workflow](../../chorus-runs/README.md) · [Campaign runner](../../chorus-runs/campaign.py)
-
-## Milestones
-
-### 1. Prove the grading path on one task
-
-1. Pin a DeepSWE revision, a compatible Pier release, and the image digest and platform. Start with `ts-pattern-match-each`, which has a pinned base commit, a clearly specified TypeScript API, and a separate verifier. The task config collects the diff from the base commit to `HEAD`, so patch replay needs to commit the changes. [Task brief](https://github.com/datacurve-ai/deep-swe/blob/main/tasks/ts-pattern-match-each/instruction.md) · [Task configuration](https://github.com/datacurve-ai/deep-swe/blob/main/tasks/ts-pattern-match-each/task.toml)
-2. Run the reference and empty-patch controls without model calls. Then send those same patches through the replay adapter. Use a deliberately incorrect patch to check that verifier failure details reach the run report. Confirm that local Docker supports the pinned image on the development machine. Use a compatible Linux runner if the image fails on Apple Silicon.
-3. Read `reward.json` and keep the structured test report and verifier output. Accept an official `reward` of `1` or `0`. Verify the pinned task's error contract, including its `-1` crash sentinel. A replay failure that shows the adapter changed the patch or started from the wrong tree is an integration error. A patch the official verifier rejects on the correct base is an unresolved trial. [Reference grader](https://github.com/datacurve-ai/deep-swe/blob/main/tasks/ts-pattern-match-each/tests/grader.py)
-
-**Ready when** the reference scores 1, the empty and incorrect candidates score 0, a verifier crash is recorded as an error, and the same patch can be regraded without contacting a model.
-
-### 2. Run one DeepSWE task through Chorus
-
-1. Add a task registry for the pinned local checkout. Store the task ID, brief, language, repository URL, base commit, image digest and platform, and verifier version. Create sessions from registered task IDs. Materialize the verified task checkout with repository paths preserved. Use a clean Git history for Chorus and confirm its baseline tree matches the replay environment. Keep the shared Chorus plan outside the task's Git tree so a repository-owned `SPEC.md` stays available as ordinary source. The benchmark inputs visible to agents are the brief and worktree. Keep reference solutions, grader code, hidden tests, external remotes, and credentials outside the tools agents can access. Inspect the prepared workspace during preflight.
-2. Reuse Chorus's shared plan, board, worktrees, and PR flow. Give solo and team conditions the same task prompt and repo capabilities. In the first wiring test agents can inspect and edit files. Before the comparison pilot, add a Build tool for named public checks such as compile or unit tests. The engine chooses each command from task configuration and runs it against the agent's worktree snapshot in a disposable copy of the benchmark environment, with bounded output and runtime. Log the check result with the agent and candidate revision. The final verifier stays outside the agent loop.
-3. Enforce the total model-call cap and deadline inside Chorus. Count dispatched requests and retries against the shared cap across planning, coding and integration. Reserve calls before dispatch, stop new work when the limit is reached, and freeze the latest integrated commit under the existing cancellation fence. Persist the budget across restarts and record tokens, latency and cost using the existing usage ledger. Grading runs under its own timeout.
-4. Record the final commit, evidence cursor and a binary-safe base-to-final Git diff with its digest. Keep Chorus planning metadata out of the patch. Submit exactly that artifact to Pier. Expose the verifier state, official reward and test counts in the session result, alongside links to the patch and evidence. Keep the repository-run process review optional and outside the score. Recovery resumes the pending stage from persisted state and retries grading against the same patch digest. A retry can reuse a valid saved grade without rerunning participants.
-
-**Ready when** a fake provider drives an end-to-end repo edit through local PR merge, freeze, real verification and result display. Reopening the session shows the same commit, score and trace, and app experiments and saved sessions still pass their existing checks.
-
-### 3. Run batches and compare teams
-
-1. Extend the Chorus Runs manifest with the pinned benchmark version, task list, participant/model configurations, seed, repeats, total model calls per trial and timeout. Queue the expanded task × configuration × repeat matrix sequentially first. Use a durable trial key and idempotent session creation so an interrupted create request reconnects to the same session. Record trial, grade attempt and Chorus session IDs. Resume pending work without repeating completed model calls or silently resetting limits.
-2. Show one headline **resolution rate** per configuration and the percentage-point difference from the solo baseline. The browser report also shows per-task outcomes and repeat counts, new and regression test results, duration, calls, tokens, spend coverage and terminal reason. Link each trial to the frozen patch and Chorus session. Use valid outcomes from the same task/repeat slots for a provisional comparison and show coverage. Mark the comparison complete once all planned slots have a valid result.
-3. Show each agent's merged PRs, reviews and cited changes, public checks run, usage, and open tasks. Offer an optional evidence-based review of task ownership, material review findings and follow-through, with links to the relevant records. The task grade belongs to the team submission. Changes in a particular agent or role can be tested in a named roster condition with the rest of the experiment held fixed.
-4. Add a DeepSWE task picker to Chorus Web after the CLI path and report are stable. Let the user choose one or several tasks, a saved roster or comparison, limits and repeat count. Start browser requests through the same Chorus Runs queue as CLI requests. The results view opens the campaign report and each trial's PRs, checks and final grade.
-
-**Ready when** a two-task batch can run, be interrupted and resumed, and produce the same report after reloading. Each trial exposes exactly one final patch and one authoritative grade. The user can launch and inspect a single trial and a multi-task batch, and can identify which agents' work reached the final commit.
-
-## Scoring rules and first pilot
-
-- **Trial.** Use the official binary reward for the one submitted patch. A time or call limit can still yield a passing final patch. An empty final patch at the limit is evaluated as an empty submission. A verifier crash, environment error, or researcher cancellation without a submitted patch is ungraded and visible in coverage. Retry transient verifier failures on the frozen patch at most once by default. Use the grader's new-test and regression-test counts as diagnostics. [DeepSWE output contract](https://github.com/datacurve-ai/deep-swe#task-format)
-- **Campaign.** Average the binary results across repeats within a task, then average across tasks and multiply by 100. Each task has equal weight. For example, two tasks with repeat records of `2/3` and `1/3` produce a 50% resolution rate. Fix task IDs, model, tools, budget and grader across the conditions. Once several trials exist, show the paired change by task so the headline score can be traced back to specific wins and losses.
-- **Pilot.** First run one TypeScript task as a solo and team smoke check. Then freeze 10 tasks spanning focused fixes and cross-module changes. Compare one general agent with a three-agent Chorus roster, with three repeats per task and the same total call and time limits per trial. That is 60 trials. Interleave conditions within task and repeat blocks. Review smoke usage before setting pilot limits, report observed token and spend differences, and keep tuning tasks in a separate development set. Add a same-size independent-agent condition with a fixed selection procedure if the next question is whether communication adds value beyond multiple independent attempts.
-
-## Verification before the pilot
-
-- Cover task metadata and path validation, the workspace baseline, binary diff replay, isolation of hidden files, and all supported grade and error states. Confirm the adapter neither changes the official verifier nor exposes verifier output to participants.
-- Exercise cancellation during a model call and during verification, restart after the patch freezes, interrupted session creation, and replay after a grader error. Verify that calls and trials are counted once and late results cannot override a cancelled or superseded attempt.
-- Test single-task and batch flows with fake participants and a small fixture. Run the real task's reference and empty controls separately from routine tests. Check both CLI and browser against the same reports and confirm ordinary app and checked-answer benchmark sessions remain readable.
+DeepSWE sessions use their own execution and prompt versions. Existing app and checked-answer snapshots retain their current readers. The DeepSWE patch lives in the session's experiment directory alongside its Git repository.

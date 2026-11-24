@@ -46,6 +46,16 @@ Small frontend and backend starter projects are included. You can also use revie
 
 Browser and Terminal are user controls. Agents and judges work from code and saved evidence. Use **Run** to verify the generated app yourself.
 
+### Compare Chorus agents on DeepSWE
+
+In a source installation, configure Docker and Pier, set `CHORUS_DEEPSWE_PROFILE`, and run the verifier calibration. Then choose **DeepSWE** in the home page’s problem-source dropdown to run the pinned TypeScript task, `ts-pattern-match-each`. The **App or open-ended problem** option still offers the preset briefs and **Other** for your own statement. [Local verifier setup and calibration](docs/deep-swe-integration-plan.md#local-verifier-setup)
+
+The launcher starts with the six default Chorus profiles. **Use solo vs. team preset** sets up one neutral worker and a team of three neutral workers, with three repeats per condition. To compare a solo worker with the six default profiles, duplicate the default condition first, then edit the first condition down to one worker and select **No personality or role**. Each condition has a team model, optional worker model overrides, a shared model-call limit and a solving deadline per trial.
+
+Every trial starts from a fresh copy of the pinned repository. Once solving ends, the official verifier grades the merged patch. Its binary reward is **1** for a pass or **0** for a fail. The campaign’s **Resolution rate** is the percentage of graded trials that passed. **Inspect trial** shows the patch and any test counts the verifier returned. A verifier error leaves the trial ungraded and lets you retry the same patch.
+
+You can close the browser while the engine runs. Reopen the report from **Saved campaigns** to see paired differences across repeats, model calls, elapsed time and costs. Use **Repeat campaign** to run the saved conditions again or **Export JSON** to download the report.
+
 ### Run smaller problems with checked answers
 
 The engine also includes five benchmark problems: scheduling, transaction records, mixtures, production planning, and probability. These are available through the command line and API; they are not the current web home page’s task picker.
