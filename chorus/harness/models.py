@@ -319,8 +319,92 @@ class ExperimentReport(Model):
     missingWork: list[str]
 
 
+class DeepSWETask(Model):
+    id: str
+    datasetCommit: str
+    baseCommit: str
+    baseTree: str
+    image: str
+    verifierImage: str
+    platform: str
+    pierVersion: str
+
+
+class DeepSWESlot(Model):
+    guidance: Literal["neutral", "role", "full"]
+    profileId: str | None = None
+    model: str | None = None
+
+    @model_validator(mode="after")
+    def validate_profile(self):
+        if (self.guidance == "neutral") != (self.profileId is None):
+            raise ValueError("Choose a profile for role or full guidance only.")
+        return self
+
+
+class DeepSWECondition(Model):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+    model: str = Field(min_length=1, max_length=160)
+    slots: list[DeepSWESlot] = Field(min_length=1, max_length=15)
+    callLimit: int = Field(ge=1, le=10000)
+    solvingSeconds: int = Field(ge=1, le=86400)
+
+
+class DeepSWERequest(Model):
+    task: DeepSWETask
+    condition: DeepSWECondition
+
+
+class DeepSWECampaignRequest(Model):
+    requestId: str = Field(pattern=r"^[a-zA-Z0-9-]{1,64}$")
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+    task: DeepSWETask
+    conditions: list[DeepSWECondition] = Field(min_length=1, max_length=8)
+    repeats: int = Field(ge=1, le=30)
+    seed: int = Field(default=0, ge=0, le=2147483647)
+
+    @model_validator(mode="after")
+    def distinct_conditions(self):
+        if len({item.name.casefold() for item in self.conditions}) != len(self.conditions):
+            raise ValueError("Give each condition a distinct name.")
+        return self
+
+
+class DeepSWECatalog(Model):
+    task: DeepSWETask | None = None
+    models: list[ModelInfo] = Field(default_factory=list)
+    problem: Problem
+    agents: list[Persona]
+    model: ModelInfo
+    callLimit: int
+    solvingSeconds: int
+    unavailableReason: str | None = None
+
+
+class DeepSWEResult(Model):
+    reward: Literal[0, 1]
+    tests: int | None = None
+    passed: int | None = None
+    failed: int | None = None
+    compilationFailure: str | None = None
+
+
+class DeepSWERun(Model):
+    condition: DeepSWECondition | None = None
+    task: DeepSWETask
+    callLimit: int
+    solvingSeconds: int
+    callsReserved: int = 0
+    deadlineAt: str | None = None
+    stopReason: Literal["call_limit", "deadline"] | None = None
+    patchDigest: str | None = None
+    submittedTree: str | None = None
+    verificationAttempts: int = 0
+    result: DeepSWEResult | None = None
+
+
 class ExperimentState(Model):
-    phase: Literal["plan", "build", "judge"] = "plan"
+    phase: Literal["plan", "build", "judge", "verify"] = "plan"
     planningCompletions: list[PlanningCompletion] | None = None
     # Preserve the original decision and threshold for archived majority runs.
     majority: int | None = None
@@ -329,8 +413,9 @@ class ExperimentState(Model):
     frozen: FrozenExperiment | None = None
     judgeAttempts: int = 0
     report: ExperimentReport | None = None
-    rubric: Literal["application-v1", "deliverable-v1"] = "application-v1"
+    rubric: Literal["application-v1", "deliverable-v1", "deepswe-v1"] = "application-v1"
     deliverablePlan: DeliverablePlan | None = None
+    deepswe: DeepSWERun | None = None
 
 
 class HarnessSnapshot(Model):
@@ -345,7 +430,7 @@ class HarnessSnapshot(Model):
     problem: Problem
     agents: list[GeneratedPersona | Persona]
     workers: list[Worker]
-    status: Literal["ready", "running", "reviewing", "paused", "completed", "stopped", "stopping", "killed", "judge_failed"] = "ready"
+    status: Literal["ready", "running", "reviewing", "paused", "completed", "stopped", "stopping", "killed", "judge_failed", "verify_failed"] = "ready"
     canvas: str = ""
     canvasVersion: int = 0
     boardCount: int = 0
@@ -381,7 +466,7 @@ class RecordPage(Model):
 
 class HarnessCommand(Model):
     commandId: str = Field(min_length=1, max_length=100)
-    action: Literal["start", "pause", "resume", "stop", "kill", "retry_judge"]
+    action: Literal["start", "pause", "resume", "stop", "kill", "retry_judge", "retry_verification"]
     expectedRevision: int = Field(ge=0)
 
 
@@ -414,6 +499,61 @@ class UsageReport(Model):
 
 class ExperimentUsageReport(UsageReport):
     teamGeneration: Usage
+
+
+class CampaignTrial(Model):
+    condition: str
+    repeat: int
+    sessionId: str | None
+    status: str
+    reward: Literal[0, 1] | None
+    calls: int
+    usage: Usage | None
+    wallTimeMs: int | None
+
+
+class CampaignSummary(Model):
+    id: str
+    name: str
+    status: str
+    createdAt: str
+
+
+class CampaignScore(Model):
+    condition: str
+    passed: int
+    graded: int
+    planned: int
+    ratePercent: float | None
+    pairedCount: int
+    deltaPoints: float | None
+
+
+class DeepSWEComparison(Model):
+    baseline: str
+    candidate: str
+    paired: int
+    wins: int
+    losses: int
+    ties: int
+    baselinePlanned: int
+    candidatePlanned: int
+    baselinePercent: float | None
+    candidatePercent: float | None
+    deltaPoints: float | None
+    changedSettings: list[str]
+
+
+class DeepSWECampaign(Model):
+    id: str
+    status: Literal["running", "paused", "finished", "cancelled"]
+    error: str
+    manifest: DeepSWECampaignRequest
+    trials: list[CampaignTrial]
+    scores: list[CampaignScore]
+    callCeiling: int
+    engineVersion: str
+    promptVersion: str
 
 
 class WorkspacePort(Model):
@@ -449,6 +589,11 @@ class HarnessContracts(Model):
     usage: ExperimentUsageReport | UsageReport
     experimentCatalog: ExperimentCatalog
     experimentConfig: ExperimentConfig
+    campaignSummary: CampaignSummary
+    deepsweComparison: DeepSWEComparison
+    deepsweRequest: DeepSWERequest
+    deepsweCampaign: DeepSWECampaign
+    deepsweCatalog: DeepSWECatalog
     teamGeneration: TeamGeneration
     teamGenerationRequest: TeamGenerationRequest
     repositoryTree: RepositoryTree

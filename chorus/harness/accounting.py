@@ -8,7 +8,7 @@ import time
 import hashlib
 from datetime import datetime, timezone
 from uuid import uuid4
-from chorus.harness.models import ExperimentUsageReport, Usage, UsageReport
+from chorus.harness.models import ExperimentUsageReport, Record, Usage, UsageReport
 from chorus.llm.caching import CACHE_SCOPE
 from chorus.llm.openai import assert_luna_budget, luna_input_estimate
 from chorus.llm.transport import assert_budget
@@ -72,7 +72,7 @@ def usage_report(repository, sid):
     generation = [r for r in records if r.data.get("phase") == "team_generation"]
     participants = [r for r in records if r.agentId != "judge" and r.data.get("phase") != "team_generation"]
     judges = [r for r in records if r.agentId == "judge"]
-    end = datetime.fromisoformat(state.updatedAt) if state.status in {"completed", "stopped", "killed", "judge_failed"} else datetime.now(timezone.utc)
+    end = datetime.fromisoformat(state.updatedAt) if state.status in {"completed", "stopped", "killed", "judge_failed", "verify_failed"} else datetime.now(timezone.utc)
     totals = dict(
         agents={a.id: aggregate([r for r in participants if r.agentId == a.id]) for a in state.agents},
         participants=aggregate(participants), judge=aggregate(judges), total=aggregate(records),
@@ -126,7 +126,7 @@ class Meter:
         info = next((m for m in self.call.catalog.models if m.id == model), None) if hasattr(self.call, "catalog") else None
         return info.provider if info else "unknown"
 
-    async def invoke(self, sid, actor, generation, messages, *, phase="agent", tools=None, output=2400, model=None):
+    async def invoke(self, sid, actor, generation, messages, *, phase="agent", tools=None, output=2400, model=None, admit=None):
         state = self.repo.get(sid)
         model = model or state.config.model
         route = self.route(model)
@@ -141,7 +141,8 @@ class Meter:
             self.repo.change(sid, reserve, generation=generation)
         rid = str(uuid4())
         data = call_data(rid, phase, model, route, state.promptVersion)
-        record = self.repo.append(sid, "call", actor, worker.currentTurnIndex if worker else 0, data, record_id=rid)
+        turn = worker.currentTurnIndex if worker else 0
+        record = self.repo.append(sid, "call", actor, turn, data, record_id=rid) if admit is None else None
         started = None
         token = CACHE_SCOPE.set(f"{sid}:{actor}:harness-epoch-0")
         task = asyncio.current_task()
@@ -153,9 +154,10 @@ class Meter:
                     raise asyncio.CancelledError
                 if worker:
                     self.repo.change(sid, lambda s: self._running(s, actor), generation=generation)
-                started = time.monotonic()
-                data.update(startedAt=now(), outcome="running")
-                self.repo.update_record(sid, rid, data)
+                if admit is None:
+                    started = time.monotonic()
+                    data.update(startedAt=now(), outcome="running")
+                    self.repo.update_record(sid, rid, data)
                 sent = messages
                 options = {"output": output, "phase": phase, "run_id": rid}
                 if route == "ollama" and (tools or any(m.get("tool_calls") or m.get("role") == "tool" for m in messages)):
@@ -167,7 +169,13 @@ class Meter:
                     assert_luna_budget(luna_input_estimate(sent, schema), output)
                 else:
                     assert_budget(sent, output + (2048 if route == "openrouter" else 0), format={"tools": tools} if tools else None)
-                request = self.repo.append(sid, "request", actor, worker.currentTurnIndex if worker else 0, {"callId": rid, "messages": sent, "tools": tools, "outputAllowance": output}, generation=generation)
+                if admit is not None:
+                    started = time.monotonic()
+                    data.update(startedAt=now(), outcome="running")
+                    pending = Record(id=rid, sequence=0, kind="call", agentId=actor, turn=turn, createdAt=data["queuedAt"], data=data)
+                    self.repo.change(sid, admit, records=[pending], generation=generation)
+                    record = pending
+                request = self.repo.append(sid, "request", actor, turn, {"callId": rid, "messages": sent, "tools": tools, "outputAllowance": output}, generation=generation)
                 data["requestRecordId"] = request.id
                 data["requestHash"] = hashlib.sha256(json.dumps({"messages": sent, "tools": tools}, sort_keys=True).encode()).hexdigest()
                 result = await self.call(model, sent, **options)
@@ -195,7 +203,7 @@ class Meter:
             CACHE_SCOPE.reset(token)
             data["endedAt"] = now()
             data["latencyMs"] = round((time.monotonic() - started) * 1000) if started is not None else None
-            if not self.closed:
+            if not self.closed and record is not None:
                 self.repo.update_record(sid, record.id, data)
 
     def _running(self, state, actor):

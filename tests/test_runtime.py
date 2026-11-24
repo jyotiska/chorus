@@ -10,7 +10,7 @@ from chorus.services.errors import ChorusError
 
 
 def harness_state(frozen=None, main="a" * 40):
-    return SimpleNamespace(experiment=SimpleNamespace(repository=SimpleNamespace(mainCommit=main), frozen=frozen))
+    return SimpleNamespace(experiment=SimpleNamespace(repository=SimpleNamespace(mainCommit=main), frozen=frozen, deepswe=None))
 
 
 async def test_runtime_uses_frozen_pin_and_preserves_an_existing_scratch_copy():

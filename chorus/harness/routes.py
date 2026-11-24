@@ -6,8 +6,10 @@ from typing import Literal
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import Response, StreamingResponse
+from chorus.harness import deepswe
+from chorus.harness.campaign import checked_profile, check_pins
 from chorus.harness.models import (
-    ExperimentCatalog, ExperimentConfig, ExperimentTasks, ExperimentUsageReport, HarnessCatalog, HarnessCommand, HarnessConfig,
+    CampaignSummary, DeepSWECatalog, DeepSWECampaign, DeepSWECampaignRequest, DeepSWEComparison, DeepSWERequest, ExperimentCatalog, ExperimentConfig, ExperimentTasks, ExperimentUsageReport, HarnessCatalog, HarnessCommand, HarnessConfig,
     HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryCommitDiff, RepositoryFile, RepositoryTree, TeamGeneration,
     TeamGenerationRequest, TerminalTicket, UsageReport, WorkspaceAction, WorkspaceRuntime,
 )
@@ -48,6 +50,77 @@ async def create_experiment(request: Request, config: ExperimentConfig):
 @router.post("/experiments/teams", response_model=TeamGeneration, status_code=201)
 async def create_experiment_team(request: Request, config: TeamGenerationRequest):
     return await service(request).experiments.generate_team(config)
+
+
+@router.get("/deepswe/catalog", response_model=DeepSWECatalog)
+async def deepswe_catalog(request: Request):
+    svc = service(request)
+    catalog = await current_catalog(svc, svc.experiments.catalog)
+    reason = None
+    profile = None
+    try:
+        profile = await asyncio.to_thread(deepswe.Profile.load)
+        await asyncio.to_thread(profile.check_docker)
+    except ChorusError as error:
+        reason = str(error)
+    problem = svc.experiments.deepswe_problem(profile)
+    return DeepSWECatalog(task=profile.task if profile else None, problem=problem,
+                          agents=catalog.agents, models=catalog.models,
+                          model=next(model for model in catalog.models if model.id == catalog.defaultModel),
+                          callLimit=deepswe.CALL_LIMIT, solvingSeconds=deepswe.SOLVING_SECONDS, unavailableReason=reason)
+
+
+@router.post("/deepswe/sessions", response_model=HarnessSnapshot, status_code=201)
+async def create_deepswe(request: Request, settings: DeepSWERequest | None = None):
+    profile = await checked_profile()
+    if settings:
+        check_pins(profile, settings.task)
+    return service(request).experiments.create_deepswe(profile, settings.condition if settings else None)
+
+
+@router.post("/deepswe/campaigns", response_model=DeepSWECampaign, status_code=201)
+async def launch_campaign(request: Request, manifest: DeepSWECampaignRequest):
+    return await service(request).campaigns.create(manifest)
+
+
+@router.get("/deepswe/campaigns", response_model=list[CampaignSummary])
+async def list_campaigns(request: Request):
+    repo = service(request).repo
+    entries = []
+    for cid in repo.campaign_ids():
+        data = repo.campaign(cid)
+        entries.append(CampaignSummary(id=cid, name=data["manifest"]["name"], status=data["status"], createdAt=data["createdAt"]))
+    return entries
+
+
+@router.get("/deepswe/campaigns/{cid}", response_model=DeepSWECampaign)
+async def campaign_report(request: Request, cid: str):
+    return service(request).campaigns.report(cid)
+
+
+@router.get("/deepswe/campaigns/{cid}/comparison", response_model=DeepSWEComparison)
+async def compare_campaigns(request: Request, cid: str, other: str, candidate: str, baseline: str):
+    return service(request).campaigns.compare(cid, other, candidate, baseline)
+
+
+@router.post("/deepswe/campaigns/{cid}/{action}", response_model=DeepSWECampaign)
+async def campaign_control(request: Request, cid: str, action: Literal["resume", "cancel"]):
+    return await service(request).campaigns.control(cid, action)
+
+
+@router.get("/sessions/{sid}/deepswe/patch", response_class=Response)
+def deepswe_patch(request: Request, sid: str):
+    svc = service(request)
+    experiment = svc.repo.get(sid).experiment
+    benchmark = experiment.deepswe if experiment else None
+    if not benchmark or not benchmark.patchDigest:
+        raise ChorusError("NOT_FOUND", "This session has no frozen DeepSWE patch.", 404)
+    data = svc.experiments.git.frozen_patch(sid, benchmark.patchDigest, deepswe.MAX_PATCH_BYTES)
+    return Response(data, media_type="application/octet-stream", headers={
+        "Content-Disposition": f'attachment; filename="{benchmark.task.id}.patch"',
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "no-store",
+    })
 
 
 @router.get("/assets/{agent_id}/{asset}")

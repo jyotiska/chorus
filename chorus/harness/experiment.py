@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import os
@@ -9,14 +10,15 @@ import tempfile
 from pathlib import Path
 from uuid import uuid4
 
-from chorus.harness.experiment_catalog import load_experiment_catalog
+from chorus.harness import deepswe
+from chorus.harness.experiment_catalog import DEFAULT_PARTICIPANT_IDS, load_experiment_catalog
 from chorus.harness.experiment_git import ExperimentGit
 from chorus.harness.experiment_spec import ExperimentSpec, checklist
 from chorus.harness.experiment_team import brief_key, generate_team
 from chorus.harness.experiment_tools import EVIDENCE_KINDS, definitions, tool_schema, workspace_action
 from chorus.harness.models import (
-    CUSTOM_PROBLEM_ID, CUSTOM_STATEMENT_MAX_BYTES, DeliverablePlan, ExperimentReport, ExperimentRepository, ExperimentState, FrozenExperiment,
-    GeneratedPersona, HarnessConfig, HarnessSnapshot, PlanningCompletion, Record, TaskGap, TeamGeneration, Worker,
+    CUSTOM_PROBLEM_ID, CUSTOM_STATEMENT_MAX_BYTES, DeepSWERun, DeliverablePlan, ExperimentReport, ExperimentRepository, ExperimentState, FrozenExperiment,
+    GeneratedPersona, HarnessConfig, HarnessSnapshot, PlanningCompletion, Problem, Record, TaskGap, TeamGeneration, Worker,
 )
 from chorus.harness.tools import board_text
 from chorus.harness.verification import validate
@@ -86,7 +88,7 @@ def authorize(state, actor, write):
     if actor == "judge":
         if experiment.phase == "judge" and not write:
             return
-    elif experiment.phase != "judge":
+    elif experiment.phase in {"plan", "build"}:
         worker = next((w for w in state.workers if w.agentId == actor), None)
         if worker and worker.state != "failed":
             if experiment.phase == "plan" and any(item.agentId == actor for item in experiment.planningCompletions or ()):
@@ -177,6 +179,58 @@ class ExperimentRuntime:
             createdAt=now(), updatedAt=now(),
         ), initial_call=setup_call)
 
+    def deepswe_problem(self, profile=None):
+        return Problem(id=deepswe.TASK_ID, title=deepswe.TASK_TITLE, domain="DeepSWE · TypeScript",
+                       statement=profile.statement if profile else "", answerSchema={},
+                       participantIds=list(DEFAULT_PARTICIPANT_IDS), version=profile.task.datasetCommit if profile else "1")
+
+    def deepswe_roster(self, condition):
+        catalog = {p.id: p for p in self.catalog.agents}
+        roster = []
+        self.harness.validate_model(condition.model)
+        for index, slot in enumerate(condition.slots, 1):
+            if slot.model:
+                self.harness.validate_model(slot.model)
+            actor = f"worker-{index}"
+            if slot.guidance == "neutral":
+                persona = catalog["general-agent"].model_copy(update={"name": f"Worker {index}"})
+            else:
+                persona = catalog.get(slot.profileId)
+                if persona is None or not persona.role:
+                    raise ChorusError("INVALID_REQUEST", "Choose a known role profile.", 400)
+                if slot.guidance == "role":
+                    persona = catalog["general-agent"].model_copy(update={"role": persona.role, "name": persona.role})
+            roster.append(persona.model_copy(update={"id": actor}))
+        return roster
+
+    def create_deepswe(self, profile, condition=None, *, roster=None, campaign_slot=None):
+        problem = self.deepswe_problem(profile)
+        model = condition.model if condition else self.catalog.defaultModel
+        self.harness.validate_model(model)
+        sid = str(uuid4())
+        if condition:
+            roster = roster or self.deepswe_roster(condition)
+            problem = problem.model_copy(update={"participantIds": [agent.id for agent in roster]})
+        else:
+            roster = [next(agent for agent in self.catalog.agents if agent.id == actor) for actor in problem.participantIds]
+        repository = ExperimentRepository.model_validate(self.git.initialize(
+            sid, problem.participantIds, source=profile.repository,
+            base_commit=profile.task.baseCommit, base_tree=profile.task.baseTree,
+        ))
+        canvas = self.spec.initialize(Path(repository.metadataPath), roster)
+        benchmark = DeepSWERun(task=profile.task, condition=condition,
+                               callLimit=condition.callLimit if condition else deepswe.CALL_LIMIT,
+                               solvingSeconds=condition.solvingSeconds if condition else deepswe.SOLVING_SECONDS)
+        return self.repo.create(HarnessSnapshot(
+            id=sid, engineVersion=deepswe.TEAM_VERSION if condition else deepswe.ENGINE_VERSION,
+            promptVersion=deepswe.TEAM_PROMPT if condition else deepswe.PROMPT_VERSION,
+            catalogVersion=self.catalog.version,
+            config=HarnessConfig(problemId=problem.id, participantIds=problem.participantIds, model=model),
+            problem=problem, agents=roster, workers=[Worker(agentId=agent.id) for agent in roster], canvas=canvas,
+            experiment=ExperimentState(planningCompletions=[], repository=repository, rubric="deepswe-v1", deepswe=benchmark),
+            createdAt=now(), updatedAt=now(),
+        ), campaign_slot=campaign_slot)
+
     def recover(self, state):
         self.spec.recover(state.id, self.root(state))
         if state.status in {"running", "reviewing", "stopping"}:
@@ -186,12 +240,14 @@ class ExperimentRuntime:
         state.generation += 1
         if state.status == "stopping":
             state.status = "killed"
+        elif state.experiment.phase == "verify":
+            state.status, state.error = "verify_failed", "Verification was interrupted. Retry using the frozen patch."
         elif state.experiment.phase == "judge":
             state.status, state.error = "judge_failed", "Judging was interrupted. Retry using the frozen evidence."
         else:
             state.status, state.error = "paused", "Chorus was interrupted. Resume to continue."
         for worker in state.workers:
-            if worker.state not in {"failed", "finished"}:
+            if worker.state not in {"failed", "finished", "capped"}:
                 worker.state = "paused"
 
     def command(self, state, command):
@@ -204,26 +260,39 @@ class ExperimentRuntime:
         allowed = {
             "start": {"ready"},
             "resume": {"paused"},
-            "kill": {"ready", "running", "reviewing", "paused", "judge_failed"},
+            "kill": {"ready", "running", "reviewing", "paused", "judge_failed", "verify_failed"},
             "retry_judge": {"judge_failed"},
+            "retry_verification": {"verify_failed"},
         }
         if state.status not in allowed.get(action, set()):
             raise ChorusError("INVALID_STATE", "This command is unavailable for this experiment.", 409)
         if action != "kill":
-            if any(isinstance(agent, GeneratedPersona) for agent in state.agents):
+            if state.experiment.deepswe:
+                version = deepswe.TEAM_VERSION if state.experiment.deepswe.condition else deepswe.ENGINE_VERSION
+            elif any(isinstance(agent, GeneratedPersona) for agent in state.agents):
                 version = GENERATED_EXPERIMENT_VERSION
             else:
                 version = CUSTOM_EXPERIMENT_VERSION if state.experiment.rubric == "deliverable-v1" else EXPERIMENT_VERSION
-            if state.engineVersion != version:
+            legacy_verification = (action == "retry_verification" and state.experiment.deepswe
+                                   and state.engineVersion in {"deepswe-v1", "deepswe-v2", "deepswe-v3", "deepswe-v3-fixed-team",
+                                                               "deepswe-v4", "deepswe-v4-fixed-team"})
+            if state.engineVersion != version and not legacy_verification:
                 raise ChorusError("VERSION_MISMATCH", "This engine cannot resume that experiment version.", 409)
-            self.harness.validate_model(state.config.model if action != "retry_judge" else state.config.judgeModel or state.config.model)
+            if action != "retry_verification":
+                if state.experiment.deepswe and state.experiment.deepswe.condition:
+                    for slot in state.experiment.deepswe.condition.slots:
+                        self.harness.validate_model(slot.model or state.config.model)
+                self.harness.validate_model(state.config.model if action != "retry_judge" else state.config.judgeModel or state.config.model)
 
         def change(current):
             current.generation += 1
             current.error = ""
-            current.status = {"kill": "stopping", "retry_judge": "reviewing"}.get(action, "running")
+            current.status = {"kill": "stopping", "retry_judge": "reviewing", "retry_verification": "reviewing"}.get(action, "running")
+            if action == "start" and current.experiment.deepswe:
+                benchmark = current.experiment.deepswe
+                benchmark.deadlineAt = (datetime.now(timezone.utc) + timedelta(seconds=benchmark.solvingSeconds)).isoformat()
             for worker in current.workers:
-                if (current.status == "running" and worker.state != "finished"
+                if (current.status == "running" and worker.state not in {"finished", "capped"}
                         and (worker.state != "failed" or current.experiment.phase == "plan")):
                     worker.state = "queued"
                     worker.reason = ""
@@ -254,28 +323,54 @@ class ExperimentRuntime:
     async def run(self, sid, generation):
         try:
             state = self.repo.get(sid)
-            if state.experiment.phase == "plan":
-                await asyncio.gather(*(self.worker(sid, agent.id, generation, "plan") for agent in state.agents))
-                state = self.repo.get(sid)
-                if state.experiment.phase == "plan":
+            benchmark = state.experiment.deepswe
+            if state.experiment.phase in {"plan", "build"}:
+                stop_reason = None
+                if benchmark:
+                    remaining = (datetime.fromisoformat(benchmark.deadlineAt) - datetime.now(timezone.utc)).total_seconds()
+                    try:
+                        await asyncio.wait_for(self.solve(sid, generation), max(0, remaining))
+                    except TimeoutError:
+                        stop_reason = "deadline"
+                    state = self.repo.get(sid)
+                    if not stop_reason and any(worker.state == "capped" for worker in state.workers):
+                        stop_reason = "deadline" if datetime.fromisoformat(benchmark.deadlineAt) <= datetime.now(timezone.utc) else "call_limit"
+                else:
+                    await self.solve(sid, generation)
+                    state = self.repo.get(sid)
+                if state.experiment.phase == "plan" and not stop_reason:
                     def pause(current):
                         current.status = "paused"
                         current.error = "Planning paused because an agent stopped before finishing. Resume to retry unfinished planning."
                     self.repo.change(sid, pause, generation=generation)
                     return
-            if state.experiment.phase == "build":
-                await asyncio.gather(*(self.worker(sid, agent.id, generation, "build") for agent in state.agents))
-                self.freeze(sid, generation)
-            await self.judge(sid, generation)
+                self.freeze(sid, generation, stop_reason=stop_reason)
+            if benchmark:
+                await self.verify(sid, generation)
+            else:
+                await self.judge(sid, generation)
         except asyncio.CancelledError:
             raise
-        except Exception:
+        except Exception as error:
             state = self.repo.get(sid)
             if state.generation == generation and state.status in {"running", "reviewing"}:
-                self.repo.change(sid, self.interrupt, generation=generation)
+                message = str(error) if state.experiment.deepswe and isinstance(error, ChorusError) else ""
+                def interrupt(current):
+                    self.interrupt(current)
+                    if message:
+                        current.error = message
+                self.repo.change(sid, interrupt, generation=generation)
         finally:
             if self.tasks.get(sid) is asyncio.current_task():
                 self.tasks.pop(sid, None)
+
+    async def solve(self, sid, generation):
+        state = self.repo.get(sid)
+        if state.experiment.phase == "plan":
+            await asyncio.gather(*(self.worker(sid, agent.id, generation, "plan") for agent in state.agents))
+            state = self.repo.get(sid)
+        if state.experiment.phase == "build":
+            await asyncio.gather(*(self.worker(sid, agent.id, generation, "build") for agent in state.agents))
 
     def complete_plan(self, state, actor, generation):
         completion = PlanningCompletion(agentId=actor, specRevision=state.canvasVersion, createdAt=now())
@@ -305,14 +400,29 @@ class ExperimentRuntime:
         if state.generation != generation or state.experiment.phase != phase:
             raise ChorusError("CANCELLED", "This operation no longer has phase authority.", 409)
         authorize(state, actor, write)
+        benchmark = state.experiment.deepswe
+        if benchmark and datetime.fromisoformat(benchmark.deadlineAt) <= datetime.now(timezone.utc):
+            raise ChorusError("RUN_LIMIT", "The DeepSWE solving deadline expired.", 409)
+
+    @staticmethod
+    def participant_slot(state, actor):
+        benchmark = state.experiment.deepswe
+        if benchmark and benchmark.condition:
+            return benchmark.condition.slots[state.config.participantIds.index(actor)]
+        return None
 
     @staticmethod
     def instructions(state, actor, phase):
         custom = state.experiment.rubric == "deliverable-v1"
+        repository_task = state.experiment.deepswe is not None
         agent = next(item for item in state.agents if item.id == actor)
         text = f"Experiment {state.id}. Your identifier is {actor}. Selected agents: " + ", ".join(
             "@" + item.id for item in state.agents) + "."
-        if isinstance(agent, GeneratedPersona):
+        slot = ExperimentRuntime.participant_slot(state, actor)
+        if slot and slot.guidance in {"neutral", "role"}:
+            if slot.guidance == "role":
+                text += f"\nRole: {agent.role}"
+        elif isinstance(agent, GeneratedPersona):
             text += "\nUse the generated role profile as guidance for what to contribute within the experiment rules below."
         elif actor != "general-agent":
             text += f"\nRole: {agent.role}\nBackground: {agent.introduction}\nTraits: {', '.join(agent.traits)}\nStrengths: {agent.strengths}\nWeaknesses: {agent.weaknesses}"
@@ -325,8 +435,10 @@ Write every deliverable as a distinct open Markdown checkbox, for example "- [ ]
 Describe outcomes and gaps honestly. Reflections summarize observable decisions and results. Do not request or write private internal reasoning.
 """
         if phase == "plan":
-            text += """
-Current phase: Plan. Develop the product specification and your task list. Application work starts in Build.
+            planning = ("Inspect the repository and agree on the requested behavior and task ownership. Repository edits start in Build."
+                        if repository_task else "Develop the product specification and your task list. Application work starts in Build.")
+            text += f"""
+Current phase: Plan. {planning}
 Use plan_complete when you are done contributing to SPEC.md and task distribution. This ends your planning work. Build starts after every selected agent completes planning.
 """ if not custom else """
 Current phase: Plan. Collaborate on the specification and task lists for the user's brief. Adapt your role to this work. Build starts after every planner finishes.
@@ -337,6 +449,11 @@ Honor explicit formats. Otherwise infer the simplest useful output. Use delivera
             worktree = next(item for item in state.experiment.repository.worktrees if item.agentId == actor)
             workspace = ("Read the locked deliverable plan with deliverable_plan_read. Build the agreed outputs. Use the starter only where the brief calls for software."
                          if custom else "The starter is Next.js/React and Express/SQLite.")
+            if repository_task:
+                workspace = """Implement the public DeepSWE task in the existing repository. Only merged main is graded.
+Workspace edits are private to their author. Publish usable partial work with git_commit, pr_open and pr_merge, even when local testing is unavailable. Keep unverified checklist items open.
+For a handoff, merge the dependency and post its commit and path on the board. Peers can use submission_status and main_read to inspect merged code while working on their own branches.
+Use submission_status before finishing. The official verifier runs after submission."""
             text += f"""
 Current phase: Build. Your worktree is {worktree.path} on {worktree.branch}. {workspace}
 Use relative paths through workspace tools and maintain your own checklist. Keep existing items, including unfinished or descoped work. Add new items unchecked.
@@ -345,6 +462,8 @@ Commit through git_commit, which synchronizes with local main before committing.
 Merge your PRs before calling agent_finish. If Chorus reports a stale PR or a conflict, sync with main, resolve any conflicts, and open and merge a replacement PR.
 Before agent_finish, reread your checklist. State what you delivered and verified. In remaining, copy the text of each unchecked item and explain why it remains open or what is missing. Use an empty array if none remain.
 """
+        if repository_task:
+            return text + "\nThe shared plan is managed by spec tools, away from repository files. The solver cannot run shell commands."
         return text if custom else text + "\nBusiness brief:\n" + state.problem.statement
 
     def conversation_newest_first(self, sid, actor, phase):
@@ -372,10 +491,12 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             profile = persona.model_dump(exclude={"id", "generationId", "avatarId", "avatarBrief", "avatarVersion"})
             messages.insert(1, {"role": "user", "content": "Generated role profile:\n" + json.dumps(profile, ensure_ascii=False)})
         recent = self.conversation_newest_first(sid, actor, phase)
-        if state.experiment.rubric == "deliverable-v1":
+        if state.experiment.rubric == "deliverable-v1" or state.experiment.deepswe:
             messages.insert(1, {"role": "user", "content": state.problem.statement})
-        if state.experiment.rubric == "deliverable-v1" or generated_team:
-            return messages + self.custom_history(messages, recent, tools, state.config.model, 14_500)
+        if state.experiment.rubric == "deliverable-v1" or generated_team or state.experiment.deepswe:
+            slot = self.participant_slot(state, actor)
+            model = (slot.model if slot else None) or state.config.model
+            return messages + self.custom_history(messages, recent, tools, model, 14_500)
         if state.config.model == "gpt-6-luna" and self.meter.route(state.config.model) == "openai":
             fixed = luna_input_estimate(messages, {"tools": tools, "format": None})
             budget = luna_input_limit(EXPERIMENT_OUTPUT_LIMIT) - LUNA_FRAMING_HEADROOM - fixed
@@ -418,18 +539,29 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             worker.callsUsed = 0
             worker.currentTurnIndex += 1
 
+        def admit(state):
+            self.check(state, actor, generation, phase)
+            benchmark = state.experiment.deepswe
+            if benchmark.callsReserved >= benchmark.callLimit:
+                raise ChorusError("RUN_LIMIT", "The DeepSWE model-call limit was reached.", 409)
+            benchmark.callsReserved += 1
+
         try:
             state = self.repo.get(sid)
             worker = self.harness.get_worker(state, actor)
-            if worker.state in {"failed", "finished"}:
+            if worker.state in {"failed", "finished", "capped"}:
                 return
             if self.restore_pending(sid, actor, generation, phase):
                 return
-            tools = definitions(phase, custom=state.experiment.rubric == "deliverable-v1")
+            slot = self.participant_slot(state, actor)
+            repository_task = state.experiment.deepswe is not None
+            tools = definitions(phase, custom=state.experiment.rubric == "deliverable-v1", repository_task=repository_task)
             while True:
                 self.repo.change(sid, reserve, generation=generation)
                 messages = self.context(sid, actor, generation, phase, tools)
-                result = await self.meter.invoke(sid, actor, generation, messages, phase=phase, tools=tools, output=EXPERIMENT_OUTPUT_LIMIT)
+                result = await self.meter.invoke(sid, actor, generation, messages, phase=phase, tools=tools,
+                                                 output=EXPERIMENT_OUTPUT_LIMIT, model=slot.model if slot else None,
+                                                 admit=admit if repository_task else None)
                 self.check(self.repo.get(sid), actor, generation, phase)
                 message = result["message"]
                 calls = message.get("tool_calls", [])
@@ -448,6 +580,13 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         except Exception as error:
             state = self.repo.get(sid)
             if state.generation == generation and state.status == "running" and state.experiment.phase == phase:
+                if isinstance(error, ChorusError) and error.code == "RUN_LIMIT":
+                    reason = str(error)
+                    def cap(current):
+                        worker = self.harness.get_worker(current, actor)
+                        worker.state, worker.reason = "capped", reason
+                    self.repo.change(sid, cap, generation=generation)
+                    return
                 context_limit = isinstance(error, ChorusError) and error.code == "CONTEXT_LIMIT"
                 def fail(current):
                     worker = self.harness.get_worker(current, actor)
@@ -470,7 +609,8 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         try:
             state = self.repo.get(sid)
             self.check(state, actor, generation, phase)
-            schema = tool_schema(phase, custom=state.experiment.rubric == "deliverable-v1").get(name)
+            schema = tool_schema(phase, custom=state.experiment.rubric == "deliverable-v1",
+                                 repository_task=state.experiment.deepswe is not None).get(name)
             if schema is None:
                 raise ChorusError("FORBIDDEN", "This tool is unavailable in the current phase.", 403)
             args = json.loads(call["function"]["arguments"])
@@ -548,10 +688,18 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
                 self.spec.release(sid, root, actor, generation, lease["token"])
         if name == "plan_complete":
             return self.complete_plan(state, actor, generation)
+        if name == "submission_status":
+            return self.git.submission_status(sid, actor)
+        if name == "main_read":
+            file = self.git.browse_file(sid, "main", args["revision"], args["path"])
+            if file.content is None:
+                raise ValueError(f"Cannot preview this file ({file.status}).")
+            return {"revision": args["revision"], **chunk(file.content, args["offset"])}
         if name.startswith("workspace_"):
             if actor != "judge":
                 checkout = Path(next(item.path for item in state.experiment.repository.worktrees if item.agentId == actor))
-            return workspace_action(checkout, name, args, write=actor != "judge", custom=state.experiment.rubric == "deliverable-v1")
+            return workspace_action(checkout, name, args, write=state.experiment.phase == "build" and actor != "judge",
+                                    custom=state.experiment.rubric == "deliverable-v1", repository_task=state.experiment.deepswe is not None)
 
         authorize(state, actor, True)
         if name == "board_write":
@@ -569,6 +717,10 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             reason = self.short_text(args["reason"], 600)
             remaining = {}
             if name == "agent_finish":
+                status = self.git.submission_status(sid, actor) if state.experiment.deepswe else None
+                if status and (status["syncPending"] or status["changedFileCount"]):
+                    return {"code": "WORK_NOT_SUBMITTED", **status,
+                            "error": "Your worktree has unpublished work. Use git_commit, resolve any reported conflicts with git_resolve, then pr_open and pr_merge. Record verification gaps in remaining."}
                 pending = self.pending_pull_requests(sid, actor)
                 if pending:
                     return {
@@ -577,6 +729,9 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
                         "pendingPullRequests": pending[:8],
                         "pendingCount": len(pending),
                     }
+                if status and status["unmergedCommits"]:
+                    return {"code": "WORK_NOT_SUBMITTED", **status,
+                            "error": "Your branch has a commit outside main. Open a PR with pr_open and integrate it with pr_merge before finishing."}
                 remaining = {normalize(gap["task"]): self.short_text(gap["reason"], 600) for gap in args["remaining"]}
                 if len(remaining) != len(args["remaining"]):
                     raise ValueError("Explain each remaining deliverable once.")
@@ -621,6 +776,7 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
 
     def git_action(self, state, actor, name, args, key):
         sid = state.id
+        repository_task = state.experiment.deepswe is not None
         def publish(kind, data, mutate=lambda _: None):
             record = event(kind, actor, data, id=f"{kind}:{key}")
             self.repo.change(sid, mutate, records=[record], generation=state.generation)
@@ -628,9 +784,10 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
 
         if name in {"git_commit", "git_resolve"}:
             return publish("commit", self.git.commit(sid, actor, self.short_text(args["message"], 1500),
-                           resolve_conflicts=name == "git_resolve", operation_id=key))
+                           resolve_conflicts=name == "git_resolve", operation_id=key, repository_task=repository_task))
         if name == "pr_open":
-            return publish("pr", self.git.open_pr(sid, actor, self.short_text(args["description"], 2500), args["tasks"]))
+            return publish("pr", self.git.open_pr(sid, actor, self.short_text(args["description"], 2500), args["tasks"],
+                                                  repository_task=repository_task))
         records = self.repo.all(sid, "pr")
         pr = next((record.data for record in reversed(records) if record.data.get("id") == args["id"]
                    and record.data.get("status") in {"open", "merged", "conflict", "stale"}), None)
@@ -641,7 +798,7 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         if pr["status"] != "open" or pr["agentId"] != actor:
             raise ChorusError("FORBIDDEN", "Only the author can merge an open pull request.", 403)
         try:
-            result = self.git.merge_pr(sid, actor, pr)
+            result = self.git.merge_pr(sid, actor, pr, repository_task=repository_task)
         except ChorusError as error:
             if error.code in {"PR_STALE_SOURCE", "PR_STALE_TARGET", "PR_CONFLICT"}:
                 return publish("pr", {**pr, "status": "conflict" if error.code == "PR_CONFLICT" else "stale",
@@ -649,19 +806,57 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             raise
         return publish("pr", result, lambda current: setattr(current.experiment.repository, "mainCommit", self.git.main_commit(sid)))
 
-    def freeze(self, sid, generation):
+    def freeze(self, sid, generation, *, stop_reason=None):
         state = self.repo.get(sid)
         self.spec.cleanup(sid, self.root(state), reason="Build ended")
         commit = self.git.main_commit(sid)
         plan = state.experiment.deliverablePlan
         checks = self.git.artifact_checks(sid, state.experiment.repository.baselineCommit, commit, plan) if plan else []
+        benchmark = state.experiment.deepswe
+        if benchmark:
+            digest, tree = self.git.freeze_patch(sid, benchmark.task.baseCommit, commit, deepswe.MAX_PATCH_BYTES)
         def apply(current):
             current.experiment.frozen = FrozenExperiment(mainCommit=commit, specRevision=current.canvasVersion,
                                                          evidenceThrough=current.sequence, artifactChecks=checks)
             current.experiment.repository.mainCommit = commit
             current.frozenSequence = current.sequence
-            current.experiment.phase, current.status = "judge", "reviewing"
+            current.experiment.phase, current.status = "verify" if benchmark else "judge", "reviewing"
+            if benchmark:
+                current.experiment.deepswe.patchDigest = digest
+                current.experiment.deepswe.submittedTree = tree
+                current.experiment.deepswe.stopReason = stop_reason
+                if stop_reason:
+                    for worker in current.workers:
+                        if worker.state not in {"finished", "failed", "capped"}:
+                            worker.state, worker.reason = "capped", "The DeepSWE solving limit was reached."
         self.repo.change(sid, apply, generation=generation)
+
+    async def verify(self, sid, generation):
+        state = self.repo.get(sid)
+        benchmark = state.experiment.deepswe
+        attempt = benchmark.verificationAttempts + 1
+        self.repo.change(sid, lambda current: setattr(current.experiment.deepswe, "verificationAttempts", attempt),
+                         records=[event("assessment", "verifier", {"attempt": attempt, "status": "started"})], generation=generation)
+        try:
+            profile = await asyncio.to_thread(deepswe.Profile.load)
+            if profile.task != benchmark.task:
+                raise deepswe.unavailable("Restore this run's pinned DeepSWE profile before retrying verification.")
+            patch = self.git.frozen_patch(sid, benchmark.patchDigest, deepswe.MAX_PATCH_BYTES)
+            result = await profile.grade(patch, benchmark.submittedTree)
+        except (ChorusError, OSError, ValueError) as error:
+            message = str(error) if isinstance(error, ChorusError) else "The verifier could not read or grade the frozen submission."
+            def failed(current):
+                current.status = "verify_failed"
+                current.error = message
+            self.repo.change(sid, failed, records=[event("assessment", "verifier", {"attempt": attempt, "status": "ungraded"})],
+                             generation=generation)
+            return
+        def finish(current):
+            current.experiment.deepswe.result = result
+            current.status = "completed"
+        self.repo.change(sid, finish, records=[event("assessment", "verifier", {
+            "attempt": attempt, "status": "completed", "reward": result.reward,
+        })], generation=generation)
 
     async def judge(self, sid, generation):
         state = self.repo.get(sid)

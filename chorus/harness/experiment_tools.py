@@ -63,7 +63,9 @@ JUDGE_TOOLS = {
 }
 
 
-def tool_schema(phase, *, custom=False):
+def tool_schema(phase, *, custom=False, repository_task=False):
+    if phase == "verify":
+        return {}
     if phase == "judge":
         return {**JUDGE_TOOLS, "deliverable_plan_read": DELIVERABLE_PLAN_READ} if custom else JUDGE_TOOLS
     tools = {
@@ -81,22 +83,35 @@ def tool_schema(phase, *, custom=False):
             "Write a UTF-8 file inside deliverables/, frontend/, or backend/ in your worktree, creating parent directories as needed.",
             BUILD_TOOLS["workspace_write"][1],
         )
+    if repository_task:
+        for name in ("workspace_list", "workspace_read", "workspace_read_more"):
+            tools[name] = BUILD_TOOLS[name]
+        if phase == "build":
+            tools["submission_status"] = ("Inspect your private edits, branch and integrated main revision before handoff or finish.", parameters())
+            tools["main_read"] = ("Read a committed shared file. Use the mainCommit from submission_status and offset 0 initially.",
+                                  parameters(path=S, revision=S, offset=I))
+            tools["workspace_write"] = ("Write a UTF-8 file at a repository-relative path.", BUILD_TOOLS["workspace_write"][1])
+            tools["workspace_delete"] = ("Delete a regular file in your worktree.", parameters(path=S))
+            tools["workspace_rename"] = ("Move a regular file to an unused path in your worktree.", parameters(path=S, destination=S))
     return tools
 
 
-def definitions(phase, *, custom=False):
+def definitions(phase, *, custom=False, repository_task=False):
     return [
         {"type": "function", "function": {"name": name, "description": description, "parameters": schema}}
-        for name, (description, schema) in tool_schema(phase, custom=custom).items()
+        for name, (description, schema) in tool_schema(phase, custom=custom, repository_task=repository_task).items()
     ]
 
 
-def file_path(root: Path, relative: str) -> Path:
+def file_path(root: Path, relative: str, *, repository_task=False) -> Path:
     path = Path(relative)
     if path.is_absolute() or ".." in path.parts or len(relative) > 500:
         raise ValueError("Use a relative path inside the workspace.")
-    if any(part.casefold() in {".git", "spec.md"} for part in path.parts):
+    reserved = {".git"} if repository_task else {".git", "spec.md"}
+    if any(part.casefold() in reserved for part in path.parts):
         raise ValueError("Use the dedicated Git and SPEC.md tools.")
+    if repository_task and ("\\" in relative or any(ord(char) < 32 or ord(char) == 127 for char in relative)):
+        raise ValueError("Use a relative repository path without control characters or backslashes.")
     target = root
     for part in path.parts:
         target = target / part
@@ -105,15 +120,16 @@ def file_path(root: Path, relative: str) -> Path:
     return target
 
 
-def workspace_action(root, name, args, *, write=False, custom=False):
-    target = file_path(root, args["path"])
+def workspace_action(root, name, args, *, write=False, custom=False, repository_task=False):
+    target = file_path(root, args["path"], repository_task=repository_task)
     if name == "workspace_list":
         if not target.is_dir():
             raise ValueError("Directory not found.")
+        hidden = {".git", "node_modules", ".next"} | (set() if repository_task else {"spec.md"})
         entries = [
             {"name": item.name, "type": "directory" if item.is_dir() else "file"}
             for item in sorted(target.iterdir())
-            if not item.is_symlink() and item.name.casefold() not in {".git", "spec.md", "node_modules", ".next"}
+            if not item.is_symlink() and item.name.casefold() not in hidden
         ]
         return {"entries": entries[:200], "truncated": len(entries) > 200}
     if name in {"workspace_read", "workspace_read_more"}:
@@ -131,9 +147,23 @@ def workspace_action(root, name, args, *, write=False, custom=False):
         return {"content": chunk, "nextOffset": offset + len(chunk.encode("utf-8")) if more else None}
     if not write:
         raise ChorusError("FORBIDDEN", "The judge checkout is read-only through file tools.", 403)
+    if repository_task and name in {"workspace_delete", "workspace_rename"}:
+        if name == "workspace_delete":
+            if target.exists() and not target.is_file():
+                raise ValueError("Choose a regular file to delete.")
+            target.unlink(missing_ok=True)
+            return {"path": args["path"]}
+        destination = file_path(root, args["destination"], repository_task=True)
+        if target.exists() or not destination.is_file():
+            if not target.is_file() or destination.exists():
+                raise ValueError("Move a regular file to an unused repository path.")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            target.rename(destination)
+        return {"path": args["path"], "destination": args["destination"]}
     content = args["content"].encode("utf-8")
-    if custom:
-        experiment_output_path(args["path"])
+    if custom or repository_task:
+        if custom:
+            experiment_output_path(args["path"])
         if len(content) > 120000 or "\0" in args["content"]:
             raise ValueError("Write UTF-8 text of at most 120 KB without NUL characters.")
     elif len(content) > 120000 or not args["path"].startswith(("frontend/", "backend/")):

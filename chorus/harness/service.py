@@ -8,6 +8,7 @@ from uuid import uuid4
 from pydantic import ValidationError
 from chorus.harness import ENGINE_VERSION, PROMPT_VERSION
 from chorus.harness.accounting import Meter
+from chorus.harness.campaign import Campaigns
 from chorus.harness.catalog import load_catalog
 from chorus.harness.experiment import ExperimentRuntime
 from chorus.harness.models import HarnessSnapshot, HarnessConfig, Worker, Grade, JudgeReport
@@ -31,6 +32,7 @@ class HarnessService:
         self.meter = Meter(self.repo, self.call, {"local": asyncio.Semaphore(int(os.getenv("CHORUS_LOCAL_CONCURRENCY", "1"))), "cloud": asyncio.Semaphore(int(os.getenv("CHORUS_CLOUD_CONCURRENCY", "4")))})
         self.experiments = ExperimentRuntime(self)
         self.recover()
+        self.campaigns = Campaigns(self)
 
     def recover(self):
         self.repo.interrupt_experiment_teams()
@@ -72,7 +74,7 @@ class HarnessService:
         state = self.repo.get(sid)
         if state.experiment is not None:
             return self.experiments.command(state, command)
-        if command.action in {"kill", "retry_judge"}:
+        if command.action in {"kill", "retry_judge", "retry_verification"}:
             raise ChorusError("INVALID_STATE", "This command is only available for repository experiments.", 409)
         previous = self.repo.record(sid, "command:" + command.commandId)
         if previous:
@@ -452,6 +454,7 @@ class HarnessService:
         self.repo.change(sid, lambda s: setattr(s, "report", report), generation=generation)
 
     async def close(self):
+        await self.campaigns.close()
         await self.experiments.close()
         # Fence publication before cancelling; even an adapter that suppresses
         # cancellation cannot commit a late action during shutdown.

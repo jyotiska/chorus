@@ -28,6 +28,7 @@ ErrorCode = Literal[
     "PR_STALE_SOURCE",
     "PR_STALE_TARGET",
     "RECOVERED",
+    "RUN_LIMIT",
     "SCAFFOLD_UNAVAILABLE",
     "SPEC_RESERVED",
     "TIMEOUT",

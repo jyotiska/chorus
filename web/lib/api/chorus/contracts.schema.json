@@ -34,6 +34,7 @@
             "PR_STALE_SOURCE",
             "PR_STALE_TARGET",
             "RECOVERED",
+            "RUN_LIMIT",
             "SCAFFOLD_UNAVAILABLE",
             "SPEC_RESERVED",
             "TIMEOUT",
@@ -408,6 +409,173 @@
       "title": "CallMetrics",
       "type": "object"
     },
+    "CampaignScore": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "title": "Condition",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "integer"
+        },
+        "graded": {
+          "title": "Graded",
+          "type": "integer"
+        },
+        "planned": {
+          "title": "Planned",
+          "type": "integer"
+        },
+        "ratePercent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ratepercent"
+        },
+        "pairedCount": {
+          "title": "Pairedcount",
+          "type": "integer"
+        },
+        "deltaPoints": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Deltapoints"
+        }
+      },
+      "required": [
+        "condition",
+        "passed",
+        "graded",
+        "planned",
+        "ratePercent",
+        "pairedCount",
+        "deltaPoints"
+      ],
+      "title": "CampaignScore",
+      "type": "object"
+    },
+    "CampaignSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "createdAt": {
+          "title": "Createdat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "status",
+        "createdAt"
+      ],
+      "title": "CampaignSummary",
+      "type": "object"
+    },
+    "CampaignTrial": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "title": "Condition",
+          "type": "string"
+        },
+        "repeat": {
+          "title": "Repeat",
+          "type": "integer"
+        },
+        "sessionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sessionid"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "reward": {
+          "anyOf": [
+            {
+              "enum": [
+                0,
+                1
+              ],
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reward"
+        },
+        "calls": {
+          "title": "Calls",
+          "type": "integer"
+        },
+        "usage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Usage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "wallTimeMs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Walltimems"
+        }
+      },
+      "required": [
+        "condition",
+        "repeat",
+        "sessionId",
+        "status",
+        "reward",
+        "calls",
+        "usage",
+        "wallTimeMs"
+      ],
+      "title": "CampaignTrial",
+      "type": "object"
+    },
     "Catalog": {
       "additionalProperties": false,
       "properties": {
@@ -518,6 +686,626 @@
         "evidenceIds"
       ],
       "title": "CriterionScore",
+      "type": "object"
+    },
+    "DeepSWECampaign": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "running",
+            "paused",
+            "finished",
+            "cancelled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "error": {
+          "title": "Error",
+          "type": "string"
+        },
+        "manifest": {
+          "$ref": "#/$defs/DeepSWECampaignRequest"
+        },
+        "trials": {
+          "items": {
+            "$ref": "#/$defs/CampaignTrial"
+          },
+          "title": "Trials",
+          "type": "array"
+        },
+        "scores": {
+          "items": {
+            "$ref": "#/$defs/CampaignScore"
+          },
+          "title": "Scores",
+          "type": "array"
+        },
+        "callCeiling": {
+          "title": "Callceiling",
+          "type": "integer"
+        },
+        "engineVersion": {
+          "title": "Engineversion",
+          "type": "string"
+        },
+        "promptVersion": {
+          "title": "Promptversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "error",
+        "manifest",
+        "trials",
+        "scores",
+        "callCeiling",
+        "engineVersion",
+        "promptVersion"
+      ],
+      "title": "DeepSWECampaign",
+      "type": "object"
+    },
+    "DeepSWECampaignRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "requestId": {
+          "pattern": "^[a-zA-Z0-9-]{1,64}$",
+          "title": "Requestid",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "task": {
+          "$ref": "#/$defs/DeepSWETask"
+        },
+        "conditions": {
+          "items": {
+            "$ref": "#/$defs/DeepSWECondition"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Conditions",
+          "type": "array"
+        },
+        "repeats": {
+          "maximum": 30,
+          "minimum": 1,
+          "title": "Repeats",
+          "type": "integer"
+        },
+        "seed": {
+          "default": 0,
+          "maximum": 2147483647,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "requestId",
+        "name",
+        "task",
+        "conditions",
+        "repeats",
+        "seed"
+      ],
+      "title": "DeepSWECampaignRequest",
+      "type": "object"
+    },
+    "DeepSWECatalog": {
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeepSWETask"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/chorus__harness__models__ModelInfo"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "problem": {
+          "$ref": "#/$defs/Problem"
+        },
+        "agents": {
+          "items": {
+            "$ref": "#/$defs/Persona"
+          },
+          "title": "Agents",
+          "type": "array"
+        },
+        "model": {
+          "$ref": "#/$defs/chorus__harness__models__ModelInfo"
+        },
+        "callLimit": {
+          "title": "Calllimit",
+          "type": "integer"
+        },
+        "solvingSeconds": {
+          "title": "Solvingseconds",
+          "type": "integer"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unavailablereason"
+        }
+      },
+      "required": [
+        "task",
+        "models",
+        "problem",
+        "agents",
+        "model",
+        "callLimit",
+        "solvingSeconds",
+        "unavailableReason"
+      ],
+      "title": "DeepSWECatalog",
+      "type": "object"
+    },
+    "DeepSWEComparison": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline": {
+          "title": "Baseline",
+          "type": "string"
+        },
+        "candidate": {
+          "title": "Candidate",
+          "type": "string"
+        },
+        "paired": {
+          "title": "Paired",
+          "type": "integer"
+        },
+        "wins": {
+          "title": "Wins",
+          "type": "integer"
+        },
+        "losses": {
+          "title": "Losses",
+          "type": "integer"
+        },
+        "ties": {
+          "title": "Ties",
+          "type": "integer"
+        },
+        "baselinePlanned": {
+          "title": "Baselineplanned",
+          "type": "integer"
+        },
+        "candidatePlanned": {
+          "title": "Candidateplanned",
+          "type": "integer"
+        },
+        "baselinePercent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Baselinepercent"
+        },
+        "candidatePercent": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Candidatepercent"
+        },
+        "deltaPoints": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Deltapoints"
+        },
+        "changedSettings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Changedsettings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "baseline",
+        "candidate",
+        "paired",
+        "wins",
+        "losses",
+        "ties",
+        "baselinePlanned",
+        "candidatePlanned",
+        "baselinePercent",
+        "candidatePercent",
+        "deltaPoints",
+        "changedSettings"
+      ],
+      "title": "DeepSWEComparison",
+      "type": "object"
+    },
+    "DeepSWECondition": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "model": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "slots": {
+          "items": {
+            "$ref": "#/$defs/DeepSWESlot"
+          },
+          "maxItems": 15,
+          "minItems": 1,
+          "title": "Slots",
+          "type": "array"
+        },
+        "callLimit": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Calllimit",
+          "type": "integer"
+        },
+        "solvingSeconds": {
+          "maximum": 86400,
+          "minimum": 1,
+          "title": "Solvingseconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "model",
+        "slots",
+        "callLimit",
+        "solvingSeconds"
+      ],
+      "title": "DeepSWECondition",
+      "type": "object"
+    },
+    "DeepSWERequest": {
+      "additionalProperties": false,
+      "properties": {
+        "task": {
+          "$ref": "#/$defs/DeepSWETask"
+        },
+        "condition": {
+          "$ref": "#/$defs/DeepSWECondition"
+        }
+      },
+      "required": [
+        "task",
+        "condition"
+      ],
+      "title": "DeepSWERequest",
+      "type": "object"
+    },
+    "DeepSWEResult": {
+      "additionalProperties": false,
+      "properties": {
+        "reward": {
+          "enum": [
+            0,
+            1
+          ],
+          "title": "Reward",
+          "type": "integer"
+        },
+        "tests": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tests"
+        },
+        "passed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Passed"
+        },
+        "failed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Failed"
+        },
+        "compilationFailure": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compilationfailure"
+        }
+      },
+      "required": [
+        "reward",
+        "tests",
+        "passed",
+        "failed",
+        "compilationFailure"
+      ],
+      "title": "DeepSWEResult",
+      "type": "object"
+    },
+    "DeepSWERun": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeepSWECondition"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "task": {
+          "$ref": "#/$defs/DeepSWETask"
+        },
+        "callLimit": {
+          "title": "Calllimit",
+          "type": "integer"
+        },
+        "solvingSeconds": {
+          "title": "Solvingseconds",
+          "type": "integer"
+        },
+        "callsReserved": {
+          "default": 0,
+          "title": "Callsreserved",
+          "type": "integer"
+        },
+        "deadlineAt": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Deadlineat"
+        },
+        "stopReason": {
+          "anyOf": [
+            {
+              "enum": [
+                "call_limit",
+                "deadline"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stopreason"
+        },
+        "patchDigest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Patchdigest"
+        },
+        "submittedTree": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Submittedtree"
+        },
+        "verificationAttempts": {
+          "default": 0,
+          "title": "Verificationattempts",
+          "type": "integer"
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeepSWEResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "condition",
+        "task",
+        "callLimit",
+        "solvingSeconds",
+        "callsReserved",
+        "deadlineAt",
+        "stopReason",
+        "patchDigest",
+        "submittedTree",
+        "verificationAttempts",
+        "result"
+      ],
+      "title": "DeepSWERun",
+      "type": "object"
+    },
+    "DeepSWESlot": {
+      "additionalProperties": false,
+      "properties": {
+        "guidance": {
+          "enum": [
+            "neutral",
+            "role",
+            "full"
+          ],
+          "title": "Guidance",
+          "type": "string"
+        },
+        "profileId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Profileid"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        }
+      },
+      "required": [
+        "guidance",
+        "profileId",
+        "model"
+      ],
+      "title": "DeepSWESlot",
+      "type": "object"
+    },
+    "DeepSWETask": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "datasetCommit": {
+          "title": "Datasetcommit",
+          "type": "string"
+        },
+        "baseCommit": {
+          "title": "Basecommit",
+          "type": "string"
+        },
+        "baseTree": {
+          "title": "Basetree",
+          "type": "string"
+        },
+        "image": {
+          "title": "Image",
+          "type": "string"
+        },
+        "verifierImage": {
+          "title": "Verifierimage",
+          "type": "string"
+        },
+        "platform": {
+          "title": "Platform",
+          "type": "string"
+        },
+        "pierVersion": {
+          "title": "Pierversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "datasetCommit",
+        "baseCommit",
+        "baseTree",
+        "image",
+        "verifierImage",
+        "platform",
+        "pierVersion"
+      ],
+      "title": "DeepSWETask",
       "type": "object"
     },
     "Deliverable": {
@@ -837,7 +1625,8 @@
           "enum": [
             "plan",
             "build",
-            "judge"
+            "judge",
+            "verify"
           ],
           "title": "Phase",
           "type": "string"
@@ -910,7 +1699,8 @@
           "default": "application-v1",
           "enum": [
             "application-v1",
-            "deliverable-v1"
+            "deliverable-v1",
+            "deepswe-v1"
           ],
           "title": "Rubric",
           "type": "string"
@@ -919,6 +1709,17 @@
           "anyOf": [
             {
               "$ref": "#/$defs/DeliverablePlan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "deepswe": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeepSWERun"
             },
             {
               "type": "null"
@@ -937,7 +1738,8 @@
         "judgeAttempts",
         "report",
         "rubric",
-        "deliverablePlan"
+        "deliverablePlan",
+        "deepswe"
       ],
       "title": "ExperimentState",
       "type": "object"
@@ -1332,7 +2134,8 @@
             "resume",
             "stop",
             "kill",
-            "retry_judge"
+            "retry_judge",
+            "retry_verification"
           ],
           "title": "Action",
           "type": "string"
@@ -1492,6 +2295,21 @@
         "experimentConfig": {
           "$ref": "#/$defs/ExperimentConfig"
         },
+        "campaignSummary": {
+          "$ref": "#/$defs/CampaignSummary"
+        },
+        "deepsweComparison": {
+          "$ref": "#/$defs/DeepSWEComparison"
+        },
+        "deepsweRequest": {
+          "$ref": "#/$defs/DeepSWERequest"
+        },
+        "deepsweCampaign": {
+          "$ref": "#/$defs/DeepSWECampaign"
+        },
+        "deepsweCatalog": {
+          "$ref": "#/$defs/DeepSWECatalog"
+        },
         "teamGeneration": {
           "$ref": "#/$defs/TeamGeneration"
         },
@@ -1529,6 +2347,11 @@
         "usage",
         "experimentCatalog",
         "experimentConfig",
+        "campaignSummary",
+        "deepsweComparison",
+        "deepsweRequest",
+        "deepsweCampaign",
+        "deepsweCatalog",
         "teamGeneration",
         "teamGenerationRequest",
         "repositoryTree",
@@ -1617,7 +2440,8 @@
             "stopped",
             "stopping",
             "killed",
-            "judge_failed"
+            "judge_failed",
+            "verify_failed"
           ],
           "title": "Status",
           "type": "string"
@@ -2564,6 +3388,7 @@
                 "PR_STALE_SOURCE",
                 "PR_STALE_TARGET",
                 "RECOVERED",
+                "RUN_LIMIT",
                 "SCAFFOLD_UNAVAILABLE",
                 "SPEC_RESERVED",
                 "TIMEOUT",

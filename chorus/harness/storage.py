@@ -47,6 +47,12 @@ class ExperimentTeamRow(Base):
     data: Mapped[dict] = mapped_column(JSON)
 
 
+class CampaignRow(Base):
+    __tablename__ = "deepswe_campaigns"
+    id: Mapped[str] = mapped_column(String, primary_key=True)
+    data: Mapped[dict] = mapped_column(JSON)
+
+
 TABLES = (HarnessSessionRow, HarnessRecordRow, HarnessEventRow, HarnessLeaseRow)
 
 
@@ -54,8 +60,17 @@ class Repository:
     def __init__(self, store):
         self.store, self.engine = store, store.engine
 
-    def create(self, state: HarnessSnapshot, *, initial_call: Record | None = None) -> HarnessSnapshot:
+    def create(self, state: HarnessSnapshot, *, initial_call: Record | None = None, campaign_slot=None) -> HarnessSnapshot:
         with Session(self.engine) as db, db.begin():
+            if campaign_slot is not None:
+                campaign_id, index = campaign_slot
+                campaign = db.get(CampaignRow, campaign_id)
+                data = campaign.data
+                trials = data["trials"].copy()
+                if trials[index]["sessionId"] or data["status"] != "running":
+                    raise ChorusError("CONFLICT", "Campaign trial already claimed or inactive.", 409)
+                trials[index] = {**trials[index], "sessionId": state.id}
+                campaign.data = {**data, "trials": trials}
             if initial_call is not None:
                 initial_call.sequence = state.sequence = 1
                 db.add(HarnessRecordRow(session_id=state.id, id=initial_call.id, sequence=1,
@@ -65,6 +80,32 @@ class Repository:
             db.add(HarnessSessionRow(id=state.id, revision=0, snapshot=data))
             db.add(HarnessEventRow(session_id=state.id, revision=0, snapshot=data))
         return state
+
+    def campaign(self, cid):
+        with Session(self.engine) as db:
+            row = db.get(CampaignRow, cid)
+            if not row:
+                raise ChorusError("NOT_FOUND", "Campaign not found.", 404)
+            return row.data
+
+    def campaign_ids(self):
+        with Session(self.engine) as db:
+            return list(db.scalars(select(CampaignRow.id).order_by(CampaignRow.data["createdAt"].as_string().desc())))
+
+    def create_campaign(self, cid, data):
+        with Session(self.engine) as db, db.begin():
+            existing = db.get(CampaignRow, cid)
+            if existing:
+                if existing.data["manifest"] != data["manifest"]:
+                    raise ChorusError("CONFLICT", "Campaign ID already used for different settings.", 409)
+                return False
+            db.add(CampaignRow(id=cid, data=data))
+            return True
+
+    def set_campaign_status(self, cid, status, error=""):
+        with Session(self.engine) as db, db.begin():
+            row = db.get(CampaignRow, cid)
+            row.data = {**row.data, "status": status, "error": error}
 
     def save_experiment_team(self, team_id: str, data: dict) -> None:
         with Session(self.engine) as db, db.begin():

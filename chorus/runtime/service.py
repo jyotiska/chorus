@@ -22,7 +22,7 @@ class RuntimeService:
 
     def revision(self, sid):
         state = self.harness.repo.get(sid)
-        if state.experiment is None:
+        if state.experiment is None or state.experiment.deepswe is not None:
             raise ChorusError("NOT_FOUND", "This session has no application repository.", 404)
         return state.experiment.frozen.mainCommit if state.experiment.frozen else state.experiment.repository.mainCommit
 

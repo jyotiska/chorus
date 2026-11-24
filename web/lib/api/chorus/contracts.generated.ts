@@ -142,6 +142,7 @@ export type Errorcode =
       | "PR_STALE_SOURCE"
       | "PR_STALE_TARGET"
       | "RECOVERED"
+      | "RUN_LIMIT"
       | "SCAFFOLD_UNAVAILABLE"
       | "SPEC_RESERVED"
       | "TIMEOUT"
@@ -262,7 +263,16 @@ export type Reason1 = string;
 export type Remainingtasks = TaskGap[];
 export type Workers = Worker[];
 export type Status2 =
-  "ready" | "running" | "reviewing" | "paused" | "completed" | "stopped" | "stopping" | "killed" | "judge_failed";
+  | "ready"
+  | "running"
+  | "reviewing"
+  | "paused"
+  | "completed"
+  | "stopped"
+  | "stopping"
+  | "killed"
+  | "judge_failed"
+  | "verify_failed";
 export type Canvas1 = string;
 export type Canvasversion = number;
 export type Boardcount = number;
@@ -297,7 +307,7 @@ export type Insufficientevidence = boolean;
 export type Agents4 = Grade[];
 export type Coveredrecordids = string[];
 export type Completedat = string;
-export type Phase1 = "plan" | "build" | "judge";
+export type Phase1 = "plan" | "build" | "judge" | "verify";
 export type Planningcompletions = PlanningCompletion[] | null;
 export type Agentid6 = string;
 export type Specrevision = number;
@@ -345,7 +355,7 @@ export type Agents5 = AgentScorecard[];
  */
 export type Collaboration = CriterionScore[];
 export type Missingwork = string[];
-export type Rubric = "application-v1" | "deliverable-v1";
+export type Rubric = "application-v1" | "deliverable-v1" | "deepswe-v1";
 export type Kind2 = "file" | "repository" | "unavailable";
 export type Path2 = string;
 export type Format = string;
@@ -367,10 +377,43 @@ export type Acceptancecriteria = string[];
  * @maxItems 6
  */
 export type Assumptions = string[];
+export type Name3 = string;
+export type Model3 = string;
+export type Guidance = "neutral" | "role" | "full";
+export type Profileid = string | null;
+export type Model4 = string | null;
+/**
+ * @minItems 1
+ * @maxItems 15
+ */
+export type Slots = DeepSWESlot[];
+export type Calllimit = number;
+export type Solvingseconds = number;
+export type Id10 = string;
+export type Datasetcommit = string;
+export type Basecommit = string;
+export type Basetree = string;
+export type Image = string;
+export type Verifierimage = string;
+export type Platform = string;
+export type Pierversion = string;
+export type Calllimit1 = number;
+export type Solvingseconds1 = number;
+export type Callsreserved = number;
+export type Deadlineat = string | null;
+export type Stopreason = ("call_limit" | "deadline") | null;
+export type Patchdigest = string | null;
+export type Submittedtree = string | null;
+export type Verificationattempts = number;
+export type Reward = 0 | 1;
+export type Tests = number | null;
+export type Passed = number | null;
+export type Failed = number | null;
+export type Compilationfailure = string | null;
 export type Error1 = string;
 export type Createdat3 = string;
 export type Updatedat1 = string;
-export type Id10 = string;
+export type Id11 = string;
 export type Sequence1 = number;
 export type Kind3 = string;
 export type Agentid9 = string;
@@ -381,7 +424,7 @@ export type Cursor = number;
 export type Highwater = number;
 export type Hasmore = boolean;
 export type Commandid1 = string;
-export type Action1 = "start" | "pause" | "resume" | "stop" | "kill" | "retry_judge";
+export type Action1 = "start" | "pause" | "resume" | "stop" | "kill" | "retry_judge" | "retry_verification";
 export type Expectedrevision1 = number;
 export type Usage = ExperimentUsageReport | UsageReport;
 export type Callcount = number;
@@ -415,24 +458,76 @@ export type Customstatement = string | null;
  * @maxItems 15
  */
 export type Participantids3 = string[];
-export type Model3 = string;
+export type Model5 = string;
 export type Judgemodel1 = string | null;
 export type Teamgenerationid = string | null;
-export type Id11 = string;
+export type Id12 = string;
+export type Name4 = string;
+export type Status5 = string;
+export type Createdat5 = string;
+export type Baseline = string;
+export type Candidate = string;
+export type Paired = number;
+export type Wins = number;
+export type Losses = number;
+export type Ties = number;
+export type Baselineplanned = number;
+export type Candidateplanned = number;
+export type Baselinepercent = number | null;
+export type Candidatepercent = number | null;
+export type Deltapoints = number | null;
+export type Changedsettings = string[];
+export type Id13 = string;
+export type Status6 = "running" | "paused" | "finished" | "cancelled";
+export type Error2 = string;
+export type Requestid1 = string;
+export type Name5 = string;
+/**
+ * @minItems 1
+ * @maxItems 8
+ */
+export type Conditions = DeepSWECondition[];
+export type Repeats = number;
+export type Seed = number;
+export type Condition = string;
+export type Repeat = number;
+export type Sessionid = string | null;
+export type Status7 = string;
+export type Reward1 = (0 | 1) | null;
+export type Calls1 = number;
+export type Walltimems2 = number | null;
+export type Trials = CampaignTrial[];
+export type Condition1 = string;
+export type Passed1 = number;
+export type Graded = number;
+export type Planned = number;
+export type Ratepercent = number | null;
+export type Pairedcount = number;
+export type Deltapoints1 = number | null;
+export type Scores1 = CampaignScore[];
+export type Callceiling = number;
+export type Engineversion2 = string;
+export type Promptversion2 = string;
+export type Models3 = ModelInfo1[];
+export type Agents9 = Persona[];
+export type Calllimit2 = number;
+export type Solvingseconds2 = number;
+export type Unavailablereason2 = string | null;
+export type Id14 = string;
 /**
  * @minItems 3
  * @maxItems 5
  */
-export type Agents9 = GeneratedPersona[];
+export type Agents10 = GeneratedPersona[];
 export type Problemid2 = string;
 export type Customstatement1 = string | null;
-export type Model4 = string;
+export type Model6 = string;
 export type Revision2 = string;
 export type Path3 = string;
 export type Kind4 = "directory" | "file" | "link" | "submodule";
 export type Entries = RepositoryEntry[];
 export type Truncated = boolean;
-export type Status5 = "text" | "binary" | "too_large";
+export type Status8 = "text" | "binary" | "too_large";
 export type Size1 = number;
 export type Content = string | null;
 export type Patch = string;
@@ -445,14 +540,14 @@ export type Enabled = boolean;
 export type Availablerevision = string;
 export type Revision4 = string | null;
 export type State1 = "stopped" | "starting" | "running" | "failed";
-export type Error2 = string | null;
+export type Error3 = string | null;
 export type Port = number;
 export type Url = string;
 export type Forwards = WorkspacePort[];
 export type Action2 = "run" | "stop" | "reset" | "forward";
 export type Port1 = number | null;
 export type Url1 = string;
-export type Error3 = string;
+export type Error4 = string;
 export type Code =
   | "BACKEND_UNAVAILABLE"
   | "CANCELLED"
@@ -479,13 +574,14 @@ export type Code =
   | "PR_STALE_SOURCE"
   | "PR_STALE_TARGET"
   | "RECOVERED"
+  | "RUN_LIMIT"
   | "SCAFFOLD_UNAVAILABLE"
   | "SPEC_RESERVED"
   | "TIMEOUT"
   | "VERSION_MISMATCH"
   | "WORKSPACE_UNAVAILABLE"
   | "WRONG_BRANCH";
-export type Requestid1 = string;
+export type Requestid2 = string;
 
 /**
  * Root for generating TypeScript declarations and runtime validators.
@@ -664,6 +760,11 @@ export interface HarnessContracts {
   usage: Usage;
   experimentCatalog: ExperimentCatalog;
   experimentConfig: ExperimentConfig;
+  campaignSummary: CampaignSummary;
+  deepsweComparison: DeepSWEComparison;
+  deepsweRequest: DeepSWERequest;
+  deepsweCampaign: DeepSWECampaign;
+  deepsweCatalog: DeepSWECatalog;
   teamGeneration: TeamGeneration;
   teamGenerationRequest: TeamGenerationRequest;
   repositoryTree: RepositoryTree;
@@ -834,6 +935,7 @@ export interface ExperimentState {
   report: ExperimentReport | null;
   rubric: Rubric;
   deliverablePlan: DeliverablePlan | null;
+  deepswe: DeepSWERun | null;
 }
 export interface PlanningCompletion {
   agentId: Agentid6;
@@ -893,6 +995,48 @@ export interface Deliverable1 {
   primary: Primary;
   required: Required;
 }
+export interface DeepSWERun {
+  condition: DeepSWECondition | null;
+  task: DeepSWETask;
+  callLimit: Calllimit1;
+  solvingSeconds: Solvingseconds1;
+  callsReserved: Callsreserved;
+  deadlineAt: Deadlineat;
+  stopReason: Stopreason;
+  patchDigest: Patchdigest;
+  submittedTree: Submittedtree;
+  verificationAttempts: Verificationattempts;
+  result: DeepSWEResult | null;
+}
+export interface DeepSWECondition {
+  name: Name3;
+  model: Model3;
+  slots: Slots;
+  callLimit: Calllimit;
+  solvingSeconds: Solvingseconds;
+}
+export interface DeepSWESlot {
+  guidance: Guidance;
+  profileId: Profileid;
+  model: Model4;
+}
+export interface DeepSWETask {
+  id: Id10;
+  datasetCommit: Datasetcommit;
+  baseCommit: Basecommit;
+  baseTree: Basetree;
+  image: Image;
+  verifierImage: Verifierimage;
+  platform: Platform;
+  pierVersion: Pierversion;
+}
+export interface DeepSWEResult {
+  reward: Reward;
+  tests: Tests;
+  passed: Passed;
+  failed: Failed;
+  compilationFailure: Compilationfailure;
+}
 export interface RecordPage {
   records: Records;
   cursor: Cursor;
@@ -900,7 +1044,7 @@ export interface RecordPage {
   hasMore: Hasmore;
 }
 export interface Record {
-  id: Id10;
+  id: Id11;
   sequence: Sequence1;
   kind: Kind3;
   agentId: Agentid9;
@@ -967,18 +1111,90 @@ export interface ExperimentConfig {
   problemId: Problemid1;
   customStatement: Customstatement;
   participantIds: Participantids3;
-  model: Model3;
+  model: Model5;
   judgeModel: Judgemodel1;
   teamGenerationId: Teamgenerationid;
 }
-export interface TeamGeneration {
-  id: Id11;
+export interface CampaignSummary {
+  id: Id12;
+  name: Name4;
+  status: Status5;
+  createdAt: Createdat5;
+}
+export interface DeepSWEComparison {
+  baseline: Baseline;
+  candidate: Candidate;
+  paired: Paired;
+  wins: Wins;
+  losses: Losses;
+  ties: Ties;
+  baselinePlanned: Baselineplanned;
+  candidatePlanned: Candidateplanned;
+  baselinePercent: Baselinepercent;
+  candidatePercent: Candidatepercent;
+  deltaPoints: Deltapoints;
+  changedSettings: Changedsettings;
+}
+export interface DeepSWERequest {
+  task: DeepSWETask;
+  condition: DeepSWECondition;
+}
+export interface DeepSWECampaign {
+  id: Id13;
+  status: Status6;
+  error: Error2;
+  manifest: DeepSWECampaignRequest;
+  trials: Trials;
+  scores: Scores1;
+  callCeiling: Callceiling;
+  engineVersion: Engineversion2;
+  promptVersion: Promptversion2;
+}
+export interface DeepSWECampaignRequest {
+  requestId: Requestid1;
+  name: Name5;
+  task: DeepSWETask;
+  conditions: Conditions;
+  repeats: Repeats;
+  seed: Seed;
+}
+export interface CampaignTrial {
+  condition: Condition;
+  repeat: Repeat;
+  sessionId: Sessionid;
+  status: Status7;
+  reward: Reward1;
+  calls: Calls1;
+  usage: Usage1 | null;
+  wallTimeMs: Walltimems2;
+}
+export interface CampaignScore {
+  condition: Condition1;
+  passed: Passed1;
+  graded: Graded;
+  planned: Planned;
+  ratePercent: Ratepercent;
+  pairedCount: Pairedcount;
+  deltaPoints: Deltapoints1;
+}
+export interface DeepSWECatalog {
+  task: DeepSWETask | null;
+  models: Models3;
+  problem: Problem1;
   agents: Agents9;
+  model: ModelInfo1;
+  callLimit: Calllimit2;
+  solvingSeconds: Solvingseconds2;
+  unavailableReason: Unavailablereason2;
+}
+export interface TeamGeneration {
+  id: Id14;
+  agents: Agents10;
 }
 export interface TeamGenerationRequest {
   problemId: Problemid2;
   customStatement: Customstatement1;
-  model: Model4;
+  model: Model6;
 }
 export interface RepositoryTree {
   revision: Revision2;
@@ -990,7 +1206,7 @@ export interface RepositoryEntry {
   kind: Kind4;
 }
 export interface RepositoryFile {
-  status: Status5;
+  status: Status8;
   size: Size1;
   content: Content;
 }
@@ -1009,7 +1225,7 @@ export interface WorkspaceRuntime {
   availableRevision: Availablerevision;
   revision: Revision4;
   state: State1;
-  error: Error2;
+  error: Error3;
   logs: Logs;
   forwards: Forwards;
 }
@@ -1028,7 +1244,7 @@ export interface TerminalTicket {
   url: Url1;
 }
 export interface APIError {
-  error: Error3;
+  error: Error4;
   code: Code;
-  requestId: Requestid1;
+  requestId: Requestid2;
 }

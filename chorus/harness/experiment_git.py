@@ -145,8 +145,10 @@ class ExperimentGit:
             fcntl.flock(handle, fcntl.LOCK_EX)
             yield session
 
-    def initialize(self, session_id: str, participant_ids: list[str]) -> dict:
-        validate_scaffold(self.scaffold_root)
+    def initialize(self, session_id: str, participant_ids: list[str], *, source: Path | None = None,
+                   base_commit: str | None = None, base_tree: str | None = None) -> dict:
+        if source is None:
+            validate_scaffold(self.scaffold_root)
         session = self._session(session_id)
         branches = [(actor, f"agents/{_identifier(actor)}") for actor in participant_ids]
         if len({actor for actor, _ in branches}) != len(branches):
@@ -160,14 +162,22 @@ class ExperimentGit:
         metadata = session / "metadata"
         try:
             repo.mkdir()
-            for folder in ("frontend", "backend"):
-                _copy_scaffold(self.scaffold_root / folder, repo / folder)
             _git(repo, "init", "--template=", "--initial-branch=main")
-            info = repo / ".git" / "info"
-            info.mkdir(exist_ok=True)
-            (info / "exclude").write_text("/SPEC.md\n/backend/data.sqlite\n", encoding="utf-8")
-            _git(repo, "add", "--all")
-            _git(repo, "commit", "--allow-empty", "-m", "Starter scaffold baseline")
+            if source is None:
+                for folder in ("frontend", "backend"):
+                    _copy_scaffold(self.scaffold_root / folder, repo / folder)
+                info = repo / ".git" / "info"
+                info.mkdir(exist_ok=True)
+                (info / "exclude").write_text("/SPEC.md\n/backend/data.sqlite\n", encoding="utf-8")
+                _git(repo, "add", "--all")
+                _git(repo, "commit", "--allow-empty", "-m", "Starter scaffold baseline")
+            else:
+                if not base_commit or not _OBJECT_ID.fullmatch(base_commit):
+                    raise ChorusError("INVALID_REQUEST", "A pinned repository commit is required.", 400)
+                _git(repo, "fetch", "--no-tags", "--no-recurse-submodules", "--depth=1", str(source), base_commit)
+                _git(repo, "checkout", "-B", "main", "FETCH_HEAD")
+                if self._head(repo) != base_commit or self._head(repo, "HEAD^{tree}") != base_tree:
+                    raise ChorusError("GIT_FAILED", "The imported repository tree does not match the task baseline.", 409)
             baseline = self._head(repo, "refs/heads/main")
             (session / "worktrees").mkdir()
             worktrees = []
@@ -269,7 +279,7 @@ class ExperimentGit:
                     raise ChorusError("GIT_CONFLICT", f"Resolve the conflict markers in {name} before continuing.", 409)
 
     def commit(self, session_id: str, agent_id: str, message: str, *, resolve_conflicts: bool = False,
-               operation_id: str | None = None) -> dict:
+               operation_id: str | None = None, repository_task: bool = False) -> dict:
         if not message.strip():
             raise ChorusError("INVALID_REQUEST", "A commit message is required.", 400)
         with self._locked(session_id) as session:
@@ -289,7 +299,7 @@ class ExperimentGit:
                         return self._commit_view(path, branch, agent_id, head, previous_sync)
                 if previous_sync and not pending and not self._dirty(path):
                     return self._commit_view(path, branch, agent_id, previous_sync)
-            if _git(path, "ls-files", "--", _SPEC_PATH).stdout:
+            if not repository_task and _git(path, "ls-files", "--", _SPEC_PATH).stdout:
                 raise ChorusError("SPEC_RESERVED", "Use the shared specification tools to edit SPEC.md.", 409)
             unmerged = self._unmerged(path)
             merging = _git(path, "rev-parse", "--verify", "MERGE_HEAD", check=False).returncode == 0
@@ -358,7 +368,7 @@ class ExperimentGit:
         if _git(path, "log", "-1", "--format=%H", f"{target}..{source}", "--", _SPEC_PATH).stdout:
             raise ChorusError("SPEC_RESERVED", "An application PR cannot replace the shared SPEC.md.", 409)
 
-    def open_pr(self, session_id: str, agent_id: str, description: str, task_ids: list[str]) -> dict:
+    def open_pr(self, session_id: str, agent_id: str, description: str, task_ids: list[str], *, repository_task: bool = False) -> dict:
         if not description.strip():
             raise ChorusError("INVALID_REQUEST", "A pull request description is required.", 400)
         with self._locked(session_id) as session:
@@ -367,13 +377,14 @@ class ExperimentGit:
             target = self._head(session / "repository", "refs/heads/main")
             if self._ancestor(path, source, target):
                 raise ChorusError("NO_CHANGES", "This branch has no commits outside main.", 409)
-            self._check_spec_history(path, target, source)
+            if not repository_task:
+                self._check_spec_history(path, target, source)
             diff = _git(path, "diff", "--no-ext-diff", "--no-textconv", "--binary", f"{target}...{source}", "--").stdout
             return {"id": str(uuid4()), "agentId": agent_id, "branch": branch, "sourceCommit": source,
                     "targetCommit": target, "description": description, "taskIds": list(task_ids),
                     "diff": diff, "status": "open"}
 
-    def merge_pr(self, session_id: str, agent_id: str, pr: dict) -> dict:
+    def merge_pr(self, session_id: str, agent_id: str, pr: dict, *, repository_task: bool = False) -> dict:
         if pr["agentId"] != agent_id:
             raise ChorusError("FORBIDDEN", "Only the PR owner can merge this contribution.", 403)
         with self._locked(session_id) as session:
@@ -395,7 +406,8 @@ class ExperimentGit:
             if not self._ancestor(repo, main, source):
                 code = "PR_STALE_TARGET" if main != target else "PR_CONFLICT"
                 raise ChorusError(code, "Reconcile your worktree with current main and open a new PR.", 409)
-            self._check_spec_history(repo, main, source)
+            if not repository_task:
+                self._check_spec_history(repo, main, source)
             if _git(repo, "symbolic-ref", "--quiet", "--short", "HEAD").stdout.strip() != "main":
                 raise ChorusError("WRONG_BRANCH", "The primary worktree must stay on main.", 409)
             if _git(repo, "status", "--porcelain").stdout:
@@ -407,6 +419,56 @@ class ExperimentGit:
     def main_commit(self, session_id: str) -> str:
         with self._locked(session_id) as session:
             return self._head(session / "repository", "refs/heads/main")
+
+    def submission_status(self, session_id: str, actor: str) -> dict:
+        with self._locked(session_id) as session:
+            path, _ = self._branch(session, actor)
+            main = self._head(path, "refs/heads/main")
+            head = self._head(path)
+            # Disable rename detection so each NUL-delimited record has one path.
+            rows = _git(path, "status", "--porcelain=v1", "-z", "--no-renames", "--untracked-files=all").stdout
+            changes = [row for row in rows.split("\0") if row]
+            return {
+                "mainCommit": main, "workerCommit": head,
+                "unmergedCommits": not self._ancestor(path, head, main),
+                "changedFileCount": len(changes), "changes": changes[:12],
+                "syncPending": (session / "metadata" / f"sync-{actor}.json").exists(),
+            }
+
+    def freeze_patch(self, session_id: str, base: str, commit: str, maximum: int) -> tuple[str, str]:
+        with self._locked(session_id) as session, TemporaryFile() as stream:
+            repo = session / "repository"
+            tree = self._head(repo, f"{commit}^{{tree}}")
+            _git(repo, "diff", "--binary", "--full-index", "--no-renames", "--no-ext-diff", "--no-textconv", "--no-color",
+                 "--src-prefix=a/", "--dst-prefix=b/", base, commit, "--", output=stream)
+            stream.seek(0)
+            patch = stream.read(maximum + 1)
+            if len(patch) > maximum:
+                raise ChorusError("INVALID_STATE", "The submitted patch exceeds the supported size for this DeepSWE task.", 409)
+            digest = sha256(patch).hexdigest()
+            with NamedTemporaryFile(dir=session / "metadata", delete=False) as temporary:
+                path = Path(temporary.name)
+                try:
+                    temporary.write(patch)
+                    temporary.flush()
+                    os.fsync(temporary.fileno())
+                    os.replace(path, session / "metadata" / f"{digest}.patch")
+                finally:
+                    path.unlink(missing_ok=True)
+        return digest, tree
+
+    def frozen_patch(self, session_id: str, digest: str, maximum: int) -> bytes:
+        if not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise ChorusError("INVALID_STATE", "The submitted patch digest is invalid.", 409)
+        with self._locked(session_id) as session:
+            try:
+                with (session / "metadata" / f"{digest}.patch").open("rb") as stream:
+                    patch = stream.read(maximum + 1)
+            except OSError as error:
+                raise ChorusError("NOT_FOUND", "The frozen DeepSWE patch is missing from this workspace.", 404) from error
+            if len(patch) > maximum or sha256(patch).hexdigest() != digest:
+                raise ChorusError("INVALID_STATE", "The frozen DeepSWE patch failed its integrity check.", 409)
+            return patch
 
     @staticmethod
     def _artifact_entry(repo: Path, commit: str, path: str):

@@ -1125,6 +1125,556 @@
         }
       }
     },
+    "/api/v2/deepswe/catalog": {
+      "get": {
+        "summary": "Deepswe Catalog",
+        "operationId": "deepswe_catalog_api_v2_deepswe_catalog_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepSWECatalog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/deepswe/sessions": {
+      "post": {
+        "summary": "Create Deepswe",
+        "operationId": "create_deepswe_api_v2_deepswe_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DeepSWERequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Settings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarnessSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/deepswe/campaigns": {
+      "get": {
+        "summary": "List Campaigns",
+        "operationId": "list_campaigns_api_v2_deepswe_campaigns_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CampaignSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Campaigns Api V2 Deepswe Campaigns Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Launch Campaign",
+        "operationId": "launch_campaign_api_v2_deepswe_campaigns_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeepSWECampaignRequest-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepSWECampaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/deepswe/campaigns/{cid}": {
+      "get": {
+        "summary": "Campaign Report",
+        "operationId": "campaign_report_api_v2_deepswe_campaigns__cid__get",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepSWECampaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/deepswe/campaigns/{cid}/comparison": {
+      "get": {
+        "summary": "Compare Campaigns",
+        "operationId": "compare_campaigns_api_v2_deepswe_campaigns__cid__comparison_get",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "other",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Other"
+            }
+          },
+          {
+            "name": "candidate",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate"
+            }
+          },
+          {
+            "name": "baseline",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Baseline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepSWEComparison"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/deepswe/campaigns/{cid}/{action}": {
+      "post": {
+        "summary": "Campaign Control",
+        "operationId": "campaign_control_api_v2_deepswe_campaigns__cid___action__post",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "action",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "resume",
+                "cancel"
+              ],
+              "type": "string",
+              "title": "Action"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepSWECampaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/sessions/{sid}/deepswe/patch": {
+      "get": {
+        "summary": "Deepswe Patch",
+        "operationId": "deepswe_patch_api_v2_sessions__sid__deepswe_patch_get",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v2/assets/{agent_id}/{asset}": {
       "get": {
         "summary": "Asset",
@@ -2700,6 +3250,7 @@
               "PR_STALE_SOURCE",
               "PR_STALE_TARGET",
               "RECOVERED",
+              "RUN_LIMIT",
               "SCAFFOLD_UNAVAILABLE",
               "SPEC_RESERVED",
               "TIMEOUT",
@@ -3063,6 +3614,173 @@
         ],
         "title": "CallMetrics"
       },
+      "CampaignScore": {
+        "properties": {
+          "condition": {
+            "type": "string",
+            "title": "Condition"
+          },
+          "passed": {
+            "type": "integer",
+            "title": "Passed"
+          },
+          "graded": {
+            "type": "integer",
+            "title": "Graded"
+          },
+          "planned": {
+            "type": "integer",
+            "title": "Planned"
+          },
+          "ratePercent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratepercent"
+          },
+          "pairedCount": {
+            "type": "integer",
+            "title": "Pairedcount"
+          },
+          "deltaPoints": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deltapoints"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "condition",
+          "passed",
+          "graded",
+          "planned",
+          "ratePercent",
+          "pairedCount",
+          "deltaPoints"
+        ],
+        "title": "CampaignScore"
+      },
+      "CampaignSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "Createdat"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "status",
+          "createdAt"
+        ],
+        "title": "CampaignSummary"
+      },
+      "CampaignTrial": {
+        "properties": {
+          "condition": {
+            "type": "string",
+            "title": "Condition"
+          },
+          "repeat": {
+            "type": "integer",
+            "title": "Repeat"
+          },
+          "sessionId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessionid"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "reward": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "enum": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reward"
+          },
+          "calls": {
+            "type": "integer",
+            "title": "Calls"
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Usage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "wallTimeMs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Walltimems"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "condition",
+          "repeat",
+          "sessionId",
+          "status",
+          "reward",
+          "calls",
+          "usage",
+          "wallTimeMs"
+        ],
+        "title": "CampaignTrial"
+      },
       "Catalog": {
         "properties": {
           "agents": {
@@ -3174,6 +3892,750 @@
           "evidenceIds"
         ],
         "title": "CriterionScore"
+      },
+      "DeepSWECampaign": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "paused",
+              "finished",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "error": {
+            "type": "string",
+            "title": "Error"
+          },
+          "manifest": {
+            "$ref": "#/components/schemas/DeepSWECampaignRequest-Output"
+          },
+          "trials": {
+            "items": {
+              "$ref": "#/components/schemas/CampaignTrial"
+            },
+            "type": "array",
+            "title": "Trials"
+          },
+          "scores": {
+            "items": {
+              "$ref": "#/components/schemas/CampaignScore"
+            },
+            "type": "array",
+            "title": "Scores"
+          },
+          "callCeiling": {
+            "type": "integer",
+            "title": "Callceiling"
+          },
+          "engineVersion": {
+            "type": "string",
+            "title": "Engineversion"
+          },
+          "promptVersion": {
+            "type": "string",
+            "title": "Promptversion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "error",
+          "manifest",
+          "trials",
+          "scores",
+          "callCeiling",
+          "engineVersion",
+          "promptVersion"
+        ],
+        "title": "DeepSWECampaign"
+      },
+      "DeepSWECampaignRequest-Input": {
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9-]{1,64}$",
+            "title": "Requestid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "task": {
+            "$ref": "#/components/schemas/DeepSWETask"
+          },
+          "conditions": {
+            "items": {
+              "$ref": "#/components/schemas/DeepSWECondition-Input"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Conditions"
+          },
+          "repeats": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Repeats"
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "requestId",
+          "name",
+          "task",
+          "conditions",
+          "repeats"
+        ],
+        "title": "DeepSWECampaignRequest"
+      },
+      "DeepSWECampaignRequest-Output": {
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9-]{1,64}$",
+            "title": "Requestid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "task": {
+            "$ref": "#/components/schemas/DeepSWETask"
+          },
+          "conditions": {
+            "items": {
+              "$ref": "#/components/schemas/DeepSWECondition-Output"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Conditions"
+          },
+          "repeats": {
+            "type": "integer",
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Repeats"
+          },
+          "seed": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "requestId",
+          "name",
+          "task",
+          "conditions",
+          "repeats",
+          "seed"
+        ],
+        "title": "DeepSWECampaignRequest"
+      },
+      "DeepSWECatalog": {
+        "properties": {
+          "task": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeepSWETask"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/chorus__harness__models__ModelInfo"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "problem": {
+            "$ref": "#/components/schemas/Problem"
+          },
+          "agents": {
+            "items": {
+              "$ref": "#/components/schemas/Persona"
+            },
+            "type": "array",
+            "title": "Agents"
+          },
+          "model": {
+            "$ref": "#/components/schemas/chorus__harness__models__ModelInfo"
+          },
+          "callLimit": {
+            "type": "integer",
+            "title": "Calllimit"
+          },
+          "solvingSeconds": {
+            "type": "integer",
+            "title": "Solvingseconds"
+          },
+          "unavailableReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unavailablereason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task",
+          "models",
+          "problem",
+          "agents",
+          "model",
+          "callLimit",
+          "solvingSeconds",
+          "unavailableReason"
+        ],
+        "title": "DeepSWECatalog"
+      },
+      "DeepSWEComparison": {
+        "properties": {
+          "baseline": {
+            "type": "string",
+            "title": "Baseline"
+          },
+          "candidate": {
+            "type": "string",
+            "title": "Candidate"
+          },
+          "paired": {
+            "type": "integer",
+            "title": "Paired"
+          },
+          "wins": {
+            "type": "integer",
+            "title": "Wins"
+          },
+          "losses": {
+            "type": "integer",
+            "title": "Losses"
+          },
+          "ties": {
+            "type": "integer",
+            "title": "Ties"
+          },
+          "baselinePlanned": {
+            "type": "integer",
+            "title": "Baselineplanned"
+          },
+          "candidatePlanned": {
+            "type": "integer",
+            "title": "Candidateplanned"
+          },
+          "baselinePercent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baselinepercent"
+          },
+          "candidatePercent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidatepercent"
+          },
+          "deltaPoints": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deltapoints"
+          },
+          "changedSettings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Changedsettings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "baseline",
+          "candidate",
+          "paired",
+          "wins",
+          "losses",
+          "ties",
+          "baselinePlanned",
+          "candidatePlanned",
+          "baselinePercent",
+          "candidatePercent",
+          "deltaPoints",
+          "changedSettings"
+        ],
+        "title": "DeepSWEComparison"
+      },
+      "DeepSWECondition-Input": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Model"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/DeepSWESlot-Input"
+            },
+            "type": "array",
+            "maxItems": 15,
+            "minItems": 1,
+            "title": "Slots"
+          },
+          "callLimit": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Calllimit"
+          },
+          "solvingSeconds": {
+            "type": "integer",
+            "maximum": 86400.0,
+            "minimum": 1.0,
+            "title": "Solvingseconds"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "model",
+          "slots",
+          "callLimit",
+          "solvingSeconds"
+        ],
+        "title": "DeepSWECondition"
+      },
+      "DeepSWECondition-Output": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "model": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Model"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/DeepSWESlot-Output"
+            },
+            "type": "array",
+            "maxItems": 15,
+            "minItems": 1,
+            "title": "Slots"
+          },
+          "callLimit": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Calllimit"
+          },
+          "solvingSeconds": {
+            "type": "integer",
+            "maximum": 86400.0,
+            "minimum": 1.0,
+            "title": "Solvingseconds"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "model",
+          "slots",
+          "callLimit",
+          "solvingSeconds"
+        ],
+        "title": "DeepSWECondition"
+      },
+      "DeepSWERequest": {
+        "properties": {
+          "task": {
+            "$ref": "#/components/schemas/DeepSWETask"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/DeepSWECondition-Input"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task",
+          "condition"
+        ],
+        "title": "DeepSWERequest"
+      },
+      "DeepSWEResult": {
+        "properties": {
+          "reward": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "title": "Reward"
+          },
+          "tests": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tests"
+          },
+          "passed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passed"
+          },
+          "failed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed"
+          },
+          "compilationFailure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compilationfailure"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reward",
+          "tests",
+          "passed",
+          "failed",
+          "compilationFailure"
+        ],
+        "title": "DeepSWEResult"
+      },
+      "DeepSWERun": {
+        "properties": {
+          "condition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeepSWECondition-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "task": {
+            "$ref": "#/components/schemas/DeepSWETask"
+          },
+          "callLimit": {
+            "type": "integer",
+            "title": "Calllimit"
+          },
+          "solvingSeconds": {
+            "type": "integer",
+            "title": "Solvingseconds"
+          },
+          "callsReserved": {
+            "type": "integer",
+            "title": "Callsreserved",
+            "default": 0
+          },
+          "deadlineAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadlineat"
+          },
+          "stopReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "call_limit",
+                  "deadline"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stopreason"
+          },
+          "patchDigest": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patchdigest"
+          },
+          "submittedTree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submittedtree"
+          },
+          "verificationAttempts": {
+            "type": "integer",
+            "title": "Verificationattempts",
+            "default": 0
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeepSWEResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "condition",
+          "task",
+          "callLimit",
+          "solvingSeconds",
+          "callsReserved",
+          "deadlineAt",
+          "stopReason",
+          "patchDigest",
+          "submittedTree",
+          "verificationAttempts",
+          "result"
+        ],
+        "title": "DeepSWERun"
+      },
+      "DeepSWESlot-Input": {
+        "properties": {
+          "guidance": {
+            "type": "string",
+            "enum": [
+              "neutral",
+              "role",
+              "full"
+            ],
+            "title": "Guidance"
+          },
+          "profileId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profileid"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "guidance"
+        ],
+        "title": "DeepSWESlot"
+      },
+      "DeepSWESlot-Output": {
+        "properties": {
+          "guidance": {
+            "type": "string",
+            "enum": [
+              "neutral",
+              "role",
+              "full"
+            ],
+            "title": "Guidance"
+          },
+          "profileId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profileid"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "guidance",
+          "profileId",
+          "model"
+        ],
+        "title": "DeepSWESlot"
+      },
+      "DeepSWETask": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "datasetCommit": {
+            "type": "string",
+            "title": "Datasetcommit"
+          },
+          "baseCommit": {
+            "type": "string",
+            "title": "Basecommit"
+          },
+          "baseTree": {
+            "type": "string",
+            "title": "Basetree"
+          },
+          "image": {
+            "type": "string",
+            "title": "Image"
+          },
+          "verifierImage": {
+            "type": "string",
+            "title": "Verifierimage"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "pierVersion": {
+            "type": "string",
+            "title": "Pierversion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "datasetCommit",
+          "baseCommit",
+          "baseTree",
+          "image",
+          "verifierImage",
+          "platform",
+          "pierVersion"
+        ],
+        "title": "DeepSWETask"
       },
       "Deliverable": {
         "properties": {
@@ -3484,7 +4946,8 @@
             "enum": [
               "plan",
               "build",
-              "judge"
+              "judge",
+              "verify"
             ],
             "title": "Phase",
             "default": "plan"
@@ -3553,7 +5016,8 @@
             "type": "string",
             "enum": [
               "application-v1",
-              "deliverable-v1"
+              "deliverable-v1",
+              "deepswe-v1"
             ],
             "title": "Rubric",
             "default": "application-v1"
@@ -3562,6 +5026,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/DeliverablePlan"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deepswe": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeepSWERun"
               },
               {
                 "type": "null"
@@ -3581,7 +5055,8 @@
           "judgeAttempts",
           "report",
           "rubric",
-          "deliverablePlan"
+          "deliverablePlan",
+          "deepswe"
         ],
         "title": "ExperimentState"
       },
@@ -3988,7 +5463,8 @@
               "resume",
               "stop",
               "kill",
-              "retry_judge"
+              "retry_judge",
+              "retry_verification"
             ],
             "title": "Action"
           },
@@ -4281,7 +5757,8 @@
               "stopped",
               "stopping",
               "killed",
-              "judge_failed"
+              "judge_failed",
+              "verify_failed"
             ],
             "title": "Status",
             "default": "ready"
@@ -5269,6 +6746,7 @@
                   "PR_STALE_SOURCE",
                   "PR_STALE_TARGET",
                   "RECOVERED",
+                  "RUN_LIMIT",
                   "SCAFFOLD_UNAVAILABLE",
                   "SPEC_RESERVED",
                   "TIMEOUT",
