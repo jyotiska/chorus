@@ -1,6 +1,6 @@
 # Chorus architecture
 
-Updated 11 November 2026. This describes the current application. Earlier research/design notes are [archived](archive/architecture-v1.md).
+Updated 24 November 2026. This describes the current application. Earlier research/design notes are [archived](archive/architecture-v1.md).
 
 ## One repository, separate responsibilities
 
@@ -24,6 +24,8 @@ flowchart LR
 ```
 
 `chorus launch` supervises one Python API and one web process. Defaults remain 43187 and 43189. Nanoville is a separate API consumer on its own port and is not required. The web owns display and input; the engine owns models, prompts, permissions, execution, storage, usage and evaluation.
+
+Under Compose, one app container supervises the production Next.js web process and one Python engine, with SQLite and experiment repositories in a persistent volume. The engine stays on container loopback. A separate controller serves previews on host loopback and receives control requests over a private Unix socket. Only the controller has the Docker daemon socket. [Container startup and volumes](running-chorus.md#start-with-docker-compose)
 
 `chorus/harness/` is current execution code. `chorus/services/` also contains the older engine, and `/api/v1` remains readable for historical sessions; production legacy writes are disabled. Do not infer current behavior from old templates or catalogs.
 
@@ -53,6 +55,8 @@ stateDiagram-v2
 `SPEC.md` is authoritative shared planning/task state. Agents edit code in their assigned worktrees, create local PR records and merge reviewed contributions into the primary branch. These are local operations, not GitHub pull requests. Tool permissions depend on actor and phase. Git operations disable external hooks/configuration and validate paths/branch identity.
 
 The final judge reads frozen evidence and code; it cannot build or run the application. Its review is not a deterministic correctness result. App workers currently have no overall call/time/spend limit; operational limits are planned separately from completion rules.
+
+**Run** and **Terminal** are user operations. The engine exports regular committed blobs from the selected `main` revision into a disposable container without Git metadata. The container shares neither the experiment checkout nor credentials. Its loopback network lets the frontend and backend communicate. The controller relays registered HTTP and WebSocket ports and exposes one short-lived, origin-bound terminal ticket at a time. Each forwarded port gets a distinct browser origin. The iframe wrapper uses same-origin browser history inside the preview and exchanges navigation messages with Chorus. Run logs and terminal I/O remain transient.
 
 Custom runs snapshot the full user brief and publish a typed deliverable plan through the same SPEC lease. Build can write UTF-8 artifacts under `deliverables/`, in addition to the existing starter paths. The last planning completion locks the plan, and freeze checks its declared outputs against the committed `main` tree. Artifact downloads and the deliverable rubric use that same commit. Individual and collaboration scorecards retain their existing criteria. Custom runs use `experiment-v5-custom` and `experiment-v5-custom-deliverables`. Preset runs retain the `experiment-v4` runtime, saved-run recovery, and application rubric.
 
@@ -86,7 +90,7 @@ Each session has a current snapshot/revision and ordered durable records. Comman
 
 The browser subscribes to server-sent snapshot events. Reconnection uses the latest revision; intermediate snapshots may be skipped. Separate record cursors retain the audit history. Closing a tab does not stop agents. Storage currently writes full revision snapshots and several views reread large record sets; measure before changing retention or optimizing.
 
-Default data is outside the checkout at `~/.local/share/chorus/`. The database and sibling `experiments/` directory together form saved work. Never commit either, nor real exports or test recordings.
+Compose saves data in the project's `work` volume. A source installation defaults to `~/.local/share/chorus/`. The database and sibling `experiments/` directory together form saved work. Keep both outside Git along with real exports and test recordings.
 
 ## Visibility and measurement
 

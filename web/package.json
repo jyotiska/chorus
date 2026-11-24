@@ -13,9 +13,12 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "ajv": "^8.20.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
+    "highlight.js": "^11.12.0",
     "lucide-react": "^1.49.0",
     "next": "16.4.6",
     "react": "19.2.8",
@@ -35,9 +38,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "json-schema-to-typescript": "^16.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "json-schema-to-typescript": "^16.0.0"
+    "typescript": "^5"
   },
   "engines": {
     "node": "24.x"

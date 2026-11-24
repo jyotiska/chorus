@@ -51,6 +51,12 @@ const server = createServer(async (request, response) => {
   };
   if (request.url === "/api/tags") return reply({ models: ["qwen3:4b", "qwen3.5:0.8b-mlx", "qwen3.5:2b-mlx", "qwen3.5:4b-mlx", "gemma4:e2b-mlx", "gemma4:e4b-mlx"].map((name) => ({ name })) });
   if (request.url === "/health") return reply({ ok: true });
+  if (request.method === "GET" && request.url === "/chorus-preview-fixture/-/chorus-preview-fixture-1.0.0.tgz") {
+    // Synthetic npm package with package.json and an index exporting "registry-probe".
+    const archive = Buffer.from("H4sIAGV3BWsC/+3UsU7DMBDGcc88ReSZujYNGUA8jEmP4kLiyE5KEOLdMQV16MICFYj/bzn7ZOmG0+fBtw9+I8vho5ptjr36ZrZo6npfi+NqnW0O533fueZipSqrTmDKo09lvPqfXnTvO9FXur2PacqLIckuyNPiLszjlESf652kHGJfnjhjjS2dzof3a+jXMpt2m/Wrwh/1mfvlYZk/MOOr/Nt6dZx/V1+S/1Po4np6FCPzENOYq5tKJ9mEPKbn8hXEW9HXZ4QEAAAAAAAAAAAAAADgF3sDB3CixQAoAAA=", "base64");
+    response.writeHead(200, { "Content-Type": "application/octet-stream", "Content-Length": archive.length });
+    return response.end(archive);
+  }
   if (request.url === "/state") return reply(state);
   let input = "";
   for await (const chunk of request) input += chunk;
@@ -195,5 +201,5 @@ const server = createServer(async (request, response) => {
   }
   reply({ message: { role: "assistant", content }, done_reason: "stop" });
 });
-server.listen(Number(process.env.OLLAMA_TEST_PORT || 11435), "127.0.0.1");
+server.listen(Number(process.env.OLLAMA_TEST_PORT || 11435), process.env.OLLAMA_TEST_HOST || "127.0.0.1");
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => server.close(() => process.exit(0)));

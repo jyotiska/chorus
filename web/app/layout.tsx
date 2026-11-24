@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Geist_Mono } from "next/font/google";
 import { HarnessSelectProvider } from "@/components/harness/select";
+import "@xterm/xterm/css/xterm.css";
 import "./globals.css";
 import "./harness.css";
 

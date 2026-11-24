@@ -11,7 +11,7 @@ from chorus.contracts import Contracts
 ROOT = Path(__file__).resolve().parents[1]
 SHARED_FILES = (
     "contracts.schema.json", "contracts.generated.ts", "client.ts", "usage-view.tsx",
-    "harness-client.ts", "harness-workspace.tsx", "harness-workspace.module.css",
+    "harness-client.ts", "harness-workspace.tsx", "harness-workspace.module.css", "repository-viewer.tsx",
 )
 
 

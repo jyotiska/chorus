@@ -16,6 +16,8 @@ export type RepositoryTree = H["repositoryTree"];
 export type RepositoryFile = H["repositoryFile"];
 export type RepositoryCommitDiff = H["repositoryCommitDiff"];
 export type ExperimentTasks = H["experimentTasks"];
+export type WorkspaceRuntime = H["workspaceRuntime"];
+export type WorkspaceAction = H["workspaceAction"];
 export type Persona = HarnessSnapshot["agents"][number];
 export type Usage = HarnessUsage["total"];
 const ajv = new Ajv({ strict: false, allErrors: true });
@@ -91,6 +93,23 @@ export class HarnessClient {
   }
   async repositoryFile(id: string, branch: string, revision: string, path: string): Promise<RepositoryFile> {
     return parse(await this.request(`/sessions/${encodeURIComponent(id)}/repository/file?${new URLSearchParams({ branch, revision, path })}`), "RepositoryFile");
+  }
+  repositoryImage(id: string, branch: string, revision: string, path: string): string {
+    return `${this.base}/sessions/${encodeURIComponent(id)}/repository/image?${new URLSearchParams({ branch, revision, path })}`;
+  }
+  async runtime(id: string): Promise<WorkspaceRuntime> {
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/runtime`), "WorkspaceRuntime");
+  }
+  async runtimeAction(id: string, action: WorkspaceAction): Promise<WorkspaceRuntime> {
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/runtime`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(action),
+      signal: AbortSignal.timeout(75000),
+    }), "WorkspaceRuntime");
+  }
+  async terminal(id: string): Promise<H["terminalTicket"]> {
+    return parse(await this.request(`/sessions/${encodeURIComponent(id)}/runtime/terminal`, {
+      method: "POST", signal: AbortSignal.timeout(75000),
+    }), "TerminalTicket");
   }
   artifactDownload(id: string, path: string): string {
     return `${this.base}/sessions/${encodeURIComponent(id)}/artifacts/download?${new URLSearchParams({ path })}`;

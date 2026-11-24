@@ -416,6 +416,30 @@ class ExperimentUsageReport(UsageReport):
     teamGeneration: Usage
 
 
+class WorkspacePort(Model):
+    port: int
+    url: str
+
+
+class WorkspaceRuntime(Model):
+    enabled: bool
+    availableRevision: str
+    revision: str | None = None
+    state: Literal["stopped", "starting", "running", "failed"] = "stopped"
+    error: str | None = None
+    logs: dict[str, str] = Field(default_factory=dict)
+    forwards: list[WorkspacePort] = Field(default_factory=list)
+
+
+class WorkspaceAction(Model):
+    action: Literal["run", "stop", "reset", "forward"]
+    port: int | None = Field(default=None, ge=1024, le=65535)
+
+
+class TerminalTicket(Model):
+    url: str
+
+
 class HarnessContracts(Model):
     catalog: HarnessCatalog
     config: HarnessConfig
@@ -431,3 +455,6 @@ class HarnessContracts(Model):
     repositoryFile: RepositoryFile
     repositoryCommitDiff: RepositoryCommitDiff
     experimentTasks: ExperimentTasks
+    workspaceRuntime: WorkspaceRuntime
+    workspaceAction: WorkspaceAction
+    terminalTicket: TerminalTicket

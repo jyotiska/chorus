@@ -1,6 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
+from io import BytesIO
 from pathlib import Path
 import subprocess
+import tarfile
 
 import pytest
 
@@ -95,6 +97,37 @@ def test_repository_browser_reads_only_committed_objects_on_selected_branch(expe
         harness.browse_commit_diff("run-one", "main", commit)
     with pytest.raises(ChorusError, match="Choose a commit"):
         harness.browse_commit_diff("run-one", "agents/designer", "HEAD")
+
+
+def test_runtime_snapshot_is_pinned_to_regular_committed_blobs(experiment):
+    harness, _, view, paths = experiment
+    main = Path(view["path"])
+    (main / "frontend/index.js").write_text("uncommitted\n")
+    (main / "frontend/untracked.txt").touch()
+    (paths["designer"] / "frontend/branch.txt").touch()
+    branch = harness.commit("run-one", "designer", "Agent branch only")["commit"]
+    with pytest.raises(ChorusError, match="not on main"):
+        harness.runtime_snapshot("run-one", branch)
+    data = harness.runtime_snapshot("run-one", view["baselineCommit"])
+    with tarfile.open(fileobj=BytesIO(data)) as archive:
+        assert archive.extractfile("frontend/index.js").read() == b"baseline\n"
+        assert "frontend/untracked.txt" not in archive.getnames()
+        assert "frontend/branch.txt" not in archive.getnames()
+        assert all(member.isfile() and ".git" not in member.name.split("/") for member in archive)
+
+
+def test_repository_raster_images_are_read_from_the_selected_commit(experiment):
+    harness, _, view, paths = experiment
+    worktree = paths["designer"]
+    png = b"\x89PNG\r\n\x1a\nfixture"
+    (worktree / "frontend/logo.png").write_bytes(png)
+    (worktree / "frontend/not-image.png").write_text("<html>not an image</html>")
+    revision = harness.commit("run-one", "designer", "Add image examples")["commit"]
+    assert harness.browse_image("run-one", "agents/designer", revision, "frontend/logo.png") == (png, "image/png")
+    with pytest.raises(ChorusError, match="format"):
+        harness.browse_image("run-one", "agents/designer", revision, "frontend/not-image.png")
+    with pytest.raises(ChorusError, match="not found"):
+        harness.browse_image("run-one", "main", view["mainCommit"], "frontend/logo.png")
 
 
 def test_custom_writes_and_artifact_reads_stay_in_the_assigned_worktree_and_commit(experiment):

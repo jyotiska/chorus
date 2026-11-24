@@ -439,6 +439,8 @@ test("the Repository keeps the tree beside committed files and agent diffs", asy
   await tree.getByText("frontend/", { exact: true }).click();
   await tree.getByRole("button", { name: "task-label.js", exact: true }).click();
   await expect(preview.locator("pre")).toHaveText(taskLabel);
+  await expect(preview.locator(".hljs-keyword").first()).toHaveText("export");
+  await expect(preview.getByLabel("Source code")).toHaveCSS("white-space", "pre-wrap");
   expect((await tree.boundingBox())!.x).toBeLessThan((await preview.boundingBox())!.x);
   await expect(page.locator(".live-shell")).toHaveCSS("color-scheme", "dark");
   await page.screenshot({ path: "test-results/repository-files.png" });
@@ -473,6 +475,46 @@ test("the Repository keeps the tree beside committed files and agent diffs", asy
   await page.setViewportSize({ width: 390, height: 844 });
   expect((await tree.boundingBox())!.y).toBeLessThan((await patch.boundingBox())!.y);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+});
+
+test("Markdown opens rendered and Raw keeps the original text and soft wraps", async ({ page, request }) => {
+  const response = await request.post("/api/chorus/v2/experiments", {
+    data: { problemId: "todoist", participantIds: ["general-agent"], model: "qwen3.5:4b-mlx" },
+  });
+  expect(response.status()).toBe(201);
+  const state: HarnessSnapshot = await response.json();
+  const repository = state.experiment!.repository;
+  const report = "# Preview title\r\n\r\n| Key | Value |\r\n| --- | --- |\r\n| hello | world |\r\n\r\n" +
+    "[Open config](package.json)\r\n\r\n<script>window.repositoryMarkdownRan = true</script>\r\n\r\n" +
+    "```text\r\nconsole sample\r\n```\r\n\r\n" + "longword".repeat(130);
+  await writeFile(join(repository.path, "frontend/guide.markdown"), report);
+  await writeFile(join(repository.path, "frontend/other.md"), "## Other document\n");
+  const git = (...args: string[]) => execFileSync("git", ["-C", repository.path, "-c", "user.name=Chorus Test",
+    "-c", "user.email=test@chorus.invalid", "-c", "core.hooksPath=/dev/null", ...args], { encoding: "utf8" });
+  git("add", "--", "frontend/guide.markdown", "frontend/other.md");
+  git("commit", "--no-gpg-sign", "-m", "Add viewer fixtures");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`/?session=${state.id}`);
+  await page.getByRole("button", { name: "Repository", exact: true }).click();
+  const tree = page.getByRole("region", { name: "File tree" });
+  const preview = page.getByRole("region", { name: "File preview" });
+  await tree.getByText("frontend/", { exact: true }).click();
+  await tree.getByRole("button", { name: "guide.markdown", exact: true }).click();
+  await expect(preview.getByRole("button", { name: "Preview", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(preview.getByRole("heading", { name: "Preview title" })).toBeVisible();
+  await expect(preview.getByRole("table")).toContainText("world");
+  await expect(preview.getByText("console sample")).toBeVisible();
+  expect(await page.evaluate(() => Reflect.get(window, "repositoryMarkdownRan"))).toBeUndefined();
+  await preview.getByRole("button", { name: "Raw", exact: true }).click();
+  const source = preview.getByLabel("Source code");
+  expect(await source.textContent()).toBe(report);
+  await expect(source).toHaveCSS("white-space", "pre-wrap");
+  expect(await source.evaluate((element) => element.scrollWidth)).toBe(await source.evaluate((element) => element.clientWidth));
+  await tree.getByRole("button", { name: "other.md", exact: true }).click();
+  await expect(preview.getByRole("heading", { name: "Other document" })).toBeVisible();
+  await tree.getByRole("button", { name: "guide.markdown", exact: true }).click();
+  await preview.getByRole("button", { name: "Open config" }).click();
+  await expect(preview.getByRole("heading")).toHaveText("frontend/package.json");
 });
 
 test("SPEC.md shows task owners and revision diffs while preserving the Board position", async ({ page, request }) => {

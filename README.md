@@ -12,21 +12,15 @@ The goal is to understand when collaboration produces better work, what makes it
 
 *Choose a task, pick your team, and start an experiment.*
 
-## What changed
+## How Chorus is organized
 
-Chorus and Chorus Web now live in this repository. One command starts the app:
-
-```bash
-chorus launch
-```
-
-The two parts still have separate jobs:
+Chorus and Chorus Web live in this repository.
 
 - **Chorus engine** runs the agents, calls models, checks actions, and saves records.
 - **Chorus Web** is the browser interface for starting experiments and viewing their progress.
 - **Nanoville** remains a separate repository. It connects to the Chorus engine and is not needed to run this app.
 
-You no longer need a separate `chorus-web` checkout. The merge keeps existing session data and the same default ports. This is still an app you run from the source code; it is not a packaged desktop download.
+Compose builds the app from this checkout and keeps session data in a Docker volume. The source launcher is also available for development and existing local installations.
 
 ## What you can do
 
@@ -44,13 +38,13 @@ Each experiment has three stages:
 
 Custom experiments support text artifacts such as Markdown and HTML, as well as software changes. Results list the files checked at the final commit and let you open or download them. The plan and Results record requested outputs that require unavailable capabilities, such as image generation or live web research.
 
-The dark workspace keeps the Board beside `SPEC.md` when there’s room. Open **Participants** to see active tasks and blockers, **Repository** to inspect branch diffs, or **Results** to trace scores to their evidence. **Usage** shows model calls and costs, and **Archive** helps you find and reopen saved runs. [Chorus Web guide](web/README.md)
+The dark workspace keeps the Board beside `SPEC.md` when there’s room. Open **Participants** to see active tasks and blockers, **Repository** to read source and diffs, or **Results** to trace scores to their evidence. With Compose running, **Browser** can start and preview a generated app, and **Terminal** opens a shell in the same temporary workspace. **Usage** shows model calls and costs, and **Archive** helps you find and reopen saved runs. [Chorus Web guide](web/README.md)
 
 **Kill experiment** stops the work and keeps its files and records. If judging fails, **Retry judge** reviews the same saved result.
 
-App experiments need Git. Small frontend and backend starter projects are included. To use your own reviewed starter projects, set `CHORUS_EXPERIMENT_SCAFFOLD` in `.env` to a folder containing `frontend/` and `backend/`.
+Small frontend and backend starter projects are included. You can also use reviewed custom starter projects. [Custom starter configuration](docs/running-chorus.md#start-an-app-experiment)
 
-**Current limit:** agents can write and inspect code, but running application commands, starting the generated app, and checking it in a browser are not implemented in the experiment tools yet. The judge’s report is a code review, not proof that the generated app works.
+Browser and Terminal are user controls. Agents and judges work from code and saved evidence. Use **Run** to verify the generated app yourself.
 
 ### Run smaller problems with checked answers
 
@@ -58,7 +52,7 @@ The engine also includes five benchmark problems: scheduling, transaction record
 
 These runs use a separate set of fifty agent profiles. You can choose 2–50 agents and set a turn limit for each one. Agents discuss the problem and write a shared answer. Code checks that answer against the problem’s rules. An optional model judge reviews the collaboration separately.
 
-For example, with Chorus running:
+For example, with the source launcher or API server running:
 
 ```bash
 chorus run production-mix --turns-per-agent 3
@@ -68,9 +62,20 @@ Command-line benchmark runs include the model judge by default. Add `--no-judge`
 
 ## Run Chorus
 
-Use macOS or Linux, Git, Python 3.11 or newer, and Node 24. On Windows, use WSL. Open a terminal in this repository.
+Install Docker with Compose, then open a terminal in this repository:
 
-### First-time setup
+```bash
+cp -n .env.example .env
+docker compose up -d --build --wait
+```
+
+Open [http://127.0.0.1:43189](http://127.0.0.1:43189). Run `docker compose stop` to shut down the stack, or `docker compose down` to remove the containers and keep saved experiments. Configure provider keys in `.env`, or set `CHORUS_DOCKER_OLLAMA_HOST` to reach a local Ollama server. [Docker commands and data migration](docs/running-chorus.md#start-with-docker-compose)
+
+### Run from source
+
+For source development, use macOS or Linux, Git, Python 3.11 or newer, and Node 24. On Windows, use WSL.
+
+#### First-time setup
 
 ```bash
 python3 -m pip install uv==0.9.8
@@ -91,7 +96,7 @@ Open `.env` and configure the model you want to use:
 
 Keep keys in the engine’s environment, not in the browser code. If the default model is unavailable, choose another configured model. Chorus does not switch models for you.
 
-### Start the app
+#### Start the app
 
 In a new terminal, activate the Python environment and make sure Node 24 is selected. Then launch:
 
@@ -105,7 +110,7 @@ The command starts both parts and opens your browser:
 - **App:** [http://127.0.0.1:43189](http://127.0.0.1:43189)
 - **Engine:** [http://127.0.0.1:43187](http://127.0.0.1:43187)
 
-Keep the terminal open. Press **Ctrl-C** to stop both parts. Closing the browser alone leaves the agents running.
+Keep the terminal open. Press **Ctrl-C** or run `chorus stop` from another terminal to stop both parts. Closing the browser alone leaves the agents running.
 
 If a port is already in use, stop the old service or choose other ports:
 
@@ -115,7 +120,7 @@ chorus launch --api-port 43287 --web-port 43289
 
 Use `chorus launch --no-browser` if you do not want a browser tab to open.
 
-### Use a built version
+#### Use a built version
 
 The default launcher uses development mode. To build the interface first and run that version:
 
@@ -130,9 +135,9 @@ Rebuild after changing the interface. You can still start the engine alone with 
 
 The sidebar lists saved runs. Reopen a run to inspect its discussion, tasks, changes, usage, and results. Older sessions remain available through the archive.
 
-The default session database is `~/.local/share/chorus/sessions.sqlite3`. Set `CHORUS_DB` to use a different location. Run only one engine against a database at a time.
+Compose stores sessions and generated Git repositories together in `chorus_work` for the default project. Stopping, rebuilding, or recreating containers keeps that volume. Each named Compose project has its own volume. Browser and Terminal scratch files are temporary and are discarded when their controller stops.
 
-Generated app projects are saved in an `experiments/` folder beside the database by default. Set `CHORUS_EXPERIMENT_ROOT` to change that location. The merge does not move or erase these records or projects.
+A source installation defaults to `~/.local/share/chorus/sessions.sqlite3` with an `experiments/` directory alongside it. Set `CHORUS_DB` and `CHORUS_EXPERIMENT_ROOT` to override those source paths. Run only one engine against a database at a time. [Open existing data in Docker](docs/running-chorus.md#open-data-from-a-source-installation)
 
 You can export the shared document as Markdown or the session records as JSON. Some private experiment records are hidden until the experiment completes or is killed. Usage totals keep reported costs, estimates, and missing information separate.
 
@@ -156,7 +161,7 @@ Run the checks from the repository root:
 .venv/bin/python scripts/check.py
 ```
 
-The shared check runs engine tests, coverage, code checks, generated-file checks, web checks, a dependency audit and repository size/output rules. For the first browser-test run, install Chromium from `web/` with `npx playwright install chromium`. Tests use temporary databases and fake model responses.
+The shared check runs engine tests, coverage, code checks, generated-file checks, web checks, a dependency audit and repository size/output rules. For the first browser-test run, install Chromium from `web/` with `npx playwright install chromium`. Tests use temporary databases and fake model responses. A separate Docker suite exercises real preview and terminal containers in Chromium and WebKit. [Docker test instructions](TEST_PLAN.md#check-real-docker-workspaces)
 
 Shared files in `web/lib/api/chorus/` are generated copies. Edit their source in `sdk/`, then update the copies:
 

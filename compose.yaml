@@ -1,0 +1,70 @@
+name: chorus
+
+services:
+  workspace-image:
+    image: ${COMPOSE_PROJECT_NAME:-chorus}-workspace
+    build:
+      context: .
+      target: workspace
+    entrypoint: ["/bin/true"]
+    network_mode: none
+
+  chorus:
+    build:
+      context: .
+      target: app
+    init: true
+    environment:
+      CHORUS_API_KEY: ${CHORUS_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OLLAMA_HOST: ${CHORUS_DOCKER_OLLAMA_HOST:-http://host.docker.internal:11434}
+      CHORUS_RUNTIME_SOCKET: /runtime/control.sock
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "127.0.0.1:${CHORUS_WEB_PORT:-43189}:43189"
+    volumes:
+      - work:/data
+      - control:/runtime
+    depends_on:
+      controller:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:43189/api/chorus/v2/sessions').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 4s
+      retries: 15
+    stop_grace_period: 25s
+
+  controller:
+    build:
+      context: .
+      target: controller
+    init: true
+    depends_on:
+      workspace-image:
+        condition: service_completed_successfully
+    environment:
+      CHORUS_WORKSPACE_IMAGE: ${COMPOSE_PROJECT_NAME:-chorus}-workspace
+      CHORUS_RUNTIME_GROUP: ${COMPOSE_PROJECT_NAME:-chorus}
+      CHORUS_REGISTRY_VOLUME: ${COMPOSE_PROJECT_NAME:-chorus}_registry
+      CHORUS_RUNTIME_PORT: ${CHORUS_PREVIEW_PORT:-43192}
+      CHORUS_RUNTIME_ORIGINS: http://127.0.0.1:${CHORUS_WEB_PORT:-43189},http://localhost:${CHORUS_WEB_PORT:-43189}
+      CHORUS_NPM_UPSTREAM: ${CHORUS_NPM_UPSTREAM:-https://registry.npmjs.org}
+    ports:
+      - "127.0.0.1:${CHORUS_PREVIEW_PORT:-43192}:43192"
+    volumes:
+      - control:/runtime
+      - registry:/registry
+      - ${CHORUS_DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+    healthcheck:
+      test: [CMD, .venv/bin/python, -m, chorus.runtime.controller, health]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    stop_grace_period: 25s
+
+volumes:
+  work:
+  control:
+  registry:

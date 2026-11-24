@@ -8,10 +8,16 @@ async function forward(request: Request, context: { params: Promise<{ path: stri
   const base = process.env.CHORUS_API_URL || "http://127.0.0.1:43187";
   const version = path[0] === "v2" ? "v2" : "v1";
   const segments = version === "v2" ? path.slice(1) : path;
+  const runtimeRequest = version === "v2" && segments[0] === "sessions" && segments[2] === "runtime";
+  const host = request.headers.get("host") || "";
+  if (runtimeRequest && (!/^(127\.0\.0\.1|localhost)(:\d{1,5})?$/.test(host) || request.headers.get("sec-fetch-site") === "cross-site")) {
+    return Response.json({ error: "Open the workspace from local Chorus.", code: "FORBIDDEN", requestId: crypto.randomUUID() }, { status: 403 });
+  }
   const url = new URL(`/api/${version}/${segments.map(encodeURIComponent).join("/")}`, base);
   url.search = new URL(request.url).search;
   const headers = new Headers();
   for (const name of ["content-type", "last-event-id"]) { const value = request.headers.get(name); if (value) headers.set(name, value); }
+  if (runtimeRequest) headers.set("X-Chorus-Web-Origin", `http://${host}`);
   try {
     const upstream = await fetch(url, { method: request.method, headers, signal: request.signal, cache: "no-store", ...(request.method === "POST" ? { body: await request.arrayBuffer() } : {}) });
     return new Response(upstream.body, { status: upstream.status, headers: upstream.headers });

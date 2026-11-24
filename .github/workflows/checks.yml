@@ -39,3 +39,28 @@ jobs:
             web/playwright-report/
             web/test-results/
           retention-days: 7
+  docker-workspaces:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npx playwright install --with-deps chromium webkit
+        working-directory: web
+      - run: docker compose --env-file /dev/null -p chorus-ci -f compose.yaml -f tests/fixtures/runtime-compose.yaml up -d --build --wait
+      - run: npx playwright test -c playwright.docker.config.ts
+        working-directory: web
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-workspace-browser-results
+          path: web/test-results/
+          retention-days: 7
+      - if: always()
+        run: docker compose --env-file /dev/null -p chorus-ci -f compose.yaml -f tests/fixtures/runtime-compose.yaml down --volumes

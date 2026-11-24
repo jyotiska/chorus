@@ -9,7 +9,7 @@ from fastapi.responses import Response, StreamingResponse
 from chorus.harness.models import (
     ExperimentCatalog, ExperimentConfig, ExperimentTasks, ExperimentUsageReport, HarnessCatalog, HarnessCommand, HarnessConfig,
     HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryCommitDiff, RepositoryFile, RepositoryTree, TeamGeneration,
-    TeamGenerationRequest, UsageReport,
+    TeamGenerationRequest, TerminalTicket, UsageReport, WorkspaceAction, WorkspaceRuntime,
 )
 from chorus.harness.accounting import usage_report
 from chorus.harness.experiment_spec import checklist
@@ -98,6 +98,28 @@ def repository_file(request: Request, sid: str, revision: str, path: str = Query
 def repository_commit_diff(request: Request, sid: str, revision: str = Query(max_length=64),
                            branch: str = Query(default="main", max_length=90)):
     return repository_for(service(request), sid, branch).browse_commit_diff(sid, branch, revision)
+
+
+@router.get("/sessions/{sid}/repository/image", response_class=Response)
+def repository_image(request: Request, sid: str, revision: str = Query(max_length=64),
+                     path: str = Query(min_length=1, max_length=1024), branch: str = Query(default="main", max_length=90)):
+    data, media = repository_for(service(request), sid, branch).browse_image(sid, branch, revision, path)
+    return Response(data, media_type=media, headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"})
+
+
+@router.get("/sessions/{sid}/runtime", response_model=WorkspaceRuntime)
+async def workspace_runtime(request: Request, sid: str):
+    return await request.app.state.runtime.status(sid)
+
+
+@router.post("/sessions/{sid}/runtime", response_model=WorkspaceRuntime)
+async def workspace_action(request: Request, sid: str, command: WorkspaceAction):
+    return await request.app.state.runtime.action(sid, command)
+
+
+@router.post("/sessions/{sid}/runtime/terminal", response_model=TerminalTicket)
+async def workspace_terminal(request: Request, sid: str):
+    return await request.app.state.runtime.terminal(sid, request.headers.get("X-Chorus-Web-Origin", ""))
 
 
 @router.get("/sessions/{sid}/artifacts/download", response_class=Response)

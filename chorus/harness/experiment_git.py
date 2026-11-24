@@ -6,12 +6,14 @@ from contextlib import contextmanager
 import fcntl
 from fnmatch import fnmatch
 from hashlib import sha256
+from io import BytesIO
 import json
 import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
+import tarfile
 from tempfile import NamedTemporaryFile, TemporaryFile, mkdtemp
 from typing import BinaryIO
 from uuid import uuid4
@@ -65,7 +67,7 @@ def _identifier(value: str) -> str:
 
 
 def _git(path: Path, *args: str, actor: str = "chorus", check: bool = True, reflog: str | None = None,
-         binary: bool = False, output: BinaryIO | None = None):
+         binary: bool = False, output: BinaryIO | None = None, input_bytes: bytes | None = None):
     # A server invocation must not read the operator's Git configuration or
     # inherit checkout, hook, filter, signing, or repository environment overrides.
     env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
@@ -83,7 +85,7 @@ def _git(path: Path, *args: str, actor: str = "chorus", check: bool = True, refl
              "-c", f"core.excludesFile={os.devnull}", "-c", "core.logAllRefUpdates=true",
              "-c", "commit.gpgSign=false", *args],
             cwd=path, env=env, stdout=subprocess.PIPE if output is None else output, stderr=subprocess.PIPE,
-            encoding=None if binary else "utf-8", errors=None if binary else "replace", timeout=30,
+            encoding=None if binary else "utf-8", errors=None if binary else "replace", timeout=30, input=input_bytes,
         )
     except (OSError, subprocess.TimeoutExpired):
         raise ChorusError("GIT_FAILED", "Git could not complete the workspace operation.", 500) from None
@@ -549,6 +551,68 @@ class ExperimentGit:
         if truncated:
             data = data[:_MAX_PREVIEW].rpartition(b"\n")[0]
         return RepositoryCommitDiff(patch=data.decode("utf-8", errors="replace"), truncated=truncated)
+
+    def runtime_snapshot(self, session_id: str, revision: str) -> bytes:
+        """Export bounded regular blobs, without attributes, filters or Git metadata."""
+        with self._locked(session_id) as session:
+            repo = session / "repository"
+            if not _OBJECT_ID.fullmatch(revision) or not self._ancestor(repo, revision, self._browse_head(repo, "main")):
+                raise ChorusError("NOT_FOUND", "That revision is not on main.", 404)
+            listing = _git(repo, "ls-tree", "-rlz", revision, binary=True).stdout
+            if listing.count(b"\0") > 4000:
+                raise ChorusError("CAPACITY", "The preview supports up to 4,000 repository files.", 409)
+            entries = []
+            total = 0
+            for row in listing.split(b"\0")[:-1]:
+                metadata, path = row.split(b"\t", 1)
+                mode, kind, oid, size = metadata.split()
+                if kind != b"blob" or mode not in {b"100644", b"100755"}:
+                    raise ChorusError("INVALID_STATE", "The preview needs a repository with regular files and no submodules or symbolic links.", 409)
+                name = path.decode("utf-8", errors="surrogateescape")
+                if any(part.casefold() in {"", ".", "..", ".git"} for part in name.split("/")):
+                    raise ChorusError("INVALID_STATE", "The preview cannot copy a reserved repository path.", 409)
+                length = int(size)
+                total += length
+                if total > 100 * 1024 * 1024:
+                    raise ChorusError("CAPACITY", "The committed repository exceeds the 100 MiB preview limit.", 409)
+                entries.append((mode, oid, length, name))
+            request = b"".join(oid + b"\n" for _, oid, _, _ in entries)
+            with TemporaryFile() as blobs:
+                _git(repo, "cat-file", "--batch", binary=True, input_bytes=request, output=blobs)
+                blobs.seek(0)
+                buffer = BytesIO()
+                with tarfile.open(fileobj=buffer, mode="w") as archive:
+                    for mode, oid, length, name in entries:
+                        if blobs.readline().split() != [oid, b"blob", str(length).encode()]:
+                            raise ChorusError("GIT_FAILED", "A committed file could not be read.", 409)
+                        member = tarfile.TarInfo(name)
+                        member.size = length
+                        member.mode = 0o755 if mode == b"100755" else 0o644
+                        archive.addfile(member, blobs)
+                        blobs.read(1)
+                return buffer.getvalue()
+
+    def browse_image(self, session_id: str, branch: str, revision: str, path: str) -> tuple[bytes, str]:
+        if (not _OBJECT_ID.fullmatch(revision) or not path or "\0" in path or "\\" in path
+                or any(part in {"", ".", ".."} or part.casefold() == ".git" for part in path.split("/"))):
+            raise ChorusError("INVALID_REQUEST", "Choose an image from the repository tree.", 400)
+        with self._locked(session_id) as session:
+            repo = session / "repository"
+            if not self._ancestor(repo, revision, self._browse_head(repo, branch)):
+                raise ChorusError("NOT_FOUND", "That revision is not on the selected branch.", 404)
+            entry = self._artifact_entry(repo, revision, path)
+            if entry is None or entry[0] not in {b"100644", b"100755"}:
+                raise ChorusError("NOT_FOUND", "Repository image not found.", 404)
+            oid = entry[2]
+            if int(_git(repo, "cat-file", "-s", oid).stdout) > 2 * 1024 * 1024:
+                raise ChorusError("CAPACITY", "Repository images are limited to 2 MiB.", 409)
+            content = _git(repo, "cat-file", "blob", oid, binary=True).stdout
+        formats = {".png": (b"\x89PNG\r\n\x1a\n", "image/png"), ".jpg": (b"\xff\xd8\xff", "image/jpeg"),
+                   ".jpeg": (b"\xff\xd8\xff", "image/jpeg"), ".gif": (b"GIF8", "image/gif")}
+        signature, mime = formats.get(Path(path).suffix.lower(), (b"", ""))
+        if not signature or not content.startswith(signature):
+            raise ChorusError("NOT_FOUND", "This repository image format cannot be previewed.", 404)
+        return content, mime
 
     def judge_checkout(self, session_id: str, commit: str) -> Path:
         if not _OBJECT_ID.fullmatch(commit):

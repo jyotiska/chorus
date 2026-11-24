@@ -783,6 +783,7 @@
 }
 .workspace-tabs nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
@@ -1500,3 +1501,60 @@
     animation: none;
   }
 }
+.runtime-pane {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 12px;
+  padding: 14px;
+}
+.runtime-pane[hidden] { display: none; }
+.runtime-toolbar, .runtime-navigation, .runtime-terminal-state, .runtime-select, .runtime-port {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.runtime-toolbar button, .runtime-navigation button, .runtime-navigation a, .runtime-terminal-state button {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  font-size: 13px;
+}
+.runtime-toolbar button:not(:disabled), .runtime-navigation button:not(:disabled) { cursor: pointer; }
+.runtime-toolbar button:disabled, .runtime-navigation button:disabled { opacity: .45; }
+.runtime-toolbar svg, .runtime-navigation svg { width: 15px; height: 15px; }
+.runtime-toolbar code, .runtime-toolbar [role="status"], .runtime-note, .runtime-terminal-state { font-size: 13px; }
+.runtime-navigation input, .runtime-port input, .runtime-select select {
+  min-height: 32px;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  background: #111615;
+  font-size: 13px;
+}
+.runtime-navigation input { flex: 1 1 160px; }
+.runtime-port input { width: 105px; }
+.runtime-frame, .runtime-terminal-screen, .runtime-placeholder {
+  flex: 1 1 auto;
+  min-height: min(52vh, 420px);
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+}
+.runtime-frame { background: #fff; }
+.runtime-terminal-screen { background: #111615; padding: 8px; }
+.runtime-terminal-screen .xterm { height: 100%; }
+.runtime-placeholder { display: grid; place-items: center; padding: 16px; color: var(--secondary); }
+.runtime-logs pre { max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.runtime-logs summary { cursor: pointer; }
+.runtime-error { color: #ffc1b9; }

@@ -24,6 +24,7 @@ from chorus.services.sessions import SessionService
 from chorus.storage import Store
 from chorus.harness.service import HarnessService
 from chorus.harness.routes import router as harness_router
+from chorus.runtime.service import RuntimeService
 
 
 def create_app(database: str | None = None, call: ModelCall | None = None, *, pacing: float | None = None) -> FastAPI:
@@ -34,9 +35,11 @@ def create_app(database: str | None = None, call: ModelCall | None = None, *, pa
         app.state.service = SessionService(store, catalog, call or ProviderRouter(catalog), pacing=pacing if pacing is not None else float(os.getenv("CHORUS_PACING", "1.8")))
         app.state.legacy_writes = call is not None or os.getenv("CHORUS_ENABLE_LEGACY_WRITES") == "1"
         app.state.harness = HarnessService(store, call)
+        app.state.runtime = RuntimeService(app.state.harness)
         try:
             yield
         finally:
+            await app.state.runtime.close()
             await app.state.harness.close()
             await app.state.service.close()
             store.close()

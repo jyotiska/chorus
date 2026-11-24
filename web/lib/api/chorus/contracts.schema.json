@@ -1509,6 +1509,15 @@
         },
         "experimentTasks": {
           "$ref": "#/$defs/ExperimentTasks"
+        },
+        "workspaceRuntime": {
+          "$ref": "#/$defs/WorkspaceRuntime"
+        },
+        "workspaceAction": {
+          "$ref": "#/$defs/WorkspaceAction"
+        },
+        "terminalTicket": {
+          "$ref": "#/$defs/TerminalTicket"
         }
       },
       "required": [
@@ -1525,7 +1534,10 @@
         "repositoryTree",
         "repositoryFile",
         "repositoryCommitDiff",
-        "experimentTasks"
+        "experimentTasks",
+        "workspaceRuntime",
+        "workspaceAction",
+        "terminalTicket"
       ],
       "title": "HarnessContracts",
       "type": "object"
@@ -2710,6 +2722,20 @@
       "title": "TeamGenerationRequest",
       "type": "object"
     },
+    "TerminalTicket": {
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "TerminalTicket",
+      "type": "object"
+    },
     "TokenUsage": {
       "additionalProperties": false,
       "properties": {
@@ -3237,6 +3263,133 @@
         "remainingTasks"
       ],
       "title": "Worker",
+      "type": "object"
+    },
+    "WorkspaceAction": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "run",
+            "stop",
+            "reset",
+            "forward"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "maximum": 65535,
+              "minimum": 1024,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Port"
+        }
+      },
+      "required": [
+        "action",
+        "port"
+      ],
+      "title": "WorkspaceAction",
+      "type": "object"
+    },
+    "WorkspacePort": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "title": "Port",
+          "type": "integer"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port",
+        "url"
+      ],
+      "title": "WorkspacePort",
+      "type": "object"
+    },
+    "WorkspaceRuntime": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "availableRevision": {
+          "title": "Availablerevision",
+          "type": "string"
+        },
+        "revision": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Revision"
+        },
+        "state": {
+          "default": "stopped",
+          "enum": [
+            "stopped",
+            "starting",
+            "running",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "logs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Logs",
+          "type": "object"
+        },
+        "forwards": {
+          "items": {
+            "$ref": "#/$defs/WorkspacePort"
+          },
+          "title": "Forwards",
+          "type": "array"
+        }
+      },
+      "required": [
+        "enabled",
+        "availableRevision",
+        "revision",
+        "state",
+        "error",
+        "logs",
+        "forwards"
+      ],
+      "title": "WorkspaceRuntime",
       "type": "object"
     },
     "chorus__contracts__ModelInfo": {

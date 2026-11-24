@@ -9,11 +9,13 @@ import {
   Ellipsis,
   FileText,
   GitBranch,
+  Globe,
   Gauge,
   Link as LinkIcon,
   MessagesSquare,
   Pause,
   Play,
+  Terminal,
   Users,
 } from "lucide-react";
 import {
@@ -26,8 +28,9 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { message, sessionHref, Shell, Sheet } from "./shell";
 import { RunProgress } from "./session-summary";
+import { RepositoryRuntime } from "./runtime";
 
-type Tab = "Board" | "Canvas" | "Repository" | "Results";
+type Tab = "Board" | "Canvas" | "Repository" | "Results" | "Browser" | "Terminal";
 const splitPreferenceKey = "chorus.harness.boardSplit";
 
 export function LiveWorkspace({
@@ -55,6 +58,8 @@ export function LiveWorkspace({
     (active || snapshot.status === "paused" || snapshot.status === "judge_failed");
   const [tab, setTab] = useState<Tab>(() => (finished ? "Results" : "Board"));
   const [repositoryOpened, setRepositoryOpened] = useState(false);
+  const [runtimeOpened, setRuntimeOpened] = useState(false);
+  const [terminalOpened, setTerminalOpened] = useState(false);
   const [drawer, setDrawer] = useState<"Participants" | "Usage" | "Problem statement" | null>(null);
   const [notice, setNotice] = useState("");
   const canvasOpener = useRef<HTMLButtonElement | null>(null);
@@ -200,6 +205,17 @@ export function LiveWorkspace({
               </span>
             )}
           </button>
+          {experiment && <>
+            <button aria-current={tab === "Browser" ? "page" : undefined} onClick={() => {
+              setRuntimeOpened(true);
+              setTab("Browser");
+            }}><Globe />Browser</button>
+            <button aria-current={tab === "Terminal" ? "page" : undefined} onClick={() => {
+              setRuntimeOpened(true);
+              setTerminalOpened(true);
+              setTab("Terminal");
+            }}><Terminal />Terminal</button>
+          </>}
         </nav>
         <div className="inspect-buttons">
           {tab === "Board" && roomForBoth && (
@@ -287,6 +303,9 @@ export function LiveWorkspace({
             <ExperimentRepositoryView snapshot={snapshot} visible={tab === "Repository"} />
           </div>
         )}
+        {experiment && runtimeOpened && <RepositoryRuntime key={snapshot.id} id={snapshot.id}
+          view={tab === "Browser" || tab === "Terminal" ? tab : null} terminalOpened={terminalOpened}
+          runtimeReset={() => setTerminalOpened(false)} />}
       </div>
       {drawer && (
         <Sheet key={drawer} title={drawer} className={drawer === "Participants" ? "participants-sheet" : undefined}

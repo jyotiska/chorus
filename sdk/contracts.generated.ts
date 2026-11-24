@@ -441,7 +441,18 @@ export type Revision3 = number;
 export type Markdown = string;
 export type Completed = number;
 export type Total = number;
-export type Error2 = string;
+export type Enabled = boolean;
+export type Availablerevision = string;
+export type Revision4 = string | null;
+export type State1 = "stopped" | "starting" | "running" | "failed";
+export type Error2 = string | null;
+export type Port = number;
+export type Url = string;
+export type Forwards = WorkspacePort[];
+export type Action2 = "run" | "stop" | "reset" | "forward";
+export type Port1 = number | null;
+export type Url1 = string;
+export type Error3 = string;
 export type Code =
   | "BACKEND_UNAVAILABLE"
   | "CANCELLED"
@@ -659,6 +670,9 @@ export interface HarnessContracts {
   repositoryFile: RepositoryFile;
   repositoryCommitDiff: RepositoryCommitDiff;
   experimentTasks: ExperimentTasks;
+  workspaceRuntime: WorkspaceRuntime;
+  workspaceAction: WorkspaceAction;
+  terminalTicket: TerminalTicket;
 }
 export interface HarnessCatalog {
   version: Version;
@@ -990,8 +1004,31 @@ export interface ExperimentTasks {
   completed: Completed;
   total: Total;
 }
-export interface APIError {
+export interface WorkspaceRuntime {
+  enabled: Enabled;
+  availableRevision: Availablerevision;
+  revision: Revision4;
+  state: State1;
   error: Error2;
+  logs: Logs;
+  forwards: Forwards;
+}
+export interface Logs {
+  [k: string]: string;
+}
+export interface WorkspacePort {
+  port: Port;
+  url: Url;
+}
+export interface WorkspaceAction {
+  action: Action2;
+  port: Port1;
+}
+export interface TerminalTicket {
+  url: Url1;
+}
+export interface APIError {
+  error: Error3;
   code: Code;
   requestId: Requestid1;
 }

@@ -13,6 +13,7 @@ import { HarnessClient, HarnessError } from "./harness-client";
 import type { ExperimentTasks, HarnessAction, HarnessCatalog, HarnessSnapshot, HarnessRecord, HarnessUsage, Persona, RepositoryCommitDiff, RepositoryFile, RepositoryTree, Usage } from "./harness-client";
 import { ChorusClient } from "./client";
 import type { Snapshot as LegacySnapshot } from "./client";
+import { RepositoryFileViewer } from "./repository-viewer";
 import styles from "./harness-workspace.module.css";
 
 const client = new HarnessClient();
@@ -781,11 +782,6 @@ function PullRequestDetails({ change, agentName }: {
   );
 }
 
-function RepositoryFileContents({ file }: { file: RepositoryFile }) {
-  return file.status === "text" ? <pre tabIndex={0}><code>{file.content || "(empty file)"}</code></pre>
-    : <p className={styles.muted}>{file.status === "binary" ? "Binary file." : "File exceeds the 128 KB preview limit."}</p>;
-}
-
 function RepositoryBrowser({ snapshot, repository, visible, frozenRevision }: {
   snapshot: HarnessSnapshot;
   repository: RepositoryMetadata;
@@ -918,7 +914,8 @@ function RepositoryBrowser({ snapshot, repository, visible, frozenRevision }: {
           <section className={styles.repositoryPreview} aria-label="File preview">
             <h3>{path ? <code>{path}</code> : "File preview"}</h3>
             <RecordError message={file?.error ?? ""} />
-            {path ? file?.data ? <RepositoryFileContents file={file.data} /> : !file?.error && <p role="status">Loading file…</p> : (
+            {path ? file?.data && treeRevision ? <RepositoryFileViewer key={fileKey} file={file.data} id={id}
+              branch={branch} revision={treeRevision} path={path} openFile={setPath} /> : !file?.error && <p role="status">Loading file…</p> : (
               <p className={styles.muted}>Select a file to read its committed contents.</p>
             )}
           </section>
@@ -1351,18 +1348,24 @@ function ExperimentScorecard({ scores, criteria, label, openEvidence }: {
 }
 
 function ArtifactFilePreview({ id, revision, path }: { id: string; revision: string; path: string }) {
-  const [state, setState] = useState<{ data?: RepositoryFile; error?: string }>({});
+  const [selected, setSelected] = useState(path);
+  const [result, setResult] = useState<{ path: string; data?: RepositoryFile; error?: string }>();
+  const state = result?.path === selected ? result : undefined;
   useEffect(() => {
     let active = true;
-    void client.repositoryFile(id, "main", revision, path).then((data) => {
-      if (active) setState({ data });
+    void client.repositoryFile(id, "main", revision, selected).then((data) => {
+      if (active) setResult({ path: selected, data });
     }).catch((error: unknown) => {
-      if (active) setState({ error: error instanceof Error ? error.message : "Could not open this artifact." });
+      if (active) setResult({ path: selected, error: error instanceof Error ? error.message : "Could not open this artifact." });
     });
     return () => { active = false; };
-  }, [id, revision, path]);
-  if (state.data) return <RepositoryFileContents file={state.data} />;
-  return state.error ? <RecordError message={state.error} /> : <p role="status">Loading file…</p>;
+  }, [id, revision, selected]);
+  return <>
+    {selected !== path && <button onClick={() => setSelected(path)}>Back to {path}</button>}
+    {state?.data ? <RepositoryFileViewer key={selected} file={state.data} id={id} branch="main"
+      revision={revision} path={selected} openFile={setSelected} />
+      : state?.error ? <RecordError message={state.error} /> : <p role="status">Loading file…</p>}
+  </>;
 }
 
 type ExperimentState = NonNullable<HarnessSnapshot["experiment"]>;

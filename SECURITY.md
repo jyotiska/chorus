@@ -1,6 +1,6 @@
 # Security and private data
 
-Chorus is a local, single-user research application. Run one engine against a database. The launcher binds both services to loopback. Do not expose it to the public internet or a shared network: it has no multi-user authentication or permissions system. Remote hosting is not a supported deployment.
+Chorus is a local, single-user research application. Run one engine against a database. Compose publishes the web and preview listeners on host loopback. Keep those bindings local because Chorus has no multi-user authentication or permissions system.
 
 ## Report a problem
 
@@ -15,6 +15,12 @@ Local databases and experiment repositories can retain prompts, outputs, code an
 ## Starter files
 
 Bundled starters contain no credentials. Custom starters are trusted local inputs: review their content before using them. Imports exclude environment files except `.env.example`, common key/credential files, databases and generated artifacts. Symlinks and special files are rejected. Limits are 5 MiB per file and 50 MiB per frontend/backend project. These checks do not detect secrets embedded in ordinary source files. Generated code is untrusted and is not executed by the experiment tools.
+
+## Browser and Terminal
+
+The trusted Compose controller has access to the local Docker socket. Run it only with a Docker installation you control. The controller API is available to the engine through a dedicated volume and Unix socket. Workspace containers use a non-root user, a read-only image, bounded temporary storage, and no Docker network. They have access to their own loopback and a read-only socket for downloading npm packages from the configured registry. The repository copy, terminal history, and service output are temporary. [Docker daemon privileges](https://docs.docker.com/engine/security/#docker-daemon-attack-surface)
+
+The preview is generated web content. Each service has its own origin, and the embedded preview restricts form and navigation behavior to that context. Chorus accepts terminal connections only from its local web origins with a single-use, short-lived ticket. Workspace code has no mount for the engine's database, Git worktrees, or provider settings. Keep secrets out of generated files and temporary terminal input.
 
 ## Dependencies
 

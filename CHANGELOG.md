@@ -1,5 +1,13 @@
 # Changes
 
+## 24 November 2026 — Docker and repository workspaces
+
+- Docker Compose starts the full Chorus app and keeps experiments in a persistent volume.
+- **Run** starts the generated frontend and backend in an isolated workspace and opens the frontend in **Browser**. **Terminal** connects to a shell in that same workspace and can forward ports for manually started servers.
+- **Repository** shows read-only, wrapped source with syntax highlighting. Markdown opens in **Preview** with a **Raw** option.
+- `chorus stop` shuts down the local launcher or a Compose stack. The source launcher can immediately reuse its ports after shutdown.
+- A Docker test job exercises real workspaces in Chromium and WebKit with a fake provider.
+
 ## 11 November 2026 — contributor setup and repository quality
 
 - Bundled dependency-free frontend/backend starters replace the external sibling-folder requirement. Existing experiment workspaces are unchanged.
