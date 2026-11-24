@@ -29,6 +29,8 @@ import {
 import { Portrait, ProfileDialog } from "@/lib/api/chorus/harness-workspace";
 import { harness, message, Sheet } from "./shell";
 
+import { DeepSWESetup } from "./deepswe-setup";
+
 function ModelPicker({
   id,
   label,
@@ -90,6 +92,8 @@ export function Launcher({
     catalog.problems.find((item) => item.id === previous?.problemId) ??
       catalog.problems[0],
   );
+  const [visitedDeepSWE, setVisitedDeepSWE] = useState(false);
+  const [source, setSource] = useState("app");
   const custom = experiment && problem.id === "other";
   const [customStatement, setCustomStatement] = useState(
     previous?.problemId === "other" ? previousRun?.problem.statement ?? "" : "",
@@ -283,7 +287,15 @@ export function Launcher({
     />
   );
   return (
-    <section className="launcher">
+    <section className={experiment && source === "app" ? "launcher app-source" : "launcher"}>
+      {experiment && (
+        <section className="problem-field source-picker">
+          <ModelPicker id="problem-source" label="Problem source" value={source} select={(value) => { setSource(value); if (value === "deepswe") setVisitedDeepSWE(true); }}
+            options={[{ value: "app", label: "App or open-ended problem" }, { value: "deepswe", label: "DeepSWE" }]} />
+        </section>
+      )}
+      {visitedDeepSWE && <div hidden={source !== "deepswe"}><DeepSWESetup /></div>}
+      {source === "app" && <>
       {!experiment && (
         <div className="launcher-intro">
           <h2>Set up a session</h2>
@@ -553,6 +565,7 @@ export function Launcher({
       {profile && (
         <ProfileDialog agent={profile} close={() => setProfile(null)} />
       )}
+      </>}
     </section>
   );
 }

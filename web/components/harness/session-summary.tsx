@@ -55,8 +55,10 @@ export function RunProgress({
     progress = experiment.planningCompletions
       ? `${experiment.planningCompletions.length} / ${snapshot.agents.length} finished`
       : `${experiment.votes.length} / ${experiment.majority} votes`;
+  } else if (experiment.phase === "verify") {
+    progress = snapshot.status === "reviewing" ? "Grading patch" : "Patch frozen";
   } else {
-    const stopped = snapshot.workers.filter(({ state }) => state === "finished" || state === "failed").length;
+    const stopped = snapshot.workers.filter(({ state }) => ["finished", "failed", "capped"].includes(state)).length;
     progress = `${stopped} / ${snapshot.agents.length} stopped`;
   }
 
@@ -64,7 +66,7 @@ export function RunProgress({
     <>
       {experiment && (
         <div className="run-phases" role="group" aria-label="Experiment phase">
-          {(["plan", "build", "judge"] as const).map((phase) => (
+          {["plan", "build", experiment.deepswe ? "verify" : "judge"].map((phase) => (
             <span key={phase} aria-current={experiment.phase === phase ? "step" : undefined}>
               {phase[0].toUpperCase() + phase.slice(1)}
             </span>

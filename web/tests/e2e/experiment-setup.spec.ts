@@ -829,3 +829,108 @@ test.describe("200 percent desktop reflow", () => {
     await expect(usageButton).toBeFocused();
   });
 });
+
+test("DeepSWE preserves per-source drafts and previews a matched study while offline", async ({ page }) => {
+  await page.goto("/?experiment=1");
+  await page.getByRole("button", { name: /Choose brief:/ }).click();
+  await page.getByRole("dialog", { name: "Choose a brief" }).getByRole("button", { name: /^Other/ }).click();
+  const draft = page.getByRole("textbox", { name: "Problem statement" });
+  await draft.fill("Keep this draft when switching sources.");
+
+  const source = page.getByRole("combobox", { name: "Problem source" });
+  await source.click();
+  await page.getByRole("option", { name: "DeepSWE", exact: true }).click();
+  await expect(page.getByText("ts-pattern-match-each", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Default team" }).getByRole("listitem")).toHaveCount(6);
+  await expect(page.getByRole("button", { name: "Start DeepSWE run" })).toBeDisabled();
+  await expect(page.getByText(/Set CHORUS_DEEPSWE_PROFILE/)).toBeVisible();
+  await page.getByRole("button", { name: "Use solo vs. team preset" }).click();
+  await expect(page.getByText("6 trials · Up to 720 model calls")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Solo", exact: true }).getByRole("listitem")).toHaveCount(1);
+  const team = page.getByRole("region", { name: "Team of three" });
+  await expect(team.getByRole("listitem")).toHaveCount(3);
+  await team.getByLabel("Guidance").first().selectOption("role");
+  await expect(team.getByRole("combobox", { name: "Profile", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Start campaign" })).toBeDisabled();
+
+  await source.click();
+  await page.getByRole("option", { name: "App or open-ended problem" }).click();
+  await expect(draft).toHaveValue("Keep this draft when switching sources.");
+  await source.click();
+  await page.getByRole("option", { name: "DeepSWE", exact: true }).click();
+  await expect(team.getByLabel("Guidance").first()).toHaveValue("role");
+});
+
+test("saved DeepSWE results display the verifier reward after a reload", async ({ page, request }) => {
+  const response = await request.post("/api/chorus/v2/experiments", { data: {
+    problemId: "todoist", participantIds: ["frontend-engineer"], model: "qwen3.5:4b-mlx",
+  } });
+  const saved: HarnessSnapshot = await response.json();
+  const experiment = saved.experiment!;
+  const commit = experiment.repository.baselineCommit;
+  const frozen: HarnessSnapshot = {
+    ...saved, revision: 99, status: "completed",
+    problem: { ...saved.problem, id: "ts-pattern-match-each", title: "TypeScript pattern matching with .each" },
+    experiment: { ...experiment, phase: "verify", rubric: "deepswe-v1",
+      frozen: { mainCommit: commit, specRevision: 0, evidenceThrough: 0, artifactChecks: [] },
+      deepswe: {
+        condition: null,
+        task: { id: "ts-pattern-match-each", baseCommit: commit, baseTree: commit, datasetCommit: commit,
+          image: "fixture/task", verifierImage: "fixture/verifier", platform: "linux/amd64", pierVersion: "0.3.1" },
+        callLimit: 120, solvingSeconds: 1800, callsReserved: 13, deadlineAt: null, stopReason: null,
+        patchDigest: "a".repeat(64), submittedTree: commit, verificationAttempts: 1,
+        result: { reward: 0, tests: 7, passed: 6, failed: 1, compilationFailure: "Feature suite could not run. TS2394: incompatible overload." },
+      },
+    },
+  };
+  await page.route(`**/api/chorus/v2/sessions/${saved.id}`, (route) => route.fulfill({ json: frozen }));
+  await page.goto(`/?session=${saved.id}`);
+  const results = page.getByRole("region", { name: "DeepSWE results" });
+  await expect(results.getByText("Failed", { exact: true })).toBeVisible();
+  await expect(results.getByText("7 tests · 6 passed · 1 failed")).toBeVisible();
+  await expect(results.getByText(/TS2394: incompatible overload/)).toBeVisible();
+  await expect(results.getByRole("link", { name: "Download patch" })).toHaveAttribute("href", /\/deepswe\/patch$/);
+  await expect(page.getByRole("button", { name: "Terminal", exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(results.getByText("Failed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Verify", { exact: true })).toHaveAttribute("aria-current", "step");
+});
+
+test("DeepSWE launches the previewed campaign and reopens paired scores", async ({ page, request }) => {
+  const base = "/api/chorus/v2/deepswe";
+  const catalog = await (await request.get(base + "/catalog")).json();
+  const pin = "a".repeat(40);
+  const task = { id: catalog.problem.id, baseCommit: pin, baseTree: pin, datasetCommit: pin,
+    image: "fixture/task", verifierImage: "fixture/grade", platform: "linux/amd64", pierVersion: "0.3.1" };
+  const models = catalog.models.map((model: { id: string }) => ({ ...model, available: true, unavailableReason: null }));
+  await page.route("**" + base + "/catalog", route => route.fulfill({ json: { ...catalog, models, task, unavailableReason: null } }));
+  let report: import("../../lib/api/chorus/harness-client").DeepSWECampaign | undefined;
+  await page.route("**" + base + "/campaigns", async route => {
+    if (route.request().method() === "GET") return route.fulfill({ json: [] });
+    const manifest = route.request().postDataJSON();
+    expect(manifest.conditions.map((c: { slots: unknown[] }) => c.slots.length)).toEqual([1, 3]);
+    expect(manifest.repeats).toBe(3);
+    report = { manifest, id: manifest.requestId, callCeiling: 720, status: "finished", error: "",
+      engineVersion: "deepswe-v2", promptVersion: "fixture",
+      trials: manifest.conditions.flatMap((c: { name: string }, i: number) => [1, 2, 3].map(repeat => ({
+        condition: c.name, repeat, sessionId: `trial-${i}-${repeat}`, status: "completed", reward: repeat <= i + 1 ? 1 : 0,
+        usage: null, wallTimeMs: null, calls: 6,
+      }))),
+      scores: [
+        { condition: "Solo", passed: 1, graded: 3, planned: 3, ratePercent: 100 / 3, pairedCount: 3, deltaPoints: 0 },
+        { condition: "Team of three", passed: 2, graded: 3, planned: 3, ratePercent: 200 / 3, pairedCount: 3, deltaPoints: 100 / 3 },
+      ],
+    };
+    return route.fulfill({ status: 201, json: report });
+  });
+  await page.route("**" + base + "/campaigns/*", route => route.fulfill({ json: report }));
+  await page.goto("/?experiment=1");
+  await page.getByRole("combobox", { name: "Problem source" }).click();
+  await page.getByRole("option", { name: "DeepSWE", exact: true }).click();
+  await page.getByRole("button", { name: "Use solo vs. team preset" }).click();
+  await page.getByRole("button", { name: "Start campaign" }).click();
+  await expect(page.getByText("+33.3 pp (3 paired)")).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("link", { name: "Inspect trial" })).toHaveCount(6);
+  await expect(page.getByRole("link", { name: "Export JSON" })).toBeVisible();
+});

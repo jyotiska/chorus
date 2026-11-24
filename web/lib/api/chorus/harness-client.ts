@@ -6,6 +6,12 @@ type H = Contracts["harness"];
 export type HarnessSnapshot = H["snapshot"];
 export type HarnessCatalog = H["catalog"];
 export type ExperimentCatalog = H["experimentCatalog"];
+export type DeepSWERequest = H["deepsweRequest"];
+export type DeepSWECondition = DeepSWERequest["condition"];
+export type DeepSWEComparison = H["deepsweComparison"];
+export type DeepSWECampaign = H["deepsweCampaign"];
+export type CampaignManifest = DeepSWECampaign["manifest"];
+export type DeepSWECatalog = H["deepsweCatalog"];
 export type HarnessConfig = H["config"];
 export type ExperimentConfig = H["experimentConfig"];
 export type TeamGeneration = H["teamGeneration"];
@@ -43,6 +49,31 @@ export class HarnessClient {
   }
   async catalog(): Promise<HarnessCatalog> { return parse(await this.request("/catalog"), "HarnessCatalog"); }
   async experimentCatalog(): Promise<ExperimentCatalog> { return parse(await this.request("/experiments/catalog"), "ExperimentCatalog"); }
+  async deepsweCatalog(signal: AbortSignal): Promise<DeepSWECatalog> {
+    return parse(await this.request("/deepswe/catalog", { signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]) }), "DeepSWECatalog");
+  }
+  async createDeepSWE(settings?: DeepSWERequest): Promise<HarnessSnapshot> {
+    return parse(await this.request("/deepswe/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(settings), signal: AbortSignal.timeout(60000) }), "HarnessSnapshot");
+  }
+  async launchCampaign(manifest: CampaignManifest): Promise<DeepSWECampaign> {
+    return parse(await this.request("/deepswe/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(manifest), signal: AbortSignal.timeout(60000) }), "DeepSWECampaign");
+  }
+  async campaign(id: string, signal?: AbortSignal): Promise<DeepSWECampaign> {
+    return parse(await this.request(`/deepswe/campaigns/${encodeURIComponent(id)}`, signal ? { signal } : {}), "DeepSWECampaign");
+  }
+  async campaigns(): Promise<H["campaignSummary"][]> {
+    const rows = await this.request("/deepswe/campaigns");
+    if (!Array.isArray(rows)) throw new Error("Invalid DeepSWE campaign list.");
+    return rows.map(row => parse<H["campaignSummary"]>(row, "CampaignSummary"));
+  }
+  async compareCampaigns(id: string, other: string, candidate: string, baseline: string): Promise<DeepSWEComparison> {
+    const params = new URLSearchParams({ other, candidate, baseline });
+    return parse(await this.request(`/deepswe/campaigns/${encodeURIComponent(id)}/comparison?${params}`), "DeepSWEComparison");
+  }
+  async campaignControl(id: string, action: "resume" | "cancel"): Promise<DeepSWECampaign> {
+    return parse(await this.request(`/deepswe/campaigns/${encodeURIComponent(id)}/${action}`, { method: "POST" }), "DeepSWECampaign");
+  }
+  deepswePatch(id: string): string { return `${this.base}/sessions/${encodeURIComponent(id)}/deepswe/patch`; }
   async list(): Promise<HarnessSnapshot[]> {
     const value = await this.request("/sessions");
     if (!Array.isArray(value)) throw new Error("Invalid Chorus session list.");

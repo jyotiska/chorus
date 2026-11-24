@@ -44,18 +44,21 @@ export function LiveWorkspace({
 }) {
   const { snapshot, usage, usageError, retryUsage, act, busy, leave } = controls;
   const experiment = snapshot.experiment;
+  const deepswe = experiment?.deepswe;
   const documentName = experiment ? "SPEC.md" : "Canvas";
   const finished =
-    ["completed", "stopped", "killed", "judge_failed"].includes(snapshot.status);
+    ["completed", "stopped", "killed", "judge_failed", "verify_failed"].includes(snapshot.status);
   let outcome = "Run finished";
   if (snapshot.status === "killed") outcome = "Killed";
   else if (snapshot.status === "judge_failed") outcome = "Judge failed";
+  else if (snapshot.status === "verify_failed") outcome = "Ungraded";
+  else if (deepswe?.result) outcome = deepswe.result.reward === 1 ? "Passed" : "Failed";
   else if (experiment) outcome = "Report ready";
   else if (snapshot.verification) outcome = `Solution ${snapshot.verification.status}`;
   const active =
     snapshot.status === "running" || snapshot.status === "reviewing";
   const canKill = experiment &&
-    (active || snapshot.status === "paused" || snapshot.status === "judge_failed");
+    (active || ["paused", "judge_failed", "verify_failed"].includes(snapshot.status));
   const [tab, setTab] = useState<Tab>(() => (finished ? "Results" : "Board"));
   const [repositoryOpened, setRepositoryOpened] = useState(false);
   const [runtimeOpened, setRuntimeOpened] = useState(false);
@@ -103,7 +106,7 @@ export function LiveWorkspace({
       {snapshot.status === "ready" && (
         <button disabled={busy} onClick={() => void act("start")}>
           <Play />
-          {experiment ? "Start experiment" : "Start session"}
+          {deepswe ? "Start DeepSWE run" : experiment ? "Start experiment" : "Start session"}
         </button>
       )}
       {active && !experiment && (
@@ -121,6 +124,9 @@ export function LiveWorkspace({
       {experiment && snapshot.status === "judge_failed" && (
         <button disabled={busy} onClick={() => void act("retry_judge")}>Retry judge</button>
       )}
+      {deepswe && snapshot.status === "verify_failed" && (
+        <button disabled={busy} onClick={() => { setTab("Results"); void act("retry_verification"); }}>Retry verification</button>
+      )}
       <DropdownMenu onOpenChangeComplete={(open) => {
         if (!open && confirmKill.current) {
           confirmKill.current = false;
@@ -137,7 +143,7 @@ export function LiveWorkspace({
               Model <code>{snapshot.config.model}</code>
             </DropdownMenuLabel>
             <DropdownMenuItem onClick={() => void copy()}><LinkIcon /> Copy session link</DropdownMenuItem>
-            {experiment?.rubric === "deliverable-v1" && (
+            {(experiment?.rubric === "deliverable-v1" || deepswe) && (
               <DropdownMenuItem onClick={() => setDrawer("Problem statement")}><FileText /> View problem statement</DropdownMenuItem>
             )}
             {!experiment && !finished && !snapshot.endedEarly && (
@@ -205,7 +211,7 @@ export function LiveWorkspace({
               </span>
             )}
           </button>
-          {experiment && <>
+          {experiment && !deepswe && <>
             <button aria-current={tab === "Browser" ? "page" : undefined} onClick={() => {
               setRuntimeOpened(true);
               setTab("Browser");

@@ -83,7 +83,7 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
     };
   }, [legacyCatalog]);
   async function start(run: HarnessSnapshot) {
-    setPrevious(run);
+    if (!run.experiment?.deepswe) setPrevious(run);
     // A reload during Start must recover the already-created session.
     localStorage.setItem(storageKey, run.id);
     window.history.replaceState(window.history.state, "", sessionHref(run.id));
@@ -127,7 +127,11 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
     <Shell
       title={experimentSetup ? "New experiment" : "New session"}
       experimentSetup={experimentSetup}
-      onNew={() => document.getElementById("choose-problem")?.click()}
+      onNew={() => {
+        const brief = document.getElementById("choose-problem");
+        if (brief) brief.click();
+        else document.getElementById("problem-source")?.focus();
+      }}
     >
       {error && (
         <div role="alert">

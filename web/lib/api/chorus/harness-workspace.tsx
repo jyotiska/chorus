@@ -1275,6 +1275,7 @@ const outcomes: Record<HarnessSnapshot["status"], string> = {
   stopping: "Stopping",
   killed: "Killed",
   judge_failed: "Judge failed",
+  verify_failed: "Ungraded",
 };
 
 function ResultsHeading({ title, outcome, detail, tone }: {
@@ -1500,7 +1501,47 @@ function ExperimentResults({ snapshot }: { snapshot: HarnessSnapshot }) {
   );
 }
 
+function DeepSWEResults({ snapshot }: { snapshot: HarnessSnapshot }) {
+  const experiment = snapshot.experiment!;
+  const run = experiment.deepswe!;
+  const result = run.result;
+  const outcome = result ? (result.reward === 1 ? "Passed" : "Failed")
+    : snapshot.status === "reviewing" ? "Verifying" : outcomes[snapshot.status];
+  const tests = result && [
+    ["tests", result.tests], ["passed", result.passed], ["failed", result.failed],
+  ].filter(([, count]) => count !== null);
+  return (
+    <section className={`${styles.panel} ${styles.resultsView}`} aria-label="DeepSWE results">
+      <ResultsHeading title="Chorus on DeepSWE" outcome={outcome} detail={run.task.id}
+        tone={result?.reward === 1 ? "positive" : result?.reward === 0 || snapshot.status === "verify_failed" ? "attention" : undefined} />
+      {snapshot.status === "verify_failed" && <RecordError message={snapshot.error} />}
+      {snapshot.status === "reviewing" && <p className={styles.resultsNote} role="status">Pier is grading the frozen patch.</p>}
+      {run.stopReason && <p className={styles.resultsNote}>Solving ended at the {run.stopReason === "call_limit" ? "model-call limit" : "deadline"}.</p>}
+      {run.condition && <details><summary>{run.condition.name} · Run settings</summary>
+        <p>{run.callLimit} shared calls · {run.solvingSeconds} seconds</p>
+        <ul>{run.condition.slots.map((slot, index) => <li key={index}>
+          {snapshot.agents[index].name} · {slot.guidance === "neutral" ? "Neutral" : slot.guidance === "role" ? "Role only" : "Full profile"} · {slot.model ?? snapshot.config.model}
+        </li>)}</ul>
+      </details>}
+      {result && <section className={styles.resultsSummary} aria-label="Verifier tests">
+        <h3>Verifier tests</h3>
+        <p>{tests?.length ? tests.map(([label, count]) => `${count} ${label}`).join(" · ") : "Test totals unavailable."}</p>
+        {result.compilationFailure && <details open><summary>Suite compilation failure</summary>
+          <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{result.compilationFailure}</pre>
+        </details>}
+      </section>}
+      {experiment.frozen && run.patchDigest && <section className={styles.resultsSummary} aria-label="Submitted patch">
+        <h3>Submitted patch</h3>
+        <p>Base <code title={run.task.baseCommit}>{run.task.baseCommit.slice(0, 12)}</code> · Main <code title={experiment.frozen.mainCommit}>{experiment.frozen.mainCommit.slice(0, 12)}</code></p>
+        <p>SHA-256 <code title={run.patchDigest}>{run.patchDigest.slice(0, 16)}</code> · {run.verificationAttempts} {run.verificationAttempts === 1 ? "grading attempt" : "grading attempts"}</p>
+        <a href={client.deepswePatch(snapshot.id)} download>Download patch</a>
+      </section>}
+    </section>
+  );
+}
+
 function Report({ snapshot }: { snapshot: HarnessSnapshot }) {
+  if (snapshot.experiment?.deepswe) return <DeepSWEResults snapshot={snapshot} />;
   if (snapshot.experiment) return <ExperimentResults snapshot={snapshot} />;
   const report = snapshot.report;
   const verification = snapshot.verification;
@@ -1626,7 +1667,7 @@ export function LiveSession({ snapshot, receive, mode, leave, presentation }: { 
   const experiment = snapshot.experiment;
   const parts: WorkspaceParts = {
     heading: <div className={styles.sessionTitle}><div><p className={styles.eyebrow}>Session {snapshot.id.slice(0, 8)} · {snapshot.config.model}</p><h1>{snapshot.problem.title}</h1><p>{snapshot.status} · {snapshot.agents.length} agents · {snapshot.config.maxTurnsPerAgent} turns per agent</p></div><div className={styles.actions}>{snapshot.status === "ready" && <button disabled={busy} onClick={() => void act("start")}>Start session</button>}{active && <button disabled={busy} onClick={() => void act("pause")}>Pause</button>}{snapshot.status === "paused" && <button disabled={busy} onClick={() => void act("resume")}>Resume</button>}{!["completed", "stopped"].includes(snapshot.status) && !snapshot.endedEarly && <button disabled={busy} onClick={() => void act("stop")}>Stop and evaluate</button>}<button disabled={busy} onClick={() => { if (active) { void act("pause").then((ok) => { if (ok) leave(); }); } else leave(); }}>Back to setup</button></div></div>,
-    error: <RecordError message={error || connectionError || (snapshot.status === "judge_failed" ? "" : snapshot.error) || (!presentation?.workspace ? usageError : "")} />,
+    error: <RecordError message={error || connectionError || (["judge_failed", "verify_failed"].includes(snapshot.status) ? "" : snapshot.error) || (!presentation?.workspace ? usageError : "")} />,
     metrics: usage && <section className={styles.topMetrics} aria-label="Session totals"><p className={styles.eyebrow}>Participant totals · {snapshot.agents.length} agents</p><Metrics usage={usage.participants} /><div className={styles.costFooter}><span>Judge: {money(usage.judge.reportedCostUSD + usage.judge.estimatedCostUSD)}</span><span>Session: {money(usage.total.reportedCostUSD + usage.total.estimatedCostUSD)}{usage.total.estimatedCostUSD > 0 ? " including estimates" : ""}</span><span>Wall time: {(usage.wallTimeMs / 1000).toFixed(0)} s</span></div></section>,
     scene: presentation?.scene ? presentation.scene({ snapshot, select: setSelected, selected }) : mode === "nanoville" ? <Scene snapshot={snapshot} select={setSelected} /> : null,
     roster: <ParticipantsRoster snapshot={snapshot} select={setSelected} />,

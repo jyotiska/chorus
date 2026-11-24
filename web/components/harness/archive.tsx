@@ -18,6 +18,7 @@ const statusLabels: Record<HarnessSnapshot["status"], string> = {
   stopped: "Stopped",
   killed: "Killed",
   judge_failed: "Judge failed",
+  verify_failed: "Ungraded",
 };
 const createdFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 const exactCreatedFormat = new Intl.DateTimeFormat(undefined, { dateStyle: "long", timeStyle: "long" });
@@ -28,7 +29,7 @@ type ArchiveRun = {
   status: HarnessSnapshot["status"];
   createdAt: string;
   participants: number;
-  kind: "Experiment" | "Benchmark" | "Historical";
+  kind: "Experiment" | "Benchmark" | "DeepSWE" | "Historical";
   phase?: string;
 };
 
@@ -84,7 +85,7 @@ function ArchiveList({ history }: { history: RunHistory }) {
       status: run.status,
       createdAt: run.createdAt,
       participants: run.agents.length,
-      kind: run.experiment ? "Experiment" : "Benchmark",
+      kind: run.experiment?.deepswe ? "DeepSWE" : run.experiment ? "Experiment" : "Benchmark",
       phase: run.experiment?.phase,
     }));
     const historical: ArchiveRun[] = (legacy ?? []).map((run) => ({
@@ -118,7 +119,8 @@ function ArchiveList({ history }: { history: RunHistory }) {
           options={[{ value: "", label: "All statuses" }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))]} />
         <HarnessSelect label="Filter by type" value={kind} onValueChange={setKind} options={[
           { value: "", label: "All types" }, { value: "Experiment", label: "Experiments" },
-          { value: "Benchmark", label: "Benchmarks" }, { value: "Historical", label: "Historical sessions" },
+          { value: "Benchmark", label: "Benchmarks" }, { value: "DeepSWE", label: "DeepSWE" },
+          { value: "Historical", label: "Historical sessions" },
         ]} />
         <span className="archive-count" role="status">
           {loading ? "Loading runs…" : needle || status || kind
