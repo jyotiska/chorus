@@ -201,12 +201,12 @@ test("actual tool loop completes with concise mentions, summaries, usage, and fi
     page.getByRole("dialog", { name: "Drew details" }),
   ).toBeVisible();
   const inspector = page.getByRole("dialog", { name: "Drew details" });
+  await expect(inspector.getByRole("tab")).toHaveText(["Profile", "Usage", "Reasoning summaries"]);
   await inspector.getByRole("tab", { name: "Profile" }).press("End");
   await expect(inspector.getByRole("tab", { name: "Reasoning summaries" })).toBeFocused();
   await expect(
     page.getByText("Published validated work only.", { exact: true }),
   ).toBeVisible();
-  await expect(inspector.getByRole("tab")).toHaveText(["Profile", "Usage", "Reasoning summaries"]);
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("button", { name: "Close Participants" }).click();
   await page.getByRole("button", { name: "Usage", exact: true }).click();
