@@ -214,8 +214,6 @@
   .darkWorkspace .dialog { margin:auto 0 0; width:100%; max-width:100%; border-radius:12px 12px 0 0; padding-bottom:max(20px,env(safe-area-inset-bottom)); }
   .darkWorkspace .dialog button { min-height:44px; }
 }
-.darkWorkspace .post:has(>.portrait) { position:relative; padding-left:42px; }
-.darkWorkspace .post>.portrait { position:absolute; top:18px; left:0; width:29px; height:34px; }
 .darkWorkspace .postLink { color:var(--accent); font-size:12px; margin-top:8px; }
 .darkWorkspace .markdown blockquote { font-size:14px; margin:8px 0 14px; }
 .darkWorkspace .markdown :is(h1,h2,h3) { margin:16px 0 6px; }
@@ -227,11 +225,16 @@
 .darkWorkspace .compactBoard .panelHeading { margin-bottom:6px; }
 .darkWorkspace .compactBoard .panelHeading h2 { font-size:15px; }
 .darkWorkspace .compactBoard .post { padding-block:9px; }
-.darkWorkspace .compactBoard .post:has(>.portrait) { padding-left:34px; }
-.darkWorkspace .compactBoard .post>.portrait { top:9px; width:24px; height:24px; object-fit:cover; }
-.darkWorkspace .compactBoard .post>div { column-gap:8px; row-gap:2px; }
+.darkWorkspace .compactBoard .post:has(>.portrait) {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+}
+.darkWorkspace .compactBoard .post:has(>.portrait) > :not(.portrait) { grid-column: 2; }
+.darkWorkspace .compactBoard .post > .portrait { grid-area: 1 / 1; width: 24px; height: 24px; object-fit: cover; }
+.darkWorkspace .compactBoard .post > div { align-content: center; align-items: center; column-gap: 8px; row-gap: 2px; }
 .darkWorkspace .compactBoard .post p { font-size:14px; line-height:1.5; margin-top:3px; overflow-wrap:anywhere; }
-.darkWorkspace .compactBoard .post .postLink { margin-top:3px; }
+.darkWorkspace .compactBoard .post .postLink { justify-self: start; margin-top:3px; }
 .darkWorkspace .compactBoard .post small { font-size:11px; }
 .darkWorkspace .compactBoard .newPosts { top:26px; }
 
@@ -267,9 +270,19 @@
 .markdown.specDocument ul { list-style: disc; }
 .markdown.specDocument ol { list-style: decimal; }
 .markdown.specDocument li + li { margin-top: 4px; }
-.markdown.specDocument li:global(.task-list-item) { list-style: none; }
-.markdown.specDocument input[type="checkbox"] {
-  margin-inline-end: 6px;
+.markdown.specDocument li:global(.task-list-item) {
+  position: relative;
+  padding-inline-start: 1.65em;
+  list-style: none;
+}
+.markdown.specDocument li:global(.task-list-item) > input[type="checkbox"],
+.markdown.specDocument li:global(.task-list-item) > p:first-child > input[type="checkbox"] {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: calc((1lh - 1em) / 2);
+  inline-size: 1em;
+  block-size: 1em;
+  margin: 0;
   accent-color: var(--accent);
 }
 .specWorkspace {

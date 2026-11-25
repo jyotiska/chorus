@@ -529,6 +529,7 @@ test("SPEC.md shows task owners and revision diffs while preserving the Board po
   run.boardCount = 30;
   run.canvas = [
     "# SPEC.md", "", "## Product specification", "", "Ship a compact task organizer.", "", "### Keyboard shortcuts",
+    "", "- [ ] Keep keyboard shortcuts discoverable by showing them alongside each action in the toolbar and in the settings panel.",
     "", "```markdown", "## Task Distribution", "```", "",
     ...Array.from({ length: 35 }, (_, i) => `- Document requirement ${i + 1}`),
     "", "## Task Distribution",
@@ -569,8 +570,31 @@ test("SPEC.md shows task owners and revision diffs while preserving the Board po
   await expect(spec.getByRole("heading", { name: "Keyboard shortcuts" })).toBeVisible();
   await expect(spec.getByRole("heading", { name: "Task Distribution" })).toBeHidden();
   await expect(spec.getByRole("link", { name: "Export SPEC.md" })).toBeInViewport();
+  const requirement = spec.getByRole("listitem").filter({ hasText: "Keep keyboard shortcuts discoverable" });
+  const checkbox = requirement.getByRole("checkbox");
+  await expect(checkbox).toBeVisible();
+  const { labelLines, boxCenter } = await checkbox.evaluate((element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element.parentElement!);
+    range.setStartAfter(element);
+    const box = element.getBoundingClientRect();
+    return {
+      labelLines: Array.from(range.getClientRects()).filter(({ width }) => width > 0)
+        .map(({ x, y, height }) => ({ x, center: y + height / 2 })),
+      boxCenter: box.y + box.height / 2,
+    };
+  });
+  expect(labelLines.length).toBeGreaterThan(1);
+  expect(Math.abs(labelLines[0].center - boxCenter)).toBeLessThan(1);
+  for (const line of labelLines.slice(1)) expect(line.x).toBeCloseTo(labelLines[0].x, 0);
+
   const row = board.getByRole("article").filter({ hasText: "Task discussion 15 is ready" });
   await row.scrollIntoViewIfNeeded();
+  const avatar = (await row.getByRole("img", { name: "Front-end engineer portrait" }).boundingBox())!;
+  const author = (await row.getByRole("button", { name: "Front-end engineer", exact: true }).boundingBox())!;
+  const body = (await row.getByText("Task discussion 15 is ready to review.").boundingBox())!;
+  expect(author.y + author.height / 2).toBeCloseTo(avatar.y + avatar.height / 2, 0);
+  expect(body.x).toBeCloseTo(author.x, 0);
   const boardY = (await row.boundingBox())!.y;
   await spec.getByText("Document requirement 35", { exact: true }).scrollIntoViewIfNeeded();
   await expect(spec.getByRole("link", { name: "Export SPEC.md" })).toBeInViewport();
