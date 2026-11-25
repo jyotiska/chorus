@@ -1,4 +1,4 @@
-"""Local Pier integration for the first Chorus on DeepSWE task."""
+"""Local task profiles and Pier verification for Chorus on DeepSWE."""
 from __future__ import annotations
 
 import argparse
@@ -36,6 +36,12 @@ VERIFY_SECONDS = 30 * 60
 MAX_PATCH_BYTES = 4 * 1024 * 1024
 REVISION = re.compile(r"[a-f0-9]{40}")
 IMAGE = re.compile(r"[A-Za-z0-9./:_-]+@sha256:[a-f0-9]{64}")
+TASK_SLUG = re.compile(r"(?=.{1,56}$)[a-z0-9]+(?:-[a-z0-9]+)*")
+
+
+def profiles_directory():
+    value = os.getenv("CHORUS_DEEPSWE_PROFILES_DIR")
+    return Path(value) if value else None
 
 
 def unavailable(message):
@@ -55,14 +61,23 @@ class Profile:
     repository: Path
     pier: Path
     manifest: str
+    title: str = TASK_TITLE
+    language: str = "TypeScript"
 
     @classmethod
     def load(cls):
         path = os.getenv("CHORUS_DEEPSWE_PROFILE")
         if not path:
             raise unavailable("Set CHORUS_DEEPSWE_PROFILE to enable the local DeepSWE verifier.")
+        return cls.from_file(Path(path))
+
+    @classmethod
+    def from_file(cls, path, *, expected_id=None):
         try:
-            config = tomllib.loads(Path(path).read_text())
+            config = tomllib.loads(path.read_text())
+            task_id = config.get("task_id", expected_id or TASK_ID)
+            if not TASK_SLUG.fullmatch(task_id) or (expected_id and task_id != expected_id):
+                raise ValueError
             dataset, repository, pier = (Path(config[key]) for key in ("dataset", "repository", "pier"))
             if not all(path.is_absolute() for path in (dataset, repository, pier)):
                 raise ValueError
@@ -73,7 +88,7 @@ class Profile:
             if not all(IMAGE.fullmatch(pin) for pin in (image, verifier_image)) or platform not in {"linux/amd64", "linux/arm64"}:
                 raise ValueError
         except (OSError, KeyError, ValueError, TypeError) as error:
-            raise unavailable("Check the absolute paths, commit SHAs, image digests and platform in the DeepSWE profile.") from error
+            raise unavailable("Check the task ID, absolute paths, commit SHAs, image digests and platform in the DeepSWE profile.") from error
 
         python = pier.with_name("python")
         docker = shutil.which("docker")
@@ -90,27 +105,44 @@ class Profile:
             raise unavailable(f"Install datacurve-pier=={PIER_VERSION} in the verifier environment.")
 
         try:
-            statement = _git(dataset, "show", f"{dataset_commit}:{TASK_DIR}/instruction.md").stdout
-            manifest = _git(dataset, "show", f"{dataset_commit}:{TASK_DIR}/task.toml").stdout
+            task_dir = f"tasks/{task_id}"
+            statement = _git(dataset, "show", f"{dataset_commit}:{task_dir}/instruction.md").stdout
+            manifest = _git(dataset, "show", f"{dataset_commit}:{task_dir}/task.toml").stdout
             base_tree = _git(repository, "rev-parse", "--verify", f"{base_commit}^{{tree}}").stdout.strip()
             parsed = tomllib.loads(manifest)
             if not statement.strip() or "\0" in statement or len(statement.encode("utf-8")) > 12_000:
                 raise ValueError
             metadata = parsed.get("metadata", {})
-            if metadata.get("base_commit_hash", metadata.get("base_commit", base_commit)) != base_commit:
+            if (not isinstance(metadata, dict) or metadata.get("task_id", task_id) != task_id
+                    or metadata.get("base_commit_hash", metadata.get("base_commit", base_commit)) != base_commit):
+                raise ValueError
+            title = TASK_TITLE if task_id == TASK_ID else metadata.get("display_title", task_id)
+            language = metadata.get("language", "typescript" if task_id == TASK_ID else "")
+            if not isinstance(title, str) or not isinstance(language, str):
                 raise ValueError
             verifier = parsed["verifier"]
-            if not verifier.get("collect"):
+            if not isinstance(verifier, dict) or not verifier.get("collect"):
                 raise ValueError
             manifest = pin_environment(manifest, "environment", image)
             manifest = pin_environment(manifest, "verifier.environment", verifier_image, inherited=image)
         except (ChorusError, KeyError, ValueError, TypeError) as error:
             raise unavailable("The pinned task or repository base is unavailable or its task configuration does not match the profile.") from error
+        language = {"typescript": "TypeScript", "javascript": "JavaScript"}.get(language, language.title())
         return cls(
-            DeepSWETask(id=TASK_ID, datasetCommit=dataset_commit, baseCommit=base_commit, baseTree=base_tree,
+            DeepSWETask(id=task_id, datasetCommit=dataset_commit, baseCommit=base_commit, baseTree=base_tree,
                         image=image, verifierImage=verifier_image, platform=platform, pierVersion=version),
-            statement, dataset, repository, pier, manifest,
+            statement, dataset, repository, pier, manifest, title, language,
         )
+
+    def supports_public_checks(self, pin):
+        # The original task accepts the installation's existing check profile.
+        return pin is not None and (self.task.id == TASK_ID or (
+            pin.profile.image == self.task.image and pin.profile.platform == self.task.platform
+        ))
+
+    def validate_public_checks(self, pin):
+        if pin and not self.supports_public_checks(pin):
+            raise ChorusError("VERSION_MISMATCH", "The public check profile does not match the selected DeepSWE task.", 409)
 
     def check_docker(self):
         try:
@@ -122,7 +154,8 @@ class Profile:
             raise unavailable("Start a Linux Docker daemon and give the local DeepSWE worker access to it.") from error
 
     def copy_task(self, destination):
-        archive = _git(self.dataset, "archive", self.task.datasetCommit, "--", TASK_DIR, binary=True).stdout
+        task_dir = f"tasks/{self.task.id}"
+        archive = _git(self.dataset, "archive", self.task.datasetCommit, "--", task_dir, binary=True).stdout
         with tarfile.open(fileobj=io.BytesIO(archive)) as contents:
             for member in contents:
                 relative = Path(member.name)
@@ -136,7 +169,7 @@ class Profile:
                     with contents.extractfile(member) as source, target.open("wb") as output:
                         shutil.copyfileobj(source, output)
                     target.chmod(member.mode & 0o777)
-        task = destination / TASK_DIR
+        task = destination / task_dir
         if not tomllib.loads(self.manifest)["verifier"].get("environment", {}).get("docker_image"):
             # Pier skips test uploads for a separate verifier. Build the upstream
             # tests/Dockerfile so the verifier image contains its official tests.
@@ -174,6 +207,53 @@ class Profile:
             return read_result(jobs / "verify", replay=replay)
 
 
+def default_and_profiles():
+    default, reason = None, None
+    try:
+        default = Profile.load()
+    except ChorusError as error:
+        reason = str(error)
+    profiles = {default.task.id: default} if default else {}
+    directory = profiles_directory()
+    if directory:
+        for path in sorted(directory.glob("*.toml")):
+            if path.stem in profiles or not TASK_SLUG.fullmatch(path.stem):
+                continue
+            try:
+                profiles[path.stem] = Profile.from_file(path, expected_id=path.stem)
+            except ChorusError as error:
+                reason = str(error)
+    if not os.getenv("CHORUS_DEEPSWE_PROFILE") and default is None:
+        default = next(iter(profiles.values()), None)
+    return default, list(profiles.values()), reason
+
+
+def resolve_profile(task=None):
+    if task is None:
+        if os.getenv("CHORUS_DEEPSWE_PROFILE"):
+            return Profile.load()
+        default, _, reason = default_and_profiles()
+        if default is None:
+            raise unavailable(reason)
+        return default
+    default, default_error = None, None
+    try:
+        default = Profile.load()
+    except ChorusError as error:
+        default_error = error
+    if default and default.task == task:
+        return default
+    directory = profiles_directory()
+    path = directory / f"{task.id}.toml" if directory and TASK_SLUG.fullmatch(task.id) else None
+    if path and path.is_file():
+        profile = Profile.from_file(path, expected_id=task.id)
+        if profile.task == task:
+            return profile
+    elif default_error:
+        raise default_error
+    raise ChorusError("VERSION_MISMATCH", "The configured task changed. Restore its pinned profile or select the new revision.", 409)
+
+
 def pin_verifier_base(dockerfile, image):
     original = image.split("@")[0]
     try:
@@ -193,6 +273,8 @@ def pin_environment(manifest, table, image, *, inherited=None):
     section = data
     for name in table.split("."):
         section = section.get(name, {})
+        if not isinstance(section, dict):
+            raise ValueError("Invalid environment table")
     existing = section.get("docker_image", inherited)
     if not isinstance(existing, str) or existing.split("@")[0] != image.split("@")[0] or ("@" in existing and existing != image):
         raise ValueError("Image mismatch")
@@ -331,8 +413,8 @@ async def stop_process(process):
             continue
 
 
-async def calibrate(reference_patch=None):
-    profile = Profile.load()
+async def calibrate(reference_patch=None, *, profile=None):
+    profile = profile or Profile.load()
     profile.check_docker()
     for agent, expected in (("oracle", 1), ("nop", 0)):
         result = await profile.grade(b"", profile.task.baseTree, control=agent, show_logs=True)
@@ -362,10 +444,12 @@ async def calibrate(reference_patch=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Calibrate the local DeepSWE verifier.")
+    parser.add_argument("--profile", type=Path, help="Calibrate this task profile instead of the configured default.")
     parser.add_argument("--reference-patch", type=Path, help="Override the reference patch from the pinned task checkout.")
     args = parser.parse_args()
     try:
-        asyncio.run(calibrate(args.reference_patch.read_bytes() if args.reference_patch else None))
+        profile = Profile.from_file(args.profile) if args.profile else None
+        asyncio.run(calibrate(args.reference_patch.read_bytes() if args.reference_patch else None, profile=profile))
     except (ChorusError, OSError, ValueError) as error:
         parser.exit(1, f"{error}\n")
 

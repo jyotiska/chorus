@@ -1,4 +1,4 @@
-"""One-task DeepSWE launch, submission, verification and recovery."""
+"""DeepSWE task selection, submission, verification and recovery."""
 import asyncio
 from dataclasses import replace
 from hashlib import sha256
@@ -458,6 +458,93 @@ def test_deepswe_condition_guidance_and_task_validation(tmp_path, profile, model
         role, full = state["agents"]
         assert role["role"] == full["role"] and role["id"] != full["id"]
         assert role["traits"] == [] and not role["introduction"] and full["traits"]
+
+
+def test_registered_task_uses_its_own_pins_for_campaign_and_verification(tmp_path, profile, monkeypatch):
+    task_id = "other-repository-task"
+    repository = git_repo(tmp_path / "other-repo")
+    repository.joinpath("feature.py").write_text("answer = 0\n")
+    base_commit = commit_all(repository)
+    source = profile.dataset / "tasks" / task_id
+    source.mkdir()
+    statement = "Implement the second repository task."
+    source.joinpath("instruction.md").write_text(statement)
+    source.joinpath("task.toml").write_text(profile.manifest.replace(profile.task.baseCommit, base_commit).replace(
+        "[metadata]", f'[metadata]\ntask_id = "{task_id}"\ndisplay_title = "Second task"\nlanguage = "python"',
+    ))
+    dataset_commit = commit_all(profile.dataset)
+    profile.pier.touch(mode=0o755)
+    python = profile.pier.with_name("python")
+    python.write_text(f"#!/bin/sh\nprintf '%s\\n' {deepswe.PIER_VERSION}\n")
+    python.chmod(0o755)
+    which = deepswe.shutil.which
+    monkeypatch.setattr(deepswe.shutil, "which", lambda name: "/fake/docker" if name == "docker" else which(name))
+    registry = tmp_path / "profiles"
+    registry.mkdir()
+    profile_path = registry / f"{task_id}.toml"
+    settings = dict(task_id=task_id, dataset=str(profile.dataset), dataset_commit=dataset_commit,
+                    repository=str(repository), base_commit=base_commit, image=IMAGE, verifier_image=VERIFIER_IMAGE,
+                    platform=profile.task.platform, pier=str(profile.pier))
+    profile_path.write_text("".join(f"{key} = {json.dumps(value)}\n" for key, value in settings.items()))
+    monkeypatch.setenv("CHORUS_DEEPSWE_PROFILES_DIR", str(registry))
+    selected = deepswe.Profile.from_file(profile_path)
+    copied = selected.copy_task(tmp_path / "verifier")
+    assert copied.name == task_id and copied.joinpath("instruction.md").read_text() == statement
+
+    async def provider(model, messages, **options):
+        if options["phase"] == "plan":
+            assert messages[1]["content"] == statement
+            return result(tool("plan_complete"))
+        return result(tool("agent_finish", reason="Done.", remaining=[]))
+
+    attempts = []
+
+    async def grade(self, patch, tree):
+        attempts.append(self.task)
+        assert patch == b"" and tree == selected.task.baseTree
+        if len(attempts) == 1:
+            raise deepswe.unavailable("Fixture verifier failed.")
+        return DeepSWEResult(reward=0)
+
+    monkeypatch.setattr(deepswe.Profile, "grade", grade)
+    with TestClient(create_app(str(tmp_path / "registry.sqlite3"), provider, pacing=0)) as client:
+        base = "/api/v2/deepswe"
+        catalog = client.get(f"{base}/catalog").json()
+        assert catalog["task"] == profile.task.model_dump()
+        assert [entry["task"]["id"] for entry in catalog["tasks"]] == [deepswe.TASK_ID, task_id]
+        option = catalog["tasks"][1]
+        assert option["problem"]["domain"] == "DeepSWE · Python"
+        assert option["problem"]["title"] == "Second task"
+
+        manifest = study_manifest(selected, repeats=1)
+        manifest["conditions"] = manifest["conditions"][:1]
+        wrong = {**manifest, "task": {**option["task"], "baseTree": profile.task.baseTree}}
+        assert client.post(f"{base}/campaigns", json=wrong).status_code == 409
+        campaign = client.post(f"{base}/campaigns", json=manifest)
+        assert campaign.status_code == 201, campaign.text
+        endpoint = f"{base}/campaigns/{manifest['requestId']}"
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline:
+            report = client.get(endpoint).json()
+            if report["status"] == "finished":
+                break
+            time.sleep(0.025)
+        assert report["status"] == "finished", report
+        sid = report["trials"][0]["sessionId"]
+        failed = wait_api(client, sid, "verify_failed")
+        assert failed["experiment"]["repository"]["baselineCommit"] == base_commit
+        assert start_api(client, sid, "retry_verification", failed["revision"]).status_code == 200
+        assert wait_api(client, sid, "completed")["experiment"]["deepswe"]["result"]["reward"] == 0
+        assert attempts == [selected.task, selected.task]
+
+        missing_default = tmp_path / "missing-default.toml"
+        monkeypatch.setenv("CHORUS_DEEPSWE_PROFILE", str(missing_default))
+        monkeypatch.setattr(deepswe.Profile, "load", lambda: deepswe.Profile.from_file(missing_default))
+        catalog = client.get(f"{base}/catalog").json()
+        assert catalog["task"] is None and catalog["tasks"] == [option]
+        assert client.post(f"{base}/sessions").status_code == 503
+        monkeypatch.delenv("CHORUS_DEEPSWE_PROFILE")
+        assert client.get(f"{base}/catalog").json()["task"] == option["task"]
 
 
 def test_campaign_recovers_without_recreating_trial(tmp_path, profile, monkeypatch):

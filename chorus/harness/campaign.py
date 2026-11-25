@@ -14,15 +14,10 @@ from chorus.services.errors import ChorusError
 from chorus.storage import now
 
 
-async def checked_profile():
-    profile = await asyncio.to_thread(deepswe.Profile.load)
+async def checked_profile(task=None):
+    profile = await asyncio.to_thread(deepswe.resolve_profile, task)
     await asyncio.to_thread(profile.check_docker)
     return profile
-
-
-def check_pins(profile, task):
-    if profile.task != task:
-        raise ChorusError("VERSION_MISMATCH", "The configured task changed. Restore its pinned profile or select the new revision.", 409)
 
 
 def scores(conditions, repeats, trials):
@@ -62,12 +57,12 @@ class Campaigns:
             if DeepSWECampaignRequest.model_validate(existing["manifest"]) != manifest:
                 raise ChorusError("CONFLICT", "Choose a fresh campaign ID for different settings.", 409)
             return self.report(cid)
-        profile = await checked_profile()
-        check_pins(profile, manifest.task)
+        profile = await checked_profile(manifest.task)
         checks = {condition.publicChecks for condition in manifest.conditions if condition.publicChecks}
         if len(checks) > 1:
             raise ChorusError("INVALID_REQUEST", "Use the configured public check profile for all enabled conditions.", 400)
         check_profile = public_checks.resolve_profile(next(iter(checks), None))
+        profile.validate_public_checks(check_profile)
         rosters = [[p.model_dump() for p in self.service.experiments.deepswe_roster(c)] for c in manifest.conditions]
         rng = random.Random(manifest.seed)
         trials = []
@@ -182,9 +177,8 @@ class Campaigns:
         if action == "resume":
             if data["status"] != "paused":
                 raise ChorusError("INVALID_STATE", "Only a paused campaign can resume.", 409)
-            profile = await checked_profile()
             manifest = DeepSWECampaignRequest.model_validate(data["manifest"])
-            check_pins(profile, manifest.task)
+            profile = await checked_profile(manifest.task)
             if (data["engineVersion"], data["promptVersion"]) != (deepswe.TEAM_VERSION, deepswe.TEAM_PROMPT):
                 raise ChorusError("VERSION_MISMATCH", "Restore the campaign engine and prompt versions.", 409)
             if data.get("publicCheckProfile") and data.get("publicCheckVersion") != public_checks.VERSION:

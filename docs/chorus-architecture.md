@@ -84,7 +84,7 @@ Workers run independently with per-agent turn/call/tool budgets. Board posts and
 
 ### DeepSWE repository benchmarks
 
-The source launcher offers the pinned `ts-pattern-match-each` repository task. Each trial has a fresh Git workspace, a shared call limit and deadline, an integrated patch, and a binary verifier reward. Configurable runs use `deepswe-v5`. A numbered worker slot owns its worktree and binds a model and guidance mode. An empty-body session request uses the fixed default team (`deepswe-v5-fixed-team`).
+The source launcher offers locally registered DeepSWE repository tasks. Each trial has a fresh Git workspace, a shared call limit and deadline, an integrated patch, and a binary verifier reward. Configurable runs use `deepswe-v5`. A numbered worker slot owns its worktree and binds a model and guidance mode. An empty-body session request uses the default task and fixed team (`deepswe-v5-fixed-team`).
 
 During Build, workers can inspect their Git status and read a file at a merged main revision. Finishing requires a clean worktree, completed Git synchronization and a branch tip already integrated into main. A reviewer can finish without contributing a patch. The call limit and deadline still freeze the current main. Historical v1–v4 scores and frozen patches remain available, including retries of failed verification. Resuming an older unfinished solving campaign requires its original engine and prompt versions.
 

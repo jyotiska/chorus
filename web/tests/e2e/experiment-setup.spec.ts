@@ -945,13 +945,17 @@ test("DeepSWE launches the previewed campaign and reopens paired scores", async 
   const pin = "a".repeat(40);
   const task = { id: catalog.problem.id, baseCommit: pin, baseTree: pin, datasetCommit: pin,
     image: "fixture/task", verifierImage: "fixture/grade", platform: "linux/amd64", pierVersion: "0.3.1" };
+  const second = { ...task, id: "second-repository-task" };
+  const tasks = [{ task, problem: catalog.problem, publicCheckProfile: checkProfile },
+    { task: second, problem: { ...catalog.problem, id: second.id, title: "Second task", statement: "Second public instruction." } }];
   const models = catalog.models.map((model: { id: string }) => ({ ...model, available: true, unavailableReason: null }));
-  await page.route("**" + base + "/catalog", route => route.fulfill({ json: { ...catalog, models, task, unavailableReason: null,
+  await page.route("**" + base + "/catalog", route => route.fulfill({ json: { ...catalog, models, task, tasks, unavailableReason: null,
     publicCheckProfile: checkProfile } }));
   let report: import("../../lib/api/chorus/harness-client").DeepSWECampaign | undefined;
   await page.route("**" + base + "/campaigns", async route => {
     if (route.request().method() === "GET") return route.fulfill({ json: [] });
     const manifest = route.request().postDataJSON();
+    expect(manifest.task).toEqual(task);
     expect(manifest.conditions.map((c: { slots: unknown[] }) => c.slots.length)).toEqual([1, 3]);
     expect(manifest.conditions.map((c: { publicChecks?: string }) => c.publicChecks)).toEqual([checkProfile.digest, undefined]);
     expect(manifest.repeats).toBe(3);
@@ -974,6 +978,16 @@ test("DeepSWE launches the previewed campaign and reopens paired scores", async 
   await page.getByRole("option", { name: "DeepSWE", exact: true }).click();
   await page.getByRole("button", { name: "Use solo vs. team preset" }).click();
   const soloChecks = page.getByRole("region", { name: "Solo", exact: true }).getByRole("checkbox", { name: /public checks/ });
+  await expect(soloChecks).not.toBeChecked();
+  await soloChecks.check();
+  const taskPicker = page.getByLabel("DeepSWE task");
+  await taskPicker.selectOption(second.id);
+  await expect(page.getByText(second.id, { exact: true })).toBeVisible();
+  await page.getByText("Problem statement", { exact: true }).click();
+  await expect(page.getByText("Second public instruction.")).toBeVisible();
+  await expect(soloChecks).toHaveCount(0);
+  await expect(page.getByText("6 trials · Up to 720 model calls")).toBeVisible();
+  await taskPicker.selectOption(task.id);
   await expect(soloChecks).not.toBeChecked();
   await soloChecks.check();
   await expect(page.getByRole("region", { name: "Team of three" }).getByRole("checkbox", { name: /public checks/ })).not.toBeChecked();

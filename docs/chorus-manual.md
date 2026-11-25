@@ -239,15 +239,16 @@ Ctrl-C while `chorus run` is watching requests **Pause**. **Resume** continues t
 
 ## 6. Run and compare DeepSWE trials
 
-DeepSWE currently exposes one task, `ts-pattern-match-each`. A trial begins from a pinned Git commit and tree. The solving team sees the public instruction and works through Chorus's repository tools. After freezing `main`, the engine sends the patch through the local Pier adapter and Docker verifier. Use the source installation for this verifier. [DeepSWE setup and integration](deep-swe-integration-plan.md#local-verifier-setup)
+DeepSWE exposes locally registered tasks. A trial begins from a pinned Git commit and tree. The solving team sees the public instruction and works through Chorus's repository tools. After freezing `main`, the engine sends the patch through the local Pier adapter and Docker verifier. Use the source installation for this verifier. [DeepSWE setup and integration](deep-swe-integration-plan.md#local-verifier-setup)
 
 ### Set up and calibrate the verifier
 
 1. Use a source installation with access to a Linux Docker daemon. Fetch the pinned DeepSWE dataset checkout and the task repository's specified base into separate local Git repositories.
 2. Install `datacurve-pier==0.3.1` in a separate Python 3.12 virtual environment. Resolve the task and verifier image references to immutable digests for the chosen platform. For the TypeScript pilot, the integration guide uses the same upstream task image digest as both base pins and builds the separate verifier from its upstream test files.
-3. Save a TOML profile outside the Chorus checkout and set `CHORUS_DEEPSWE_PROFILE`. Replace every placeholder with an actual pin or absolute local path.
+3. Save a TOML profile outside the Chorus checkout and set `CHORUS_DEEPSWE_PROFILE`. For additional tasks, place each profile in `CHORUS_DEEPSWE_PROFILES_DIR` and name it `<task-id>.toml`. Replace every placeholder with an actual pin or absolute local path.
 
 ```toml
+task_id = "ts-pattern-match-each"
 dataset = "/absolute/path/to/deep-swe"
 dataset_commit = "<40-character dataset commit>"
 repository = "/absolute/path/to/ts-pattern"
@@ -265,11 +266,11 @@ export CHORUS_DEEPSWE_PROFILE=/absolute/path/to/deepswe.toml
 .venv/bin/python -m chorus.harness.deepswe
 ```
 
-Calibration uses no model calls. It expects upstream oracle and no-op controls to return **1** and **0**, then replays reference, empty, and deliberately incorrect patches expecting **1**, **0**, and **0**. The module supports `--reference-patch PATH` for a locally supplied reference. Resolve calibration failures before starting a measured run. [Profile validation and calibration](../chorus/harness/deepswe.py)
+Calibration uses no model calls. It expects upstream oracle and no-op controls to return **1** and **0**, then replays reference, empty, and deliberately incorrect patches expecting **1**, **0**, and **0**. Use `--profile PATH` for an additional task or `--reference-patch PATH` for a locally supplied reference. Resolve calibration failures before starting a measured run. [Profile validation and calibration](../chorus/harness/deepswe.py)
 
 ### Configure a run or campaign
 
-From the home page select **DeepSWE**, inspect the public task and change the team, models, or limits as needed. The default API request with an empty body creates a six-agent fixed-team session with a 120-call ceiling and a 30-minute solving window. The web launcher creates a campaign even for one trial and supports named conditions and repeats.
+From the home page select **DeepSWE**, choose a task and change the team, models, or limits as needed. The default API request with an empty body creates a six-agent fixed-team session on the default task with a 120-call ceiling and a 30-minute solving window. The web launcher creates a single-task campaign even for one trial and supports named conditions and repeats.
 
 | Control | Meaning |
 | --- | --- |
@@ -617,7 +618,7 @@ Application-level failures normally include `error`, a stable `code`, and `reque
 | `GET /experiments/catalog` | Preset and custom briefs, participant roles, model availability and custom-brief limit |
 | `POST /experiments` | Create a ready app/custom session from `ExperimentConfig` |
 | `POST /experiments/teams` | Generate and save profiles for `problemId`, `model`, and optional `customStatement` |
-| `GET /deepswe/catalog` | Public task, resolved pins when available, eligible profiles, model choices, limits and unavailable reason |
+| `GET /deepswe/catalog` | Default task, selectable tasks and their pins, eligible profiles, model choices, limits and unavailable reason |
 | `POST /deepswe/sessions` | Create one ready DeepSWE session. Empty body selects the fixed team. A body contains `task` and `condition` |
 | `POST /deepswe/campaigns` | Create and start a campaign from a pinned manifest, or return the identical existing campaign |
 | `GET /deepswe/campaigns` | List campaign summaries |
@@ -832,7 +833,8 @@ Source runtime settings come from the environment or the checkout's `.env`. Comp
 | `CHORUS_LOCAL_CONCURRENCY` | 1 simultaneous local request | Harness |
 | `CHORUS_OPENAI_CACHE_MODE` | `implicit`, with `explicit` and `disabled` options | OpenAI adapter |
 | `CHORUS_RATES_JSON` | Optional exact provider-and-model rate map | Harness accounting |
-| `CHORUS_DEEPSWE_PROFILE` | Absolute TOML path for the optional local verifier | DeepSWE source engine |
+| `CHORUS_DEEPSWE_PROFILE` | Absolute TOML path for the default task profile | DeepSWE source engine |
+| `CHORUS_DEEPSWE_PROFILES_DIR` | Absolute directory for additional task profiles | DeepSWE source engine |
 | `CHORUS_WEB_PORT` | Host port 43189 | Compose |
 | `CHORUS_PREVIEW_PORT` | Host port 43192 | Compose |
 | `CHORUS_DOCKER_SOCKET` | `/var/run/docker.sock` | Compose controller mount |
@@ -898,7 +900,7 @@ Review [SECURITY.md](../SECURITY.md) for reporting instructions. Share request I
 - A judge score measures what the judge could infer from its evidence. Use the committed preview or another trusted test environment to establish observed behavior.
 - SQLite stores full snapshots by revision and some views reread large histories. Benchmark and measure storage and query costs before introducing compaction or retention changes.
 - The integrated preview automates the bundled Node startup path. Other stacks can use Terminal if the workspace image has the needed runtime and packages.
-- DeepSWE exposes one task through the source verifier. Repeated trials measure performance on that task under its saved pins. Model outputs and charges can vary between otherwise matching trials.
+- A DeepSWE campaign uses one task under its saved pins. Model outputs and charges can vary between otherwise matching trials.
 
 [Known test limits](../TEST_PLAN.md#what-is-not-proven) · [App judge budget](../chorus/harness/experiment.py) · [Architecture tradeoffs](chorus-architecture.md)
 

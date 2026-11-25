@@ -184,7 +184,10 @@ class ExperimentRuntime:
         ), initial_call=setup_call)
 
     def deepswe_problem(self, profile=None):
-        return Problem(id=deepswe.TASK_ID, title=deepswe.TASK_TITLE, domain="DeepSWE · TypeScript",
+        language = profile.language if profile else "TypeScript"
+        return Problem(id=profile.task.id if profile else deepswe.TASK_ID,
+                       title=profile.title if profile else deepswe.TASK_TITLE,
+                       domain=f"DeepSWE · {language}" if language else "DeepSWE",
                        statement=profile.statement if profile else "", answerSchema={},
                        participantIds=list(DEFAULT_PARTICIPANT_IDS), version=profile.task.datasetCommit if profile else "1")
 
@@ -210,6 +213,7 @@ class ExperimentRuntime:
     def create_deepswe(self, profile, condition=None, *, roster=None, campaign_slot=None, check_profile=None):
         if condition and condition.publicChecks:
             check_profile = check_profile or public_checks.resolve_profile(condition.publicChecks)
+            profile.validate_public_checks(check_profile)
         else:
             check_profile = None
         suffix = public_checks.VERSION if check_profile else ""
@@ -893,9 +897,7 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         self.repo.change(sid, lambda current: setattr(current.experiment.deepswe, "verificationAttempts", attempt),
                          records=[event("assessment", "verifier", {"attempt": attempt, "status": "started"})], generation=generation)
         try:
-            profile = await asyncio.to_thread(deepswe.Profile.load)
-            if profile.task != benchmark.task:
-                raise deepswe.unavailable("Restore this run's pinned DeepSWE profile before retrying verification.")
+            profile = await asyncio.to_thread(deepswe.resolve_profile, benchmark.task)
             patch = self.git.frozen_patch(sid, benchmark.patchDigest, deepswe.MAX_PATCH_BYTES)
             result = await profile.grade(patch, benchmark.submittedTree)
         except (ChorusError, OSError, ValueError) as error:

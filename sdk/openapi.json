@@ -4082,6 +4082,13 @@
               }
             ]
           },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/DeepSWECatalogEntry"
+            },
+            "type": "array",
+            "title": "Tasks"
+          },
           "models": {
             "items": {
               "$ref": "#/components/schemas/chorus__harness__models__ModelInfo"
@@ -4136,6 +4143,7 @@
         "type": "object",
         "required": [
           "task",
+          "tasks",
           "models",
           "problem",
           "agents",
@@ -4145,6 +4153,33 @@
           "unavailableReason"
         ],
         "title": "DeepSWECatalog"
+      },
+      "DeepSWECatalogEntry": {
+        "properties": {
+          "task": {
+            "$ref": "#/components/schemas/DeepSWETask"
+          },
+          "problem": {
+            "$ref": "#/components/schemas/Problem"
+          },
+          "publicCheckProfile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicCheckPin"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "task",
+          "problem"
+        ],
+        "title": "DeepSWECatalogEntry"
       },
       "DeepSWEComparison": {
         "properties": {

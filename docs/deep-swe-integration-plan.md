@@ -1,10 +1,10 @@
 # DeepSWE integration plan for Chorus
 
-The research goal is to measure whether a different Chorus team, model, or prompting choice solves more of the same repository tasks at a given budget. The source launcher supports one pinned TypeScript task, configurable participant slots, and repeated campaigns. The six-agent setup is the default. An empty-body API request still selects the fixed default team. Configured runs use `deepswe-v5` with saved guidance and per-worker model selections. Campaign manifests, trial links and grades persist in SQLite. The multi-task registry and Compose verifier deployment in milestone 5 remain future work. First-release participants are Chorus agents and teams.
+The research goal is to measure whether a different Chorus team, model, or prompting choice solves more of the same repository tasks at a given budget. The source launcher supports locally pinned tasks, configurable participant slots, and repeated campaigns on a selected task. The six-agent setup is the default. An empty-body API request selects the default task and fixed team. Configured runs use `deepswe-v5` with saved guidance and per-worker model selections. Campaign manifests, trial links and grades persist in SQLite. Campaigns spanning multiple tasks and Compose verifier deployment remain future work.
 
 ## What the researcher sees
 
-1. Choose **DeepSWE** as the problem source on the Chorus home screen. The launcher shows the pinned `ts-pattern-match-each` task, its public instructions, an editable roster, team and worker model choices, and the run limits. The existing app and **Other** briefs are available from the default source.
+1. Choose **DeepSWE** as the problem source on the Chorus home screen. Select a registered task to see its public instructions, an editable roster, model choices, and the run limits. The existing app and **Other** briefs are available from the default source.
 2. Start the run and follow **Plan → Build → Verify** in the existing session workspace. The board, shared plan, worktrees, and local PRs show how the team worked. Reopen the same session from its URL or the archive.
 3. Open **Results** to see **Passed**, **Failed**, or **Ungraded**, the frozen patch, test totals when available, and agent usage. A verifier error includes a retry action that uses the same saved patch.
 
@@ -48,15 +48,16 @@ Run the upstream reference and empty controls without model calls. Run the patch
 
 ## Milestone 5 · Expand to multiple tasks and deployment targets
 
-Replace the single task constant and local profile lookup with a registry indexed by dataset commit and task ID. Register base tree, public instructions, image/verifier digests, platform and Pier version for each eligible task. Resolve verification from the run's saved pins even after the default task changes. Gate eligibility on reference, empty and incorrect replay controls. Allow explicit task lists or a reproducible seeded subset, and show the resolved IDs before launch. A two-task, two-condition, two-repeat fixture should produce eight unique sessions and a task-weighted aggregate. Keep hidden tests and reference patches outside agent worktrees. [Current profile and grading adapter](../chorus/harness/deepswe.py) · [Frozen patches](../chorus/harness/experiment_git.py)
+The local profile directory registers a base tree, public instructions, image/verifier digests, platform and Pier version for each eligible task. Verification uses the run's saved pins. Keep the matching profile installed for retries, and keep hidden tests and reference patches outside agent worktrees. Calibrate each task before registering it. For a future multi-task campaign, allow explicit task lists or a reproducible seeded subset, and show the resolved IDs before launch. A two-task, two-condition, two-repeat fixture should produce eight unique sessions and a task-weighted aggregate. [Current profile and grading adapter](../chorus/harness/deepswe.py) · [Frozen patches](../chorus/harness/experiment_git.py)
 
 Use the source installation for the initial study. For Compose, put Pier on a dedicated benchmark worker or extend the trusted controller with a narrow grading operation. Keep Docker access off the web/API container and pin the worker platform and images. Test the real reference/empty controls on that deployment before offering it in the picker. Register public build or test tools separately if added, and save their version as a condition variable so historical comparisons expose the tool change. [Current Compose layout](../compose.yaml)
 
 ## Local verifier setup
 
-The first implementation uses a source installation of Chorus with access to a Linux Docker daemon. Check out the DeepSWE release and fetch the matching repository base into a separate local Git repository. Resolve the image references from the pinned task manifest to immutable digests for your worker's platform. For the TypeScript pilot, set both pins to the upstream task image digest. The worker pins the FROM line of the official tests/Dockerfile and builds the separate verifier with its test files. Install `datacurve-pier==0.3.1` in a separate Python 3.12 virtual environment. Keep the checkouts and profile outside the Chorus repository.
+Use a source installation of Chorus with access to a Linux Docker daemon. Check out the DeepSWE release and fetch each matching repository base into a separate local Git repository. Resolve the image references from each pinned task manifest to immutable digests for your worker's platform. If `tests/Dockerfile` uses the task image as its base, set both pins to that digest. The worker pins the `FROM` line and builds the separate verifier with the official test files. Install `datacurve-pier==0.3.1` in a separate Python 3.12 virtual environment. Keep the checkouts and profiles outside the Chorus repository.
 
 ```toml
+task_id = "ts-pattern-match-each"
 dataset = "/absolute/path/to/deep-swe"
 dataset_commit = "<full DeepSWE checkout commit>"
 repository = "/absolute/path/to/the/task-repository"
@@ -72,7 +73,11 @@ From the Chorus root, run the controls before starting a model-backed run. The D
 ```bash
 export CHORUS_DEEPSWE_PROFILE=/absolute/path/to/deepswe.toml
 .venv/bin/python -m chorus.harness.deepswe
+export CHORUS_DEEPSWE_PROFILES_DIR=/absolute/path/to/profiles
+.venv/bin/python -m chorus.harness.deepswe --profile "$CHORUS_DEEPSWE_PROFILES_DIR/task-id.toml"
 .venv/bin/chorus launch
 ```
+
+Name each additional file `<task-id>.toml` and set `task_id` to match. Legacy default profiles that omit `task_id` select `ts-pattern-match-each`. Set `CHORUS_DEEPSWE_PROFILE` to choose the default task. With only a profile directory configured, the first valid task in filename order is the default.
 
 DeepSWE sessions use their own execution and prompt versions. Existing app and checked-answer snapshots retain their current readers. The DeepSWE patch lives in the session's experiment directory alongside its Git repository.

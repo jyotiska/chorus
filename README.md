@@ -48,7 +48,7 @@ Browser and Terminal are user controls. Agents and judges work from code and sav
 
 ### Compare Chorus agents on DeepSWE
 
-In a source installation, configure Docker and Pier, set `CHORUS_DEEPSWE_PROFILE`, and run the verifier calibration. Then choose **DeepSWE** in the home page’s problem-source dropdown to run the pinned TypeScript task, `ts-pattern-match-each`. The **App or open-ended problem** option still offers the preset briefs and **Other** for your own statement. [Local verifier setup and calibration](docs/deep-swe-integration-plan.md#local-verifier-setup)
+In a source installation, configure Docker and Pier, set `CHORUS_DEEPSWE_PROFILE`, and calibrate the verifier. Set `CHORUS_DEEPSWE_PROFILES_DIR` to register additional calibrated task profiles. Choose **DeepSWE** in the home page’s problem-source dropdown, then select a task. The **App or open-ended problem** option offers the preset briefs and **Other** for your own statement. [Local verifier setup and calibration](docs/deep-swe-integration-plan.md#local-verifier-setup)
 
 The launcher starts with the six default Chorus profiles. **Use solo vs. team preset** sets up one neutral worker and a team of three neutral workers, with three repeats per condition. To compare a solo worker with the six default profiles, duplicate the default condition first, then edit the first condition down to one worker and select **No personality or role**. Each condition has a team model, optional worker model overrides, a shared model-call limit and a solving deadline per trial.
 

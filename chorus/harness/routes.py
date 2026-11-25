@@ -7,9 +7,9 @@ from urllib.parse import quote
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import Response, StreamingResponse
 from chorus.harness import deepswe, public_checks
-from chorus.harness.campaign import checked_profile, check_pins
+from chorus.harness.campaign import checked_profile
 from chorus.harness.models import (
-    CampaignSummary, DeepSWECatalog, DeepSWECampaign, DeepSWECampaignRequest, DeepSWEComparison, DeepSWERequest, ExperimentCatalog, ExperimentConfig, ExperimentTasks, ExperimentUsageReport, HarnessCatalog, HarnessCommand, HarnessConfig,
+    CampaignSummary, DeepSWECatalog, DeepSWECatalogEntry, DeepSWECampaign, DeepSWECampaignRequest, DeepSWEComparison, DeepSWERequest, ExperimentCatalog, ExperimentConfig, ExperimentTasks, ExperimentUsageReport, HarnessCatalog, HarnessCommand, HarnessConfig,
     HarnessSnapshot, ModelInfo, Record, RecordPage, RepositoryCommitDiff, RepositoryFile, RepositoryTree, TeamGeneration,
     TeamGenerationRequest, TerminalTicket, UsageReport, WorkspaceAction, WorkspaceRuntime,
 )
@@ -57,26 +57,28 @@ async def create_experiment_team(request: Request, config: TeamGenerationRequest
 async def deepswe_catalog(request: Request):
     svc = service(request)
     catalog = await current_catalog(svc, svc.experiments.catalog)
-    reason = None
-    profile = None
-    try:
-        profile = await asyncio.to_thread(deepswe.Profile.load)
-        await asyncio.to_thread(profile.check_docker)
-    except ChorusError as error:
-        reason = str(error)
+    profile, profiles, reason = await asyncio.to_thread(deepswe.default_and_profiles)
+    if profiles:
+        reason = None
+        try:
+            await asyncio.to_thread(profiles[0].check_docker)
+        except ChorusError as error:
+            reason = str(error)
     problem = svc.experiments.deepswe_problem(profile)
-    return DeepSWECatalog(task=profile.task if profile else None, problem=problem,
+    checks = public_checks.available_profile()
+    tasks = [DeepSWECatalogEntry(task=entry.task, problem=svc.experiments.deepswe_problem(entry),
+                                 publicCheckProfile=checks if entry.supports_public_checks(checks) else None)
+             for entry in profiles]
+    return DeepSWECatalog(task=profile.task if profile else None, tasks=tasks, problem=problem,
                           agents=catalog.agents, models=catalog.models,
                           model=next(model for model in catalog.models if model.id == catalog.defaultModel),
                           callLimit=deepswe.CALL_LIMIT, solvingSeconds=deepswe.SOLVING_SECONDS, unavailableReason=reason,
-                          publicCheckProfile=public_checks.available_profile())
+                          publicCheckProfile=checks if profile is None or profile.supports_public_checks(checks) else None)
 
 
 @router.post("/deepswe/sessions", response_model=HarnessSnapshot, status_code=201)
 async def create_deepswe(request: Request, settings: DeepSWERequest | None = None):
-    profile = await checked_profile()
-    if settings:
-        check_pins(profile, settings.task)
+    profile = await checked_profile(settings.task if settings else None)
     return service(request).experiments.create_deepswe(profile, settings.condition if settings else None)
 
 

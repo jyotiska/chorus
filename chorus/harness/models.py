@@ -413,8 +413,15 @@ class DeepSWECampaignRequest(Model):
         return self
 
 
+class DeepSWECatalogEntry(Model):
+    task: DeepSWETask
+    problem: Problem
+    publicCheckProfile: PublicCheckPin | None = Field(default=None, exclude_if=lambda value: value is None)
+
+
 class DeepSWECatalog(Model):
     task: DeepSWETask | None = None
+    tasks: list[DeepSWECatalogEntry] = Field(default_factory=list)
     models: list[ModelInfo] = Field(default_factory=list)
     problem: Problem
     agents: list[Persona]

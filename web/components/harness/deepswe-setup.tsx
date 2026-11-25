@@ -54,6 +54,7 @@ function ConditionEditor({ value, catalog, change }: {
 export function DeepSWESetup() {
   const router = useRouter();
   const [catalog, setCatalog] = useState<DeepSWECatalog | null>(null);
+  const [taskId, setTaskId] = useState("");
   const [conditions, setConditions] = useState<DeepSWECondition[]>([]);
   const [repeats, setRepeats] = useState(1);
   const [name, setName] = useState("DeepSWE comparison");
@@ -66,6 +67,7 @@ export function DeepSWESetup() {
     void harness.deepsweCatalog(controller.signal).then(c => {
       if (controller.signal.aborted) return;
       setCatalog(c);
+      setTaskId(c.task?.id ?? c.tasks?.[0]?.task.id ?? "");
       setConditions([{ name: "Default team", model: c.model.id, callLimit: c.callLimit, solvingSeconds: c.solvingSeconds,
         slots: c.problem.participantIds.map(profileId => ({ profileId, guidance: "full", model: null })) }]);
     }).catch(e => { if (!controller.signal.aborted) setError(message(e)); });
@@ -74,17 +76,20 @@ export function DeepSWESetup() {
     return () => controller.abort();
   }, []);
   if (!catalog || !conditions.length) return error ? <p role="alert">{error}</p> : <p role="status">Checking DeepSWE availability…</p>;
+  const tasks = catalog.tasks ?? [];
+  const selected = tasks.find(entry => entry.task.id === taskId);
+  const taskCatalog = selected ? { ...catalog, ...selected, publicCheckProfile: selected.publicCheckProfile } : catalog;
   const trials = conditions.length * repeats;
   const calls = repeats * conditions.reduce((sum, c) => sum + c.callLimit, 0);
   const unavailable = conditions.some(c => [c.model, ...c.slots.map(s => s.model ?? c.model)].some(id =>
     !catalog.models.some(m => m.id === id && m.available !== false)));
   const reason = catalog.unavailableReason || (unavailable ? "Choose an available model for each worker." : "");
   async function launch() {
-    if (!catalog?.task || reason || busy) return;
+    if (!taskCatalog.task || reason || busy) return;
     setBusy(true);
     setError("");
     try {
-      const settings = { name: trials === 1 ? conditions[0].name : name, task: catalog.task, conditions, seed: 0, repeats };
+      const settings = { name: trials === 1 ? conditions[0].name : name, task: taskCatalog.task, conditions, seed: 0, repeats };
       const key = JSON.stringify(settings);
       if (pending.current.key !== key) pending.current = { key, id: crypto.randomUUID() };
       const manifest: CampaignManifest = { ...settings, requestId: pending.current.id };
@@ -94,8 +99,18 @@ export function DeepSWESetup() {
     finally { setBusy(false); }
   }
   return <form className="swe-form" onSubmit={e => { e.preventDefault(); void launch(); }}>
-    <section className="problem-field"><h2>{catalog.problem.title}</h2><p>{catalog.problem.id}</p>
-      {catalog.problem.statement && <details><summary>Problem statement</summary><p className="saved-statement">{catalog.problem.statement}</p></details>}
+    <section className="problem-field">
+      {tasks.length > 1 ? <label>DeepSWE task<select value={taskId} disabled={busy} onChange={e => {
+        const entry = tasks.find(option => option.task.id === e.target.value);
+        if (!entry) return;
+        setTaskId(entry.task.id);
+        setConditions(current => current.map(condition => condition.publicChecks === entry.publicCheckProfile?.digest ? condition :
+          { ...condition, publicChecks: undefined }));
+      }}>
+        {tasks.map(entry => <option key={entry.task.id} value={entry.task.id}>{entry.problem.title}</option>)}
+      </select></label> : <h2>{taskCatalog.problem.title}</h2>}
+      <p>{taskCatalog.problem.id}</p>
+      {taskCatalog.problem.statement && <details><summary>Problem statement</summary><p className="saved-statement">{taskCatalog.problem.statement}</p></details>}
     </section>
     <div className="swe-actions"><button type="button" onClick={() => {
       const base = conditions[0];
@@ -103,7 +118,7 @@ export function DeepSWESetup() {
       setRepeats(3);
     }}>Use solo vs. team preset</button></div>
     {conditions.map((condition, index) => <div key={index}>
-      <ConditionEditor value={condition} catalog={catalog} change={next => setConditions(conditions.map((old, i) => i === index ? next : old))} />
+      <ConditionEditor value={condition} catalog={taskCatalog} change={next => setConditions(conditions.map((old, i) => i === index ? next : old))} />
       <div className="swe-actions">
         <button type="button" disabled={conditions.length >= 8} onClick={() => {
           let n = conditions.length + 1;
@@ -119,7 +134,7 @@ export function DeepSWESetup() {
     <p>{trials} {trials === 1 ? "trial" : "trials"} · Up to {calls} model calls</p>
     {reason && <p role="status" className="notice">{reason}</p>}
     {error && <p role="alert">{error}</p>}
-    <button type="submit" className="primary-btn" disabled={!catalog.task || !!reason || busy}>{busy ? "Starting…" : trials === 1 ? "Start DeepSWE run" : "Start campaign"}</button>
+    <button type="submit" className="primary-btn" disabled={!taskCatalog.task || !!reason || busy}>{busy ? "Starting…" : trials === 1 ? "Start DeepSWE run" : "Start campaign"}</button>
     {history.length > 0 && <section><h2>Saved campaigns</h2><ul>{history.map(item => <li key={item.id}>
       <Link href={`/deepswe/${encodeURIComponent(item.id)}`}>{item.name}</Link> · {item.status} · {new Date(item.createdAt).toLocaleString()}
     </li>)}</ul></section>}

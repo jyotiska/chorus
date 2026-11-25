@@ -532,6 +532,7 @@ export type Scores1 = CampaignScore[];
 export type Callceiling = number;
 export type Engineversion2 = string;
 export type Promptversion2 = string;
+export type Tasks = DeepSWECatalogEntry[];
 export type Models3 = ModelInfo1[];
 export type Agents9 = Persona[];
 export type Calllimit2 = number;
@@ -1231,6 +1232,7 @@ export interface CampaignScore {
 }
 export interface DeepSWECatalog {
   task: DeepSWETask | null;
+  tasks: Tasks;
   models: Models3;
   problem: Problem1;
   agents: Agents9;
@@ -1238,6 +1240,11 @@ export interface DeepSWECatalog {
   callLimit: Calllimit2;
   solvingSeconds: Solvingseconds2;
   unavailableReason: Unavailablereason2;
+  publicCheckProfile?: PublicCheckPin | null;
+}
+export interface DeepSWECatalogEntry {
+  task: DeepSWETask;
+  problem: Problem1;
   publicCheckProfile?: PublicCheckPin | null;
 }
 export interface TeamGeneration {
