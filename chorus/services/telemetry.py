@@ -19,7 +19,8 @@ CAPABILITY_VERSION = "2026-11-01"
 logger = logging.getLogger("chorus.usage")
 # Documented model maxima; the existing, smaller Chorus cap remains enforced.
 # Sources: OpenAI model page and OpenRouter /api/v1/models, 1 November 2026.
-MODEL_WINDOWS = {"gpt-6-luna": 1_050_000, "deepseek/deepseek-v4.1-flash-1017": 1_048_576,
+MODEL_WINDOWS = {"gpt-6-luna": 1_050_000, "gpt-6.1-terra": 1_050_000, "gpt-6.2-sol": 1_050_000,
+                 "deepseek/deepseek-v4.1-flash-1017": 1_048_576,
                  "minimax/minimax-m3.1-flash": 1_048_576, "z-ai/glm-5.3-flash": 1_048_576}
 
 

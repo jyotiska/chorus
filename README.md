@@ -100,7 +100,7 @@ If you use nvm to manage Node, run `nvm use` before the npm command. The reposit
 
 Open `.env` and configure the model you want to use:
 
-- `CHORUS_API_KEY` for GPT-6-Luna, the default model.
+- `CHORUS_API_KEY` for GPT-6-Luna (default), GPT-6.1 Terra, and GPT-6.2 Sol.
 - `OPENROUTER_API_KEY` for models offered through OpenRouter.
 - `OLLAMA_HOST` for local models served by Ollama.
 

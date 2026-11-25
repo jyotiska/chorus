@@ -171,12 +171,14 @@ def test_openrouter_availability_and_missing_key_do_not_depend_on_other_provider
     router = ProviderRouter(load_catalog(), ollama=OfflineLocal())
     with TestClient(create_app(str(tmp_path / "api.sqlite3"), router)) as client:
         models = client.get("/api/v1/models").json()
-        assert [item["available"] for item in models] == [False, False, False, True, True, True]
+        availability = {"ollama": False, "openai": False, "openrouter": True}
+        assert all(item["available"] is availability[item["provider"]] for item in models)
         assert "test-router-secret" not in json.dumps(models)
         monkeypatch.delenv("OPENROUTER_API_KEY")
         monkeypatch.setenv("CHORUS_API_KEY", "test-openai-secret")
         models = client.get("/api/v1/models").json()
-        assert [item["available"] for item in models] == [False, False, True, False, False, False]
+        availability = {"ollama": False, "openai": True, "openrouter": False}
+        assert all(item["available"] is availability[item["provider"]] for item in models)
         for model in MODELS:
             rejected = client.post("/api/v1/sessions", json={**CONFIG, "model": model})
             assert rejected.json()["code"] == "MODEL_UNAVAILABLE" and "OPENROUTER_API_KEY" in rejected.json()["error"]

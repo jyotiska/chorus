@@ -1038,6 +1038,16 @@
       "provider": "openai"
     },
     {
+      "id": "gpt-6.1-terra",
+      "label": "GPT-6.1 Terra",
+      "provider": "openai"
+    },
+    {
+      "id": "gpt-6.2-sol",
+      "label": "GPT-6.2 Sol",
+      "provider": "openai"
+    },
+    {
       "id": "deepseek/deepseek-v4.1-flash-1017",
       "label": "DeepSeek V4.1 Flash 1017",
       "provider": "openrouter"

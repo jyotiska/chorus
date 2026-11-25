@@ -10,21 +10,26 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from chorus.harness.models import ExperimentUsageReport, Record, Usage, UsageReport
 from chorus.llm.caching import CACHE_SCOPE
-from chorus.llm.openai import assert_luna_budget, luna_input_estimate
+from chorus.llm.openai import GPT6_REASONING_EFFORT, assert_gpt6_budget, gpt6_input_estimate
 from chorus.llm.transport import assert_budget
 from chorus.llm.usage import count
 from chorus.storage import now
 
 
 # Standard, short-context USD per million tokens. Snapshot, not a live price.
-# https://developers.openai.com/api/docs/models/gpt-6-luna (2 November 2026)
-LUNA_RATE = {"input": .10, "output": .50, "cached": .01, "cacheWrite": .125,
-             "effectiveDate": "2026-11-02", "source": "https://developers.openai.com/api/docs/models/gpt-6-luna", "tier": "standard"}
+OPENAI_RATES = {
+    "gpt-6-luna": {"input": .10, "output": .50, "cached": .01, "cacheWrite": .125, "effectiveDate": "2026-11-02",
+                   "source": "https://developers.openai.com/api/docs/models/gpt-6-luna", "tier": "standard"},
+    "gpt-6.1-terra": {"input": 1.00, "output": 5.00, "cached": .05, "cacheWrite": 1.25, "effectiveDate": "2026-11-25",
+                      "source": "https://developers.openai.com/api/docs/models/gpt-6.1-terra", "tier": "standard"},
+    "gpt-6.2-sol": {"input": 2.00, "output": 10.00, "cached": .10, "cacheWrite": 2.50, "effectiveDate": "2026-11-25",
+                    "source": "https://developers.openai.com/api/docs/models/gpt-6.2-sol", "tier": "standard"},
+}
 
 
 def rates(route, model):
     configured = json.loads(os.getenv("CHORUS_RATES_JSON", "{}"))
-    value = configured.get(route + ":" + model, LUNA_RATE if route == "openai" and model == "gpt-6-luna" else None)
+    value = configured.get(route + ":" + model, OPENAI_RATES.get(model) if route == "openai" else None)
     if value is not None:
         for key in ("input", "output", "cached", "cacheWrite"):
             if type(value.get(key)) not in (int, float) or not math.isfinite(value[key]) or value[key] < 0:
@@ -87,6 +92,8 @@ def call_data(rid, phase, model, route, prompt_version):
             "outputTokens": None, "cachedTokens": None, "cacheUsed": None, "cacheUtilizationPercent": None,
             "costUSD": None, "costSource": "unknown", "outcome": "queued", "rateSnapshot": rates(route, model)}
     data["cacheMode"] = os.getenv("CHORUS_OPENAI_CACHE_MODE", "implicit") if route == "openai" else None
+    if route == "openai" and model in GPT6_REASONING_EFFORT:
+        data["reasoningEffort"] = GPT6_REASONING_EFFORT[model]
     return data
 
 
@@ -164,9 +171,9 @@ class Meter:
                     sent = self.local_messages(messages, tools or [], phase == "judge")
                 elif tools:
                     options["tools"] = tools
-                if route == "openai" and model == "gpt-6-luna":
+                if route == "openai" and model in GPT6_REASONING_EFFORT:
                     schema = {"tools": tools, "format": None} if tools else None
-                    assert_luna_budget(luna_input_estimate(sent, schema), output)
+                    assert_gpt6_budget(gpt6_input_estimate(sent, schema), output)
                 else:
                     assert_budget(sent, output + (2048 if route == "openrouter" else 0), format={"tools": tools} if tools else None)
                 if admit is not None:

@@ -22,7 +22,7 @@ from chorus.harness.models import (
 )
 from chorus.harness.tools import board_text
 from chorus.harness.verification import validate
-from chorus.llm.openai import luna_input_estimate, luna_input_limit
+from chorus.llm.openai import GPT6_REASONING_EFFORT, gpt6_input_estimate, gpt6_input_limit
 from chorus.llm.transport import CONTEXT_TOKENS, input_estimate
 from chorus.services.canvas import normalize
 from chorus.services.errors import ChorusError
@@ -35,7 +35,7 @@ CUSTOM_PROMPT_VERSION = "experiment-v5-custom-deliverables"
 GENERATED_EXPERIMENT_VERSION = "experiment-v6-generated-team"
 GENERATED_PROMPT_VERSION = "experiment-v6-generated-personas"
 EXPERIMENT_OUTPUT_LIMIT = 8000
-LUNA_FRAMING_HEADROOM = 4096
+GPT6_FRAMING_HEADROOM = 4096
 JUDGE_CALL_LIMIT = 25
 
 
@@ -497,17 +497,17 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             slot = self.participant_slot(state, actor)
             model = (slot.model if slot else None) or state.config.model
             return messages + self.custom_history(messages, recent, tools, model, 14_500)
-        if state.config.model == "gpt-6-luna" and self.meter.route(state.config.model) == "openai":
-            fixed = luna_input_estimate(messages, {"tools": tools, "format": None})
-            budget = luna_input_limit(EXPERIMENT_OUTPUT_LIMIT) - LUNA_FRAMING_HEADROOM - fixed
-            return messages + recent_exchanges(recent, budget, luna_input_estimate)
+        if state.config.model in GPT6_REASONING_EFFORT and self.meter.route(state.config.model) == "openai":
+            fixed = gpt6_input_estimate(messages, {"tools": tools, "format": None})
+            budget = gpt6_input_limit(EXPERIMENT_OUTPUT_LIMIT) - GPT6_FRAMING_HEADROOM - fixed
+            return messages + recent_exchanges(recent, budget, gpt6_input_estimate)
         return messages + recent_exchanges(recent, 14500, exchange_bytes)
 
     def custom_history(self, messages, newest_first, tools, model, limit, *, judge=False):
         route = self.meter.route(model)
-        if route == "openai" and model == "gpt-6-luna":
-            fixed = luna_input_estimate(messages, {"tools": tools, "format": None} if tools else None)
-            return recent_exchanges(newest_first, min(32_000, luna_input_limit(EXPERIMENT_OUTPUT_LIMIT) - LUNA_FRAMING_HEADROOM - fixed), luna_input_estimate)
+        if route == "openai" and model in GPT6_REASONING_EFFORT:
+            fixed = gpt6_input_estimate(messages, {"tools": tools, "format": None} if tools else None)
+            return recent_exchanges(newest_first, min(32_000, gpt6_input_limit(EXPERIMENT_OUTPUT_LIMIT) - GPT6_FRAMING_HEADROOM - fixed), gpt6_input_estimate)
         schema = {"tools": tools} if tools and route != "ollama" else None
         sent = self.meter.local_messages(messages, tools or [], judge) if route == "ollama" else messages
         fixed = input_estimate(sent, schema)
@@ -936,7 +936,7 @@ Return one complete JSON report matching this schema, with an individual scoreca
         base_messages.append({"role": "user", "content": json.dumps(evidence)})
         transcript, evidence_pages = [], {}
         model = state.config.judgeModel or state.config.model
-        luna = model == "gpt-6-luna" and self.meter.route(model) == "openai"
+        gpt6 = model in GPT6_REASONING_EFFORT and self.meter.route(model) == "openai"
         judge_tools = definitions("judge", custom=custom)
         for index in range(JUDGE_CALL_LIMIT):
             final = index == JUDGE_CALL_LIMIT - 1
@@ -953,7 +953,7 @@ Return one complete JSON report matching this schema, with an individual scoreca
             if custom:
                 recent = self.custom_history(base_messages + [directive], reversed(transcript), tools, model, 8_500, judge=True)
             else:
-                recent = recent_exchanges(reversed(transcript), 32_000 if luna else 8500, luna_input_estimate if luna else exchange_bytes)
+                recent = recent_exchanges(reversed(transcript), 32_000 if gpt6 else 8500, gpt6_input_estimate if gpt6 else exchange_bytes)
             messages = base_messages + recent + [directive]
             try:
                 result = await self.meter.invoke(sid, "judge", generation, messages, phase="judge",

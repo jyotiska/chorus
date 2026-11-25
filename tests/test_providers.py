@@ -55,11 +55,13 @@ async def test_openai_request_normalizes_text_usage_and_strict_canvas_schema(cap
     assert "test-chorus-secret" not in caplog.text and "PRIVATE prompt" not in caplog.text
 
 
-async def test_native_function_calls_and_results_keep_call_identity():
+@pytest.mark.parametrize(("model", "effort"), [("gpt-6-luna", "none"), ("gpt-6.1-terra", "low"), ("gpt-6.2-sol", "low")])
+async def test_native_function_calls_and_results_keep_call_identity(model, effort):
     from chorus.harness.tools import definitions
     requests = []
     async def handler(request):
         body = json.loads(request.content)
+        assert body["model"] == model and body["reasoning"] == {"effort": effort} and body["store"] is False
         requests.append(body)
         if len(requests) == 1:
             return httpx.Response(200, json=response(output=[{"type": "function_call", "call_id": "call_native", "name": "board_read", "arguments": '{"after":0,"limit":5}'}]))
@@ -68,18 +70,18 @@ async def test_native_function_calls_and_results_keep_call_identity():
         return httpx.Response(200, json=response("Cycle complete."))
     adapter = OpenAITransport(transport=httpx.MockTransport(handler))
     messages = [{"role": "system", "content": "Use the board."}]
-    result = await adapter("gpt-6-luna", messages, tools=definitions())
+    result = await adapter(model, messages, tools=definitions())
     call = result["message"]["tool_calls"][0]
     assert call["id"] == "call_native"
     messages += [{"role": "assistant", **result["message"]}, {"role": "tool", "tool_call_id": call["id"], "content": '{"records":[]}'}]
-    assert (await adapter("gpt-6-luna", messages, tools=definitions()))["message"]["content"] == "Cycle complete."
+    assert (await adapter(model, messages, tools=definitions()))["message"]["content"] == "Cycle complete."
     tool = next(t for t in requests[0]["tools"] if t["name"] == "board_read")
     assert tool["strict"] is True and tool["parameters"]["properties"]["limit"]["maximum"] == 50
 
 
 @pytest.mark.parametrize("input_tokens", [250_000, 250_001])
 async def test_luna_checks_provider_token_count_near_ceiling(monkeypatch, input_tokens):
-    monkeypatch.setattr("chorus.llm.openai.LUNA_VERIFY_THRESHOLD", 1)
+    monkeypatch.setattr("chorus.llm.openai.GPT6_VERIFY_THRESHOLD", 1)
     requests = []
 
     async def handler(request):
@@ -219,9 +221,10 @@ def test_catalog_reports_independent_provider_availability_and_never_exposes_key
     router = ProviderRouter(load_catalog(), ollama=OfflineLocal())
     with TestClient(create_app(str(tmp_path / "api.sqlite3"), router)) as client:
         catalog = client.get("/api/v1/catalog").json()
-        assert [item["id"] for item in catalog["models"]] == ["qwen3.5:0.8b-mlx", "qwen3.5:4b-mlx", "gpt-6-luna", "deepseek/deepseek-v4.1-flash-1017", "minimax/minimax-m3.1-flash", "z-ai/glm-5.3-flash"]
+        assert [item["id"] for item in catalog["models"]] == ["qwen3.5:0.8b-mlx", "qwen3.5:4b-mlx", "gpt-6-luna",
+            "gpt-6.1-terra", "gpt-6.2-sol", "deepseek/deepseek-v4.1-flash-1017", "minimax/minimax-m3.1-flash", "z-ai/glm-5.3-flash"]
         assert catalog["defaultModel"] == "qwen3.5:4b-mlx"
-        assert [item["available"] for item in catalog["models"]] == [False, False, True, True, True, True]
+        assert [item["available"] for item in catalog["models"]] == [False, False, True, True, True, True, True, True]
         assert catalog["models"][-1]["installed"] is None
         assert client.get("/api/v1/models").json() == catalog["models"]
         assert "test-chorus-secret" not in json.dumps(catalog)

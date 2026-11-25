@@ -22,7 +22,7 @@ test("selects an OpenRouter model and submits its namespaced ID", async ({ page 
   await expect(page.getByText("OpenRouter selection verified.", { exact: true })).toBeVisible();
 });
 
-test("offers six models across three provider groups, and submits the selected OpenAI model", async ({ page }) => {
+test("offers models across three provider groups and submits the selected OpenAI model", async ({ page }) => {
   await page.route("**/api/chorus/catalog", async (route) => {
     const response = await route.fetch();
     const catalog = await response.json();
@@ -31,7 +31,7 @@ test("offers six models across three provider groups, and submits the selected O
   });
   await page.route("**/api/chorus/sessions", async (route) => {
     if (route.request().method() !== "POST") return route.continue();
-    expect(route.request().postDataJSON().model).toBe("gpt-6-luna");
+    expect(route.request().postDataJSON().model).toBe("gpt-6.2-sol");
     await route.fulfill({ status: 502, json: { code: "MODEL_REQUEST_FAILED", error: "OpenAI test request captured.", requestId: "test" } });
   });
   await page.goto("/archive");
@@ -40,9 +40,10 @@ test("offers six models across three provider groups, and submits the selected O
   const model = page.getByRole("combobox", { name: "Model", exact: true });
   await expect(model).toContainText("Qwen 3.5 4B MLX");
   await model.click();
-  await expect(page.getByRole("option")).toHaveText(["Qwen 3.5 0.8B MLX", "Qwen 3.5 4B MLX", "GPT-6-Luna", "DeepSeek V4.1 Flash 1017", "MiniMax M3.1 Flash", "GLM 5.3 Flash"]);
+  await expect(page.getByRole("option")).toHaveText(["Qwen 3.5 0.8B MLX", "Qwen 3.5 4B MLX", "GPT-6-Luna", "GPT-6.1 Terra", "GPT-6.2 Sol",
+    "DeepSeek V4.1 Flash 1017", "MiniMax M3.1 Flash", "GLM 5.3 Flash"]);
   await expect(page.getByText("OpenAI APIs", { exact: true })).toBeVisible();
-  await page.getByRole("option", { name: "GPT-6-Luna", exact: true }).click();
+  await page.getByRole("option", { name: "GPT-6.2 Sol", exact: true }).click();
   await page.getByRole("button", { name: "Run Simulation", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "OpenAI test request captured." })).toHaveText("OpenAI test request captured.");
 });
@@ -52,9 +53,14 @@ test("shows unconfigured OpenAI as unavailable without blocking local models", a
   await page.getByRole("combobox").first().click();
   await page.getByRole("option", { name: "debate", exact: true }).click();
   await expect(page.getByRole("button", { name: "Run Simulation", exact: true })).toBeEnabled();
-  await expect(page.getByText(/Set CHORUS_API_KEY/)).toBeVisible();
+  const openAIModels = ["GPT-6-Luna", "GPT-6.1 Terra", "GPT-6.2 Sol"];
+  for (const label of openAIModels) {
+    await expect(page.getByText(`${label}: Set CHORUS_API_KEY`, { exact: false })).toBeVisible();
+  }
   await page.getByRole("combobox", { name: "Model", exact: true }).click();
-  await expect(page.getByRole("option", { name: /GPT-6-Luna/ })).toBeDisabled();
+  for (const label of openAIModels) {
+    await expect(page.getByRole("option", { name: label, exact: false })).toBeDisabled();
+  }
 });
 test("runs a catalog scenario through Chorus and restores the same session on reload", async ({ page, request }) => {
   await page.goto("/archive");

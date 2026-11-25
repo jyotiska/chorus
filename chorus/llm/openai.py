@@ -18,19 +18,20 @@ from chorus.llm.caching import openai_options
 from chorus.llm.transport import CALL_TIMEOUT, assert_budget, input_estimate, logger
 from chorus.services.errors import ChorusError
 
-LUNA_INPUT_LIMIT = 250_000
-LUNA_CONTEXT_WINDOW = 1_050_000
-LUNA_VERIFY_THRESHOLD = 225_000
+GPT6_INPUT_LIMIT = 250_000
+GPT6_CONTEXT_WINDOW = 1_050_000
+GPT6_VERIFY_THRESHOLD = 225_000
+GPT6_REASONING_EFFORT = {"gpt-6-luna": "none", "gpt-6.1-terra": "low", "gpt-6.2-sol": "low"}
 
 
 @lru_cache(maxsize=1)
-def luna_encoding():
+def gpt6_encoding():
     return tiktoken.get_encoding("o200k_base")
 
 
-def luna_input_estimate(messages, schema=None):
+def gpt6_input_estimate(messages, schema=None):
     """Estimate text and tool tokens locally, including framing headroom."""
-    encode = luna_encoding().encode_ordinary
+    encode = gpt6_encoding().encode_ordinary
 
     def size(value):
         return len(encode(json.dumps(value, ensure_ascii=False, separators=(",", ":"))))
@@ -38,13 +39,13 @@ def luna_input_estimate(messages, schema=None):
     return sum(size(message) + 16 for message in messages) + (size(schema) + 16 if schema else 0)
 
 
-def luna_input_limit(output):
-    return min(LUNA_INPUT_LIMIT, LUNA_CONTEXT_WINDOW - output)
+def gpt6_input_limit(output):
+    return min(GPT6_INPUT_LIMIT, GPT6_CONTEXT_WINDOW - output)
 
 
-def assert_luna_budget(input_tokens, output):
-    if input_tokens > luna_input_limit(output):
-        raise ChorusError("CONTEXT_LIMIT", "This request exceeds Chorus's input budget for GPT-6 Luna.")
+def assert_gpt6_budget(input_tokens, output):
+    if input_tokens > gpt6_input_limit(output):
+        raise ChorusError("CONTEXT_LIMIT", "This request exceeds Chorus's input budget for the selected GPT-6 model.")
 
 
 def normalize_response(raw: Any, structured: bool, allow_tools: bool = False) -> dict[str, Any]:
@@ -114,7 +115,7 @@ class OpenAITransport:
     async def __call__(self, model: str, messages: list[dict[str, str]], *, output: int = 300, format: dict[str, Any] | None = None, phase: str = "", attempt: int = 1, run_id: str = "", tools: list[dict] | None = None) -> dict[str, Any]:
         key = self.require_key()
         budget_schema = {"tools": tools, "format": format} if tools else strict_schema(format) if format is not None else None
-        estimated = luna_input_estimate(messages, budget_schema) if model == "gpt-6-luna" else None
+        estimated = gpt6_input_estimate(messages, budget_schema) if model in GPT6_REASONING_EFFORT else None
         if estimated is None:
             assert_budget(messages, output, format=budget_schema)
         started = time.monotonic()
@@ -132,7 +133,9 @@ class OpenAITransport:
             else:
                 converted.append(message)
         inputs, cache_options = openai_options(model, converted, phase)
-        payload: dict[str, Any] = {"model": model, "input": inputs, "max_output_tokens": output, "reasoning": {"effort": "none"}, "store": False, "stream": False, **cache_options}
+        payload: dict[str, Any] = {"model": model, "input": inputs, "max_output_tokens": output,
+                                   "reasoning": {"effort": GPT6_REASONING_EFFORT.get(model, "none")},
+                                   "store": False, "stream": False, **cache_options}
         if tools:
             payload["tools"] = [{"type": "function", "name": t["function"]["name"], "description": t["function"]["description"], "parameters": t["function"]["parameters"], "strict": True} for t in tools]
             payload["parallel_tool_calls"] = False
@@ -141,7 +144,7 @@ class OpenAITransport:
         try:
             async with asyncio.timeout(CALL_TIMEOUT), httpx.AsyncClient(timeout=CALL_TIMEOUT, transport=self.http_transport) as client:
                 headers = {"Authorization": f"Bearer {key}"}
-                if estimated is not None and estimated >= min(LUNA_VERIFY_THRESHOLD, luna_input_limit(output)):
+                if estimated is not None and estimated >= min(GPT6_VERIFY_THRESHOLD, gpt6_input_limit(output)):
                     # Avoid a separate network call on ordinary turns. Use the
                     # provider's count for long requests close to the ceiling.
                     count_payload = {field: payload[field] for field in ("model", "input", "tools", "text", "reasoning") if field in payload}
@@ -154,7 +157,7 @@ class OpenAITransport:
                         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned an invalid input token count.") from error
                     if type(input_tokens) is not int or input_tokens < 0:
                         raise ChorusError("INVALID_MODEL_RESPONSE", "OpenAI returned an invalid input token count.")
-                    assert_luna_budget(input_tokens, output)
+                    assert_gpt6_budget(input_tokens, output)
                 response = await client.post("https://api.openai.com/v1/responses", headers=headers, json=payload)
             if not response.is_success:
                 code, message = {
