@@ -121,6 +121,8 @@ export function Launcher({
     previous?.judgeModel ?? null,
   );
   const [judge, setJudge] = useState(previous?.judgeEnabled ?? false);
+  const [publicChecks, setPublicChecks] = useState(false);
+  const checkProfile = "publicCheckProfile" in catalog ? catalog.publicCheckProfile : undefined;
   const [sheet, setSheet] = useState<"problem" | "team" | null>(null);
   const [query, setQuery] = useState("");
   const [domain, setDomain] = useState("");
@@ -260,7 +262,8 @@ export function Launcher({
       };
       const run = experiment
         ? await harness.createExperiment({ ...selection, ...(custom ? { customStatement } : {}),
-            ...(usingGenerated && generated ? { teamGenerationId: generated.team.id } : {}) })
+            ...(usingGenerated && generated ? { teamGenerationId: generated.team.id } : {}),
+            ...(publicChecks && checkProfile ? { publicChecks: checkProfile.digest } : {}) })
         : await harness.createRun({
             ...selection,
             adversaryIds: adversaries,
@@ -423,6 +426,10 @@ export function Launcher({
         )}
         {!experiment && judge && judgePicker}
       </section>
+      {experiment && checkProfile && <label className="judge">
+        <input type="checkbox" checked={publicChecks} onChange={(event) => setPublicChecks(event.target.checked)} />
+        Allow agents to run public checks · {checkProfile.profile.name}
+      </label>}
       {!experiment && reason && (
         <p role="status" className="notice">
           {reason}

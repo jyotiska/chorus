@@ -10,7 +10,7 @@ Use Python 3.11+, Node 24 and Git on macOS/Linux (Windows through WSL). Install 
 
 ## Current behavior
 
-The web home page creates app experiments with ten available roles and six selected by default. Plan, Build and Judge are separate phases. The judge is mandatory and may use a separate model. There is no benchmark-style turn cap in this mode. Agents inspect/write code but cannot execute application commands or browser tests.
+The web home page creates app experiments with ten available roles and six selected by default. Plan, Build and Judge are separate phases. The judge is mandatory and may use a separate model. There is no benchmark-style turn cap in this mode. An opted-in Build can request configured public checks on merged main. Browser and Terminal remain user controls.
 
 CLI/API benchmarks use five checked problems, a separate fifty-persona catalog, independent workers and per-agent budgets. Deterministic verification is authoritative; optional model judging evaluates collaboration. Do not apply benchmark-only rules to app experiments. `/api/v1` is historical and read-only in production; preserve saved-run compatibility.
 

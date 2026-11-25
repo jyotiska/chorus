@@ -4,10 +4,11 @@ import logging
 import random
 from uuid import uuid4
 
-from chorus.harness import deepswe
+from chorus.harness import deepswe, public_checks
 from chorus.harness.accounting import usage_report
 from chorus.harness.models import (
     CampaignScore, CampaignTrial, DeepSWECampaign, DeepSWECampaignRequest, DeepSWEComparison, HarnessCommand, Persona,
+    PublicCheckPin,
 )
 from chorus.services.errors import ChorusError
 from chorus.storage import now
@@ -58,11 +59,15 @@ class Campaigns:
             if error.code != "NOT_FOUND":
                 raise
         else:
-            if existing["manifest"] != manifest.model_dump():
+            if DeepSWECampaignRequest.model_validate(existing["manifest"]) != manifest:
                 raise ChorusError("CONFLICT", "Choose a fresh campaign ID for different settings.", 409)
             return self.report(cid)
         profile = await checked_profile()
         check_pins(profile, manifest.task)
+        checks = {condition.publicChecks for condition in manifest.conditions if condition.publicChecks}
+        if len(checks) > 1:
+            raise ChorusError("INVALID_REQUEST", "Use the configured public check profile for all enabled conditions.", 400)
+        check_profile = public_checks.resolve_profile(next(iter(checks), None))
         rosters = [[p.model_dump() for p in self.service.experiments.deepswe_roster(c)] for c in manifest.conditions]
         rng = random.Random(manifest.seed)
         trials = []
@@ -72,7 +77,9 @@ class Campaigns:
             trials.extend({"condition": i, "repeat": repeat, "sessionId": None} for i in order)
         created = self.repo.create_campaign(cid, dict(manifest=manifest.model_dump(), rosters=rosters, trials=trials,
                                                       status="running", createdAt=now(), error="",
-                                                      engineVersion=deepswe.TEAM_VERSION, promptVersion=deepswe.TEAM_PROMPT))
+                                                      engineVersion=deepswe.TEAM_VERSION, promptVersion=deepswe.TEAM_PROMPT,
+                                                      publicCheckProfile=check_profile.model_dump(mode="json") if check_profile else None,
+                                                      publicCheckVersion=public_checks.VERSION if check_profile else None))
         if created:
             self.jobs[cid] = asyncio.create_task(self.run(cid, profile))
         return self.report(cid)
@@ -94,6 +101,7 @@ class Campaigns:
         return DeepSWECampaign(id=cid, manifest=manifest, status=data["status"], error=data["error"], trials=trials,
                                scores=scores(manifest.conditions, manifest.repeats, trials),
                                engineVersion=data["engineVersion"], promptVersion=data["promptVersion"],
+                               publicCheckProfile=data.get("publicCheckProfile"),
                                callCeiling=manifest.repeats * sum(c.callLimit for c in manifest.conditions))
 
     def compare(self, cid, other_id, candidate_name, baseline_name):
@@ -111,7 +119,8 @@ class Campaigns:
         selected = select_condition(candidate, candidate_name)
         reference = select_condition(baseline, baseline_name)
         changed = [label for field, label in (("model", "Team model"), ("slots", "Worker profiles or models"),
-                                               ("callLimit", "Call limit"), ("solvingSeconds", "Solving deadline"))
+                                               ("callLimit", "Call limit"), ("solvingSeconds", "Solving deadline"),
+                                               ("publicChecks", "Public checks"))
                    if getattr(selected, field) != getattr(reference, field)]
         if (candidate.engineVersion, candidate.promptVersion) != (baseline.engineVersion, baseline.promptVersion):
             changed.append("Engine or prompt version")
@@ -140,6 +149,7 @@ class Campaigns:
         try:
             data = self.repo.campaign(cid)
             manifest = DeepSWECampaignRequest.model_validate(data["manifest"])
+            check_profile = PublicCheckPin.model_validate(data["publicCheckProfile"]) if data.get("publicCheckProfile") else None
             for index, trial in enumerate(data["trials"]):
                 if trial["sessionId"]:
                     state = self.repo.get(trial["sessionId"])
@@ -147,7 +157,7 @@ class Campaigns:
                     condition = trial["condition"]
                     frozen = [Persona.model_validate(p) for p in data["rosters"][condition]]
                     state = self.service.experiments.create_deepswe(profile, manifest.conditions[condition],
-                                                                    roster=frozen, campaign_slot=(cid, index))
+                                                                    roster=frozen, campaign_slot=(cid, index), check_profile=check_profile)
                 if state.status == "ready":
                     state = self.command(state, "start")
                 elif resume and state.status == "paused":
@@ -177,6 +187,8 @@ class Campaigns:
             check_pins(profile, manifest.task)
             if (data["engineVersion"], data["promptVersion"]) != (deepswe.TEAM_VERSION, deepswe.TEAM_PROMPT):
                 raise ChorusError("VERSION_MISMATCH", "Restore the campaign engine and prompt versions.", 409)
+            if data.get("publicCheckProfile") and data.get("publicCheckVersion") != public_checks.VERSION:
+                raise ChorusError("VERSION_MISMATCH", "Restore the campaign's public check policy version.", 409)
             if self.repo.campaign(cid)["status"] != "paused":
                 raise ChorusError("CONFLICT", "Campaign status changed.", 409)
             self.repo.set_campaign_status(cid, "running")

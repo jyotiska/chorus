@@ -14,7 +14,9 @@ Local databases and experiment repositories can retain prompts, outputs, code an
 
 ## Starter files
 
-Bundled starters contain no credentials. Custom starters are trusted local inputs: review their content before using them. Imports exclude environment files except `.env.example`, common key/credential files, databases and generated artifacts. Symlinks and special files are rejected. Limits are 5 MiB per file and 50 MiB per frontend/backend project. These checks do not detect secrets embedded in ordinary source files. Generated code is untrusted and is not executed by the experiment tools.
+Bundled starters contain no credentials. Custom starters are trusted local inputs: review their content before using them. Imports exclude environment files except `.env.example`, common key/credential files, databases and generated artifacts. Symlinks and special files are rejected. Limits are 5 MiB per file and 50 MiB per frontend/backend project. These checks do not detect secrets embedded in ordinary source files.
+
+Opted-in public checks run generated code from committed snapshots in a disposable offline container. The trusted operator supplies a locally available image containing only public tools and dependencies. The container gets the committed file copy and scratch space. Its command output is untrusted repository data and can enter the agents' model context. Keep credentials and private fixtures out of both inputs. [Public check setup](docs/running-chorus.md#enable-agent-requested-public-checks)
 
 ## Browser and Terminal
 

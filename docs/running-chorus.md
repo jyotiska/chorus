@@ -72,6 +72,28 @@ The [Chorus Web guide](../web/README.md#follow-the-work) covers the Board, task 
 
 Experiment tools let agents write and inspect code. To check the generated app yourself, start Chorus with Compose, open **Browser**, and select **Run**. To run custom commands, use **Terminal**. Both use a temporary copy of the pinned commit. [Run and inspect a generated app](../web/README.md#run-the-generated-app)
 
+## Enable agent-requested public checks
+
+In a source installation with Docker, set `CHORUS_PUBLIC_CHECK_PROFILE` in `.env` to the absolute path of a reviewed local TOML file. Use a locally available image pinned by digest for the chosen platform. It needs `/bin/sh`, `sleep`, `tar`, and the check tools and dependencies. Commands run as UID 1000 from `/workspace`, a writable copy of the committed repository. Prepare dependencies in the image for offline use.
+
+```toml
+name = "Node project checks"
+image = "registry.example.org/runner/node@sha256:<64 lowercase hex digits>"
+platform = "linux/amd64"
+timeoutSeconds = 45
+maxRuns = 12
+
+[[commands]]
+id = "unit-tests"
+argv = ["npm", "test"]
+```
+
+Choose **Allow agents to run public checks** for the new experiment or for each campaign condition you want to enable. For an API launch, use the catalog's `publicCheckProfile.digest` as `publicChecks`. During Build, an agent can request a named check for the current `main` SHA. The team decides who follows up through the Board and PRs. Each trial has one running check at a time and a shared run allowance. Concurrent requests for the same check and commit share a result. Check time counts against the solving deadline in timed runs.
+
+Open **Repository → Checks** for the commit, requesting agent, and diagnostic history. Results shows the outcomes for the submitted commit. Public checks use their own environment and provide feedback during solving. The official verifier starts after freeze and owns the benchmark score.
+
+The source launcher runs checks with local Docker. Compose deployment of the check worker is outside this release.
+
 ## Run a benchmark
 
 The engine also has five smaller problems with checked answers. Use the CLI or API to start these runs. They use fifty agent profiles, with 2–50 agents per run and a separate turn cap for each agent. The CLI enables the final model judge by default; `--no-judge` skips it without disabling the answer checks.

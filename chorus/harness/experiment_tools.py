@@ -63,7 +63,7 @@ JUDGE_TOOLS = {
 }
 
 
-def tool_schema(phase, *, custom=False, repository_task=False):
+def tool_schema(phase, *, custom=False, repository_task=False, public_checks=False):
     if phase == "verify":
         return {}
     if phase == "judge":
@@ -93,13 +93,19 @@ def tool_schema(phase, *, custom=False, repository_task=False):
             tools["workspace_write"] = ("Write a UTF-8 file at a repository-relative path.", BUILD_TOOLS["workspace_write"][1])
             tools["workspace_delete"] = ("Delete a regular file in your worktree.", parameters(path=S))
             tools["workspace_rename"] = ("Move a regular file to an unused path in your worktree.", parameters(path=S, destination=S))
+    if public_checks and phase == "build":
+        tools["public_check_run"] = ("Request an approved public check for the current merged main commit. Use the full commit SHA.",
+                                     parameters(checkId=S, commit=S))
+        tools["public_checks_read"] = ("Read shared check results. Use an empty commit for current main and an empty checkId to list approved checks and statuses. A checkId reads bounded diagnostics.",
+                                       parameters(commit=S, checkId=S))
     return tools
 
 
-def definitions(phase, *, custom=False, repository_task=False):
+def definitions(phase, *, custom=False, repository_task=False, public_checks=False):
     return [
         {"type": "function", "function": {"name": name, "description": description, "parameters": schema}}
-        for name, (description, schema) in tool_schema(phase, custom=custom, repository_task=repository_task).items()
+        for name, (description, schema) in tool_schema(phase, custom=custom, repository_task=repository_task,
+                                                       public_checks=public_checks).items()
     ]
 
 

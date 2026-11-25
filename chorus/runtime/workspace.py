@@ -10,6 +10,12 @@ from chorus.runtime.terminal import Terminal
 
 RUNNER = ("python3", "/opt/chorus/runner.py")
 MAX_SNAPSHOT = 105 * 1024 * 1024
+CONTAINER_ISOLATION = (
+    "--init", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges",
+    "--user=1000:1000", "--pids-limit=192", "--cpus=2", "--memory=2g", "--memory-swap=2g",
+    "--tmpfs=/workspace:rw,exec,nosuid,nodev,size=768m,mode=0700,uid=1000,gid=1000",
+    "--tmpfs=/tmp:rw,exec,nosuid,nodev,size=256m,mode=1777", "--log-driver=none",
+)
 
 
 async def docker(*args, data=None, timeout=45):
@@ -74,10 +80,7 @@ class Workspace:
     async def create(self, data, image, group, registry):
         code, _, _ = await docker(
             "run", "-d", "--pull=never", "--name", self.name, "--label", f"org.chorus.runtime={group}",
-            "--init", "--network=none", "--read-only", "--cap-drop=ALL", "--security-opt=no-new-privileges",
-            "--user=1000:1000", "--pids-limit=192", "--cpus=2", "--memory=2g", "--memory-swap=2g",
-            "--tmpfs=/workspace:rw,exec,nosuid,nodev,size=768m,mode=0700,uid=1000,gid=1000",
-            "--tmpfs=/tmp:rw,exec,nosuid,nodev,size=256m,mode=1777", "--log-driver=none",
+            *CONTAINER_ISOLATION,
             "--mount", f"type=volume,src={registry},dst=/registry,readonly,volume-nocopy", image,
         )
         if code or (await docker("exec", "-i", self.name, *RUNNER, "unpack", data=data))[0]:

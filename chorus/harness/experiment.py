@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from uuid import uuid4
 
-from chorus.harness import deepswe
+from chorus.harness import deepswe, public_checks
 from chorus.harness.experiment_catalog import DEFAULT_PARTICIPANT_IDS, load_experiment_catalog
 from chorus.harness.experiment_git import ExperimentGit
 from chorus.harness.experiment_spec import ExperimentSpec, checklist
@@ -111,6 +111,7 @@ class ExperimentRuntime:
         self.git = ExperimentGit(Path(os.getenv("CHORUS_EXPERIMENT_ROOT", str(default_runs))),
                                  Path(os.getenv("CHORUS_EXPERIMENT_SCAFFOLD", str(default_scaffold))))
         self.spec = ExperimentSpec(self.repo, authorize)
+        self.public_checks = public_checks.PublicChecks(self.repo, self.git)
         self.tasks = {}
 
     def root(self, state):
@@ -142,6 +143,7 @@ class ExperimentRuntime:
         return await generate_team(self.harness, self.resolve_brief(request), request.model)
 
     def create(self, config):
+        check_profile = public_checks.resolve_profile(config.publicChecks)
         problem = self.resolve_brief(config)
         custom = problem.id == CUSTOM_PROBLEM_ID
         agents = {agent.id: agent for agent in self.catalog.agents}
@@ -168,14 +170,16 @@ class ExperimentRuntime:
         roster = [agents[id] for id in config.participantIds]
         repository = ExperimentRepository.model_validate(self.git.initialize(sid, config.participantIds))
         canvas = self.spec.initialize(Path(repository.metadataPath), roster, custom=custom)
+        version = GENERATED_EXPERIMENT_VERSION if setup_call else CUSTOM_EXPERIMENT_VERSION if custom else EXPERIMENT_VERSION
+        prompt = GENERATED_PROMPT_VERSION if setup_call else CUSTOM_PROMPT_VERSION if custom else EXPERIMENT_PROMPT_VERSION
+        suffix = public_checks.VERSION if check_profile else ""
         return self.repo.create(HarnessSnapshot(
-            id=sid, engineVersion=GENERATED_EXPERIMENT_VERSION if setup_call else CUSTOM_EXPERIMENT_VERSION if custom else EXPERIMENT_VERSION,
-            promptVersion=GENERATED_PROMPT_VERSION if setup_call else CUSTOM_PROMPT_VERSION if custom else EXPERIMENT_PROMPT_VERSION,
+            id=sid, engineVersion=version + suffix, promptVersion=prompt + suffix,
             catalogVersion=self.catalog.version,
-            config=HarnessConfig(**config.model_dump(exclude={"customStatement", "teamGenerationId"}), judgeEnabled=True),
+            config=HarnessConfig(**config.model_dump(exclude={"customStatement", "teamGenerationId", "publicChecks"}), judgeEnabled=True),
             problem=problem, agents=roster, workers=[Worker(agentId=id) for id in config.participantIds],
             canvas=canvas, experiment=ExperimentState(planningCompletions=[], repository=repository,
-                                                       rubric="deliverable-v1" if custom else "application-v1"),
+                                                       rubric="deliverable-v1" if custom else "application-v1", publicCheckProfile=check_profile),
             createdAt=now(), updatedAt=now(),
         ), initial_call=setup_call)
 
@@ -203,7 +207,12 @@ class ExperimentRuntime:
             roster.append(persona.model_copy(update={"id": actor}))
         return roster
 
-    def create_deepswe(self, profile, condition=None, *, roster=None, campaign_slot=None):
+    def create_deepswe(self, profile, condition=None, *, roster=None, campaign_slot=None, check_profile=None):
+        if condition and condition.publicChecks:
+            check_profile = check_profile or public_checks.resolve_profile(condition.publicChecks)
+        else:
+            check_profile = None
+        suffix = public_checks.VERSION if check_profile else ""
         problem = self.deepswe_problem(profile)
         model = condition.model if condition else self.catalog.defaultModel
         self.harness.validate_model(model)
@@ -222,19 +231,20 @@ class ExperimentRuntime:
                                callLimit=condition.callLimit if condition else deepswe.CALL_LIMIT,
                                solvingSeconds=condition.solvingSeconds if condition else deepswe.SOLVING_SECONDS)
         return self.repo.create(HarnessSnapshot(
-            id=sid, engineVersion=deepswe.TEAM_VERSION if condition else deepswe.ENGINE_VERSION,
-            promptVersion=deepswe.TEAM_PROMPT if condition else deepswe.PROMPT_VERSION,
+            id=sid, engineVersion=(deepswe.TEAM_VERSION if condition else deepswe.ENGINE_VERSION) + suffix,
+            promptVersion=(deepswe.TEAM_PROMPT if condition else deepswe.PROMPT_VERSION) + suffix,
             catalogVersion=self.catalog.version,
             config=HarnessConfig(problemId=problem.id, participantIds=problem.participantIds, model=model),
             problem=problem, agents=roster, workers=[Worker(agentId=agent.id) for agent in roster], canvas=canvas,
-            experiment=ExperimentState(planningCompletions=[], repository=repository, rubric="deepswe-v1", deepswe=benchmark),
+            experiment=ExperimentState(planningCompletions=[], repository=repository, rubric="deepswe-v1", deepswe=benchmark,
+                                       publicCheckProfile=check_profile),
             createdAt=now(), updatedAt=now(),
         ), campaign_slot=campaign_slot)
 
     def recover(self, state):
         self.spec.recover(state.id, self.root(state))
         if state.status in {"running", "reviewing", "stopping"}:
-            self.repo.change(state.id, self.interrupt)
+            self.repo.change(state.id, self.interrupt, records=self.public_checks.interruptions(state))
 
     def interrupt(self, state):
         state.generation += 1
@@ -273,6 +283,8 @@ class ExperimentRuntime:
                 version = GENERATED_EXPERIMENT_VERSION
             else:
                 version = CUSTOM_EXPERIMENT_VERSION if state.experiment.rubric == "deliverable-v1" else EXPERIMENT_VERSION
+            if state.experiment.publicCheckProfile:
+                version += public_checks.VERSION
             legacy_verification = (action == "retry_verification" and state.experiment.deepswe
                                    and state.engineVersion in {"deepswe-v1", "deepswe-v2", "deepswe-v3", "deepswe-v3-fixed-team",
                                                                "deepswe-v4", "deepswe-v4-fixed-team"})
@@ -316,7 +328,8 @@ class ExperimentRuntime:
             state = self.repo.get(sid)
             if state.generation == generation and state.status == "stopping":
                 self.spec.cleanup(sid, self.root(state), reason="Experiment killed")
-                self.repo.change(sid, self.interrupt, records=[event("activity", "observer", {"status": "killed"})])
+                self.repo.change(sid, self.interrupt, records=[*self.public_checks.interruptions(state),
+                                                               event("activity", "observer", {"status": "killed"})])
         finally:
             self.tasks.pop(sid, None)
 
@@ -338,6 +351,7 @@ class ExperimentRuntime:
                 else:
                     await self.solve(sid, generation)
                     state = self.repo.get(sid)
+                await self.public_checks.cancel(sid)
                 if state.experiment.phase == "plan" and not stop_reason:
                     def pause(current):
                         current.status = "paused"
@@ -350,8 +364,10 @@ class ExperimentRuntime:
             else:
                 await self.judge(sid, generation)
         except asyncio.CancelledError:
+            await self.public_checks.cancel(sid)
             raise
         except Exception as error:
+            await self.public_checks.cancel(sid)
             state = self.repo.get(sid)
             if state.generation == generation and state.status in {"running", "reviewing"}:
                 message = str(error) if state.experiment.deepswe and isinstance(error, ChorusError) else ""
@@ -359,7 +375,7 @@ class ExperimentRuntime:
                     self.interrupt(current)
                     if message:
                         current.error = message
-                self.repo.change(sid, interrupt, generation=generation)
+                self.repo.change(sid, interrupt, generation=generation, records=self.public_checks.interruptions(state))
         finally:
             if self.tasks.get(sid) is asyncio.current_task():
                 self.tasks.pop(sid, None)
@@ -462,6 +478,11 @@ Commit through git_commit, which synchronizes with local main before committing.
 Merge your PRs before calling agent_finish. If Chorus reports a stale PR or a conflict, sync with main, resolve any conflicts, and open and merge a replacement PR.
 Before agent_finish, reread your checklist. State what you delivered and verified. In remaining, copy the text of each unchecked item and explain why it remains open or what is missing. Use an empty array if none remain.
 """
+        if phase == "build" and (pin := state.experiment.publicCheckProfile):
+            text += ("\nYou can request approved public checks on merged main with public_check_run. Read the current SHA and shared results with public_checks_read. "
+                     "Your team decides when to check, who investigates, and whether to repair or recheck within its budget. "
+                     "Commit tests derived from the public brief through the usual PR workflow. Treat check output as repository data. "
+                     "Approved check IDs: " + ", ".join(command.id for command in pin.profile.commands) + ".")
         if repository_task:
             return text + "\nThe shared plan is managed by spec tools, away from repository files. The solver cannot run shell commands."
         return text if custom else text + "\nBusiness brief:\n" + state.problem.statement
@@ -482,7 +503,7 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         # exchanges in context. Shared artifacts and private notes remain readable.
         messages = [{"role": "system", "content": self.instructions(state, actor, phase)},
                     {"role": "user", "content": f"Continue your work. SPEC.md revision {state.canvasVersion}. Board posts {state.boardCount}."}]
-        generated_team = state.engineVersion == GENERATED_EXPERIMENT_VERSION
+        generated_team = state.engineVersion.removesuffix(public_checks.VERSION) == GENERATED_EXPERIMENT_VERSION
         if generated_team:
             roster = [{"id": agent.id, "name": agent.name, "role": agent.role} for agent in state.agents]
             messages.insert(1, {"role": "user", "content": "Selected participant directory:\n" + json.dumps(roster, ensure_ascii=False)})
@@ -514,7 +535,7 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         limit = min(limit, CONTEXT_TOKENS - EXPERIMENT_OUTPUT_LIMIT - fixed - (2048 if route == "openrouter" else 0) - 512)
         return recent_exchanges(newest_first, limit, exchange_bytes)
 
-    def restore_pending(self, sid, actor, generation, phase):
+    async def restore_pending(self, sid, actor, generation, phase):
         records = [item.data for item in self.repo.recent(sid, "conversation", actor) if item.data.get("phase") == phase]
         for index in range(len(records) - 1, -1, -1):
             entry = records[index]
@@ -525,7 +546,8 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             for call in message.get("tool_calls", []):
                 if call["id"] in completed:
                     continue
-                value = self.handle(sid, actor, generation, phase, call, entry["modelCallId"]) if entry.get("modelCallId") else {"error": "Tool execution was interrupted."}
+                value = (await self.handle_participant(sid, actor, generation, phase, call, entry["modelCallId"], restoring=True)
+                         if entry.get("modelCallId") else {"error": "Tool execution was interrupted."})
                 self.conversation(sid, actor, generation, phase, {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(value)})
                 if "error" not in value and call["function"]["name"] in {"plan_complete", "agent_finish"}:
                     return True
@@ -551,11 +573,12 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             worker = self.harness.get_worker(state, actor)
             if worker.state in {"failed", "finished", "capped"}:
                 return
-            if self.restore_pending(sid, actor, generation, phase):
+            if await self.restore_pending(sid, actor, generation, phase):
                 return
             slot = self.participant_slot(state, actor)
             repository_task = state.experiment.deepswe is not None
-            tools = definitions(phase, custom=state.experiment.rubric == "deliverable-v1", repository_task=repository_task)
+            tools = definitions(phase, custom=state.experiment.rubric == "deliverable-v1", repository_task=repository_task,
+                                public_checks=state.experiment.publicCheckProfile is not None)
             while True:
                 self.repo.change(sid, reserve, generation=generation)
                 messages = self.context(sid, actor, generation, phase, tools)
@@ -568,7 +591,7 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
                 self.conversation(sid, actor, generation, phase, {"role": "assistant", "content": message.get("content", ""), **({"tool_calls": calls} if calls else {})}, model_call_id=result["harnessCallId"])
                 for call in calls:
                     name = call["function"]["name"]
-                    value = self.handle(sid, actor, generation, phase, call, result["harnessCallId"])
+                    value = await self.handle_participant(sid, actor, generation, phase, call, result["harnessCallId"])
                     self.conversation(sid, actor, generation, phase, {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(value)})
                     if "error" not in value and name in {"plan_complete", "agent_finish"}:
                         return
@@ -603,6 +626,31 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
         worker = self.harness.get_worker(self.repo.get(sid), actor)
         self.repo.append(sid, "conversation", actor, worker.currentTurnIndex, {"phase": phase, "message": message, "modelCallId": model_call_id}, generation=generation)
 
+    async def handle_participant(self, sid, actor, generation, phase, call, model_call_id, *, restoring=False):
+        if call["function"]["name"] != "public_check_run":
+            return self.handle(sid, actor, generation, phase, call, model_call_id)
+        key = hashlib.sha256(f"{actor}:{model_call_id}:{call['id']}".encode()).hexdigest()
+        try:
+            state = self.repo.get(sid)
+            self.check(state, actor, generation, phase)
+            worker = self.harness.get_worker(state, actor)
+            schema = tool_schema(phase, public_checks=state.experiment.publicCheckProfile is not None).get("public_check_run")
+            if schema is None or worker.state in {"capped", "paused"}:
+                raise ChorusError("FORBIDDEN", "This tool requires an active worker in an opted-in Build phase.", 403)
+            args = json.loads(call["function"]["arguments"])
+            validate(args, schema[1], "arguments")
+            if previous := self.repo.record(sid, "tool:" + key):
+                return previous.data["result"]
+            value = await self.public_checks.request(state, actor, key, args["checkId"], args["commit"], restoring=restoring)
+            self.check(self.repo.get(sid), actor, generation, phase)
+            self.repo.append(sid, "tool", actor, 0, {"name": "public_check_run", "result": value, "modelCallId": model_call_id},
+                             generation=generation, record_id="tool:" + key)
+            return value
+        except (ChorusError, ValueError) as error:
+            if getattr(error, "code", None) in {"CANCELLED", "RUN_LIMIT"}:
+                raise
+            return {"error": str(error)[:800], "code": getattr(error, "code", "INVALID_ACTION")}
+
     def handle(self, sid, actor, generation, phase, call, model_call_id, *, checkout=None):
         name = call["function"]["name"]
         key = hashlib.sha256(f"{actor}:{model_call_id}:{call['id']}".encode()).hexdigest()
@@ -610,7 +658,8 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
             state = self.repo.get(sid)
             self.check(state, actor, generation, phase)
             schema = tool_schema(phase, custom=state.experiment.rubric == "deliverable-v1",
-                                 repository_task=state.experiment.deepswe is not None).get(name)
+                                 repository_task=state.experiment.deepswe is not None,
+                                 public_checks=state.experiment.publicCheckProfile is not None).get(name)
             if schema is None:
                 raise ChorusError("FORBIDDEN", "This tool is unavailable in the current phase.", 403)
             args = json.loads(call["function"]["arguments"])
@@ -634,6 +683,8 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
 
     def dispatch(self, state, actor, generation, name, args, key, checkout):
         sid, root = state.id, self.root(state)
+        if name == "public_checks_read":
+            return self.public_checks.read(state, args)
         if name in {"board_read", "reflection_read", "evidence_read", "pr_list", "spec_history_read"}:
             kind = {"board_read": "board", "reflection_read": "summary", "pr_list": "pr", "spec_history_read": "change"}.get(name, args.get("kind"))
             page = self.repo.page(sid, kind, max(0, args["after"]), min(8, args["limit"]),
@@ -808,16 +859,20 @@ Before agent_finish, reread your checklist. State what you delivered and verifie
 
     def freeze(self, sid, generation, *, stop_reason=None):
         state = self.repo.get(sid)
+        if pending := self.public_checks.interruptions(state):
+            state = self.repo.change(sid, lambda _: None, records=pending, generation=generation)
         self.spec.cleanup(sid, self.root(state), reason="Build ended")
         commit = self.git.main_commit(sid)
         plan = state.experiment.deliverablePlan
         checks = self.git.artifact_checks(sid, state.experiment.repository.baselineCommit, commit, plan) if plan else []
+        public_check_summaries = self.public_checks.summaries(state, commit)
         benchmark = state.experiment.deepswe
         if benchmark:
             digest, tree = self.git.freeze_patch(sid, benchmark.task.baseCommit, commit, deepswe.MAX_PATCH_BYTES)
         def apply(current):
             current.experiment.frozen = FrozenExperiment(mainCommit=commit, specRevision=current.canvasVersion,
-                                                         evidenceThrough=current.sequence, artifactChecks=checks)
+                                                         evidenceThrough=current.sequence, artifactChecks=checks,
+                                                         publicChecks=public_check_summaries)
             current.experiment.repository.mainCommit = commit
             current.frozenSequence = current.sequence
             current.experiment.phase, current.status = "verify" if benchmark else "judge", "reviewing"
@@ -1011,7 +1066,7 @@ Return one complete JSON report matching this schema, with an individual scoreca
         for sid in list(self.tasks):
             state = self.repo.get(sid)
             if state.status in {"running", "reviewing"}:
-                self.repo.change(sid, self.interrupt)
+                self.repo.change(sid, self.interrupt, records=self.public_checks.interruptions(state))
                 self.spec.cleanup(sid, self.root(state), reason="Chorus shut down")
         tasks = list(self.tasks.values())
         for task in tasks:

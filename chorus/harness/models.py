@@ -62,8 +62,48 @@ class HarnessCatalog(Model):
     defaultModel: str = "gpt-6-luna"
 
 
+CheckId = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9-]{0,39}$")]
+CheckDigest = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]
+CheckStatus = Literal["running", "passed", "failed", "timed_out", "unavailable", "cancelled"]
+
+
+class PublicCheckCommand(Model):
+    id: CheckId
+    argv: list[Annotated[str, StringConstraints(min_length=1, max_length=500)]] = Field(min_length=1, max_length=24)
+
+
+class PublicCheckProfile(Model):
+    name: str = Field(min_length=1, max_length=80)
+    image: str = Field(pattern=r"^[A-Za-z0-9._/:\-]+@sha256:[0-9a-f]{64}$")
+    platform: Literal["linux/amd64", "linux/arm64"]
+    commands: list[PublicCheckCommand] = Field(min_length=1, max_length=8)
+    timeoutSeconds: int = Field(default=45, ge=1, le=120)
+    maxRuns: int = Field(default=12, ge=1, le=50)
+
+    @model_validator(mode="after")
+    def valid_commands(self):
+        if len({command.id for command in self.commands}) != len(self.commands):
+            raise ValueError("Give each public check a distinct ID.")
+        if any("\0" in part for command in self.commands for part in command.argv):
+            raise ValueError("Check arguments cannot contain NUL.")
+        return self
+
+
+class PublicCheckPin(Model):
+    digest: CheckDigest
+    profile: PublicCheckProfile
+    policy: Literal["agent-requested-v1"] = "agent-requested-v1"
+
+
+class PublicCheckSummary(Model):
+    checkId: CheckId
+    status: Literal["unchecked", "passed", "failed", "timed_out", "unavailable", "cancelled"]
+    recordId: str | None = None
+
+
 class ExperimentCatalog(HarnessCatalog):
     customStatementMaxBytes: int = CUSTOM_STATEMENT_MAX_BYTES
+    publicCheckProfile: PublicCheckPin | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class HarnessConfig(Model):
@@ -178,6 +218,7 @@ class ExperimentConfig(ExperimentBrief):
     model: str = "gpt-6-luna"
     judgeModel: str | None = None
     teamGenerationId: str | None = Field(default=None, max_length=36)
+    publicChecks: CheckDigest | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def distinct_participants(self):
@@ -292,6 +333,7 @@ class FrozenExperiment(Model):
     specRevision: int
     evidenceThrough: int
     artifactChecks: list[ArtifactCheck] = Field(default_factory=list)
+    publicChecks: list[PublicCheckSummary] = Field(default_factory=list, exclude_if=lambda value: not value)
 
 
 class CriterionScore(Model):
@@ -348,6 +390,7 @@ class DeepSWECondition(Model):
     slots: list[DeepSWESlot] = Field(min_length=1, max_length=15)
     callLimit: int = Field(ge=1, le=10000)
     solvingSeconds: int = Field(ge=1, le=86400)
+    publicChecks: CheckDigest | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class DeepSWERequest(Model):
@@ -379,6 +422,7 @@ class DeepSWECatalog(Model):
     callLimit: int
     solvingSeconds: int
     unavailableReason: str | None = None
+    publicCheckProfile: PublicCheckPin | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class DeepSWEResult(Model):
@@ -416,6 +460,7 @@ class ExperimentState(Model):
     rubric: Literal["application-v1", "deliverable-v1", "deepswe-v1"] = "application-v1"
     deliverablePlan: DeliverablePlan | None = None
     deepswe: DeepSWERun | None = None
+    publicCheckProfile: PublicCheckPin | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class HarnessSnapshot(Model):
@@ -554,6 +599,7 @@ class DeepSWECampaign(Model):
     callCeiling: int
     engineVersion: str
     promptVersion: str
+    publicCheckProfile: PublicCheckPin | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class WorkspacePort(Model):

@@ -129,7 +129,8 @@ export function CampaignReport({ id }: { id: string }) {
             </> : "—"}</td><td>{t.sessionId && <Link href={sessionHref(t.sessionId)}>Inspect trial</Link>}</td></tr>)}</tbody>
         </table></div>
         <HistoricalComparison current={report} />
-        <details><summary>Saved run settings</summary><pre>{JSON.stringify(report.manifest, null, 2)}</pre></details>
+        <details><summary>Saved run settings</summary><pre>{JSON.stringify({ ...report.manifest,
+          ...(report.publicCheckProfile && { publicCheckProfile: report.publicCheckProfile }) }, null, 2)}</pre></details>
         <Link href="/?new=1">New experiment</Link>
       </> : !error && <p role="status">Loading campaign…</p>}
     </article>

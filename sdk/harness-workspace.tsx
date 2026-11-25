@@ -782,6 +782,44 @@ function PullRequestDetails({ change, agentName }: {
   );
 }
 
+const publicCheckLabels: Record<string, string> = {
+  unchecked: "Unchecked", running: "Running", passed: "Passed", failed: "Failed",
+  timed_out: "Timed out", unavailable: "Runner unavailable", cancelled: "Cancelled",
+};
+
+function PublicChecksPanel({ snapshot, history = false }: { snapshot: HarnessSnapshot; history?: boolean }) {
+  const experiment = snapshot.experiment!;
+  const { records, error, loaded, retry } = useRecords(snapshot, "public_check", undefined, history);
+  const pin = experiment.publicCheckProfile;
+  if (!pin) return null;
+  const commit = experiment.frozen?.mainCommit ?? experiment.repository.mainCommit;
+  const attempts = [...new Map(records.map(record => [record.data.runId, record])).values()].reverse();
+  const checks = experiment.frozen?.publicChecks ?? pin.profile.commands.map(({ id }) => ({
+    checkId: id, status: attempts.find(row => row.data.checkId === id && row.data.commit === commit)?.data.status ?? "unchecked",
+  }));
+  return <section className={history ? styles.publicChecks : styles.resultsSummary} aria-label="Public checks">
+    <h3>Public checks</h3>
+    <p>{pin.profile.name} · {experiment.frozen ? "Submitted" : "Merged"} main <code title={commit}>{commit.slice(0, 12)}</code></p>
+    {error && <div className={styles.viewError}><RecordError message={error} /><button onClick={retry}>Retry</button></div>}
+    {!history || loaded ? <ul>{checks.map(check => <li key={check.checkId}>
+      <code>{check.checkId}</code> · {publicCheckLabels[text(check.status)]}
+    </li>)}</ul> : <p role="status">Loading public checks…</p>}
+    {history && attempts.length > 0 && <div>
+      <h4>Check history</h4>
+      {attempts.map(record => {
+        const sha = text(record.data.commit);
+        const name = snapshot.agents.find(agent => agent.id === record.agentId)?.name ?? record.agentId;
+        return <details key={text(record.data.runId)}>
+          <summary><code>{text(record.data.checkId)}</code> · {publicCheckLabels[text(record.data.status)]} · <code title={sha}>{sha.slice(0, 12)}</code></summary>
+          <p>Requested by {name} · <Timestamp value={record.createdAt} /></p>
+          {typeof record.data.output === "string" && record.data.output && <pre>{record.data.output}</pre>}
+          {record.data.truncated === true && <p>Output truncated.</p>}
+        </details>;
+      })}
+    </div>}
+  </section>;
+}
+
 function RepositoryBrowser({ snapshot, repository, visible, frozenRevision }: {
   snapshot: HarnessSnapshot;
   repository: RepositoryMetadata;
@@ -793,7 +831,7 @@ function RepositoryBrowser({ snapshot, repository, visible, frozenRevision }: {
   const prs = useRecords(snapshot, "pr", undefined, visible);
   const [branch, setBranch] = useState("main");
   const [path, setPath] = useState("");
-  const [view, setView] = useState<"files" | "changes">("files");
+  const [view, setView] = useState<"files" | "changes" | "checks">("files");
   const [changeId, setChangeId] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [listing, setListing] = useState<{ branch: string; data?: RepositoryTree; error?: string }>();
@@ -891,10 +929,11 @@ function RepositoryBrowser({ snapshot, repository, visible, frozenRevision }: {
             if (!changeId) setChangeId(changes[0]?.id ?? "");
             setView("changes");
           }}>Changes <small aria-hidden="true">{changes.length}</small></button>
-          <button type="button" onClick={() => setRefresh((value) => value + 1)}>Refresh files</button>
+          {snapshot.experiment?.publicCheckProfile && <button type="button" aria-pressed={view === "checks"} onClick={() => setView("checks")}>Checks</button>}
+          {view !== "checks" && <button type="button" onClick={() => setRefresh((value) => value + 1)}>Refresh files</button>}
         </div>
       </div>
-      <div className={styles.repositoryLayout}>
+      {view === "checks" ? <PublicChecksPanel snapshot={snapshot} history /> : <div className={styles.repositoryLayout}>
         <section className={styles.repositoryTree} aria-label="File tree">
           <h3>File tree</h3>
           <RecordError message={activeTree?.error ?? ""} />
@@ -967,7 +1006,7 @@ function RepositoryBrowser({ snapshot, repository, visible, frozenRevision }: {
             )}
           </section>
         )}
-      </div>
+      </div>}
       <details className={styles.repositoryInfo}>
         <summary>Repository details</summary>
         <p>Repository <code>{repository.path}</code></p>
@@ -1441,6 +1480,7 @@ function ExperimentResults({ snapshot }: { snapshot: HarnessSnapshot }) {
           {report && (custom ? " · Deliverables and records review" : " · Code and records review")}
         </p>
       )}
+      {experiment.frozen && experiment.publicCheckProfile && <PublicChecksPanel snapshot={snapshot} />}
       {frozen && artifacts?.length ? (
         <section className={styles.resultsSection} aria-labelledby="final-deliverables">
           <h3 id="final-deliverables">Deliverables</h3>
@@ -1523,6 +1563,7 @@ function DeepSWEResults({ snapshot }: { snapshot: HarnessSnapshot }) {
           {snapshot.agents[index].name} · {slot.guidance === "neutral" ? "Neutral" : slot.guidance === "role" ? "Role only" : "Full profile"} · {slot.model ?? snapshot.config.model}
         </li>)}</ul>
       </details>}
+      {experiment.frozen && experiment.publicCheckProfile && <PublicChecksPanel snapshot={snapshot} />}
       {result && <section className={styles.resultsSummary} aria-label="Verifier tests">
         <h3>Verifier tests</h3>
         <p>{tests?.length ? tests.map(([label, count]) => `${count} ${label}`).join(" · ") : "Test totals unavailable."}</p>

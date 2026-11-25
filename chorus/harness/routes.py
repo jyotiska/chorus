@@ -6,7 +6,7 @@ from typing import Literal
 from urllib.parse import quote
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import Response, StreamingResponse
-from chorus.harness import deepswe
+from chorus.harness import deepswe, public_checks
 from chorus.harness.campaign import checked_profile, check_pins
 from chorus.harness.models import (
     CampaignSummary, DeepSWECatalog, DeepSWECampaign, DeepSWECampaignRequest, DeepSWEComparison, DeepSWERequest, ExperimentCatalog, ExperimentConfig, ExperimentTasks, ExperimentUsageReport, HarnessCatalog, HarnessCommand, HarnessConfig,
@@ -39,7 +39,8 @@ async def current_catalog(svc, catalog):
 @router.get("/experiments/catalog", response_model=ExperimentCatalog)
 async def experiment_catalog(request: Request):
     svc = service(request)
-    return await current_catalog(svc, svc.experiments.catalog)
+    catalog = await current_catalog(svc, svc.experiments.catalog)
+    return catalog.model_copy(update={"publicCheckProfile": public_checks.available_profile()})
 
 
 @router.post("/experiments", response_model=HarnessSnapshot, status_code=201)
@@ -67,7 +68,8 @@ async def deepswe_catalog(request: Request):
     return DeepSWECatalog(task=profile.task if profile else None, problem=problem,
                           agents=catalog.agents, models=catalog.models,
                           model=next(model for model in catalog.models if model.id == catalog.defaultModel),
-                          callLimit=deepswe.CALL_LIMIT, solvingSeconds=deepswe.SOLVING_SECONDS, unavailableReason=reason)
+                          callLimit=deepswe.CALL_LIMIT, solvingSeconds=deepswe.SOLVING_SECONDS, unavailableReason=reason,
+                          publicCheckProfile=public_checks.available_profile())
 
 
 @router.post("/deepswe/sessions", response_model=HarnessSnapshot, status_code=201)
@@ -238,7 +240,7 @@ def visible(state, kind):
 
 
 @router.get("/sessions/{sid}/records", response_model=RecordPage)
-async def records(request: Request, sid: str, kind: Literal["board", "summary", "change", "conversation", "call", "version", "activity", "diagnostic", "assessment", "tool", "request", "output", "vote", "plan_completion", "commit", "pr", "process"], after: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=100), agent: str | None = None):
+async def records(request: Request, sid: str, kind: Literal["board", "summary", "change", "conversation", "call", "version", "activity", "diagnostic", "assessment", "tool", "request", "output", "vote", "plan_completion", "commit", "pr", "process", "public_check"], after: int = Query(default=0, ge=0), limit: int = Query(default=50, ge=1, le=100), agent: str | None = None):
     repo = service(request).repo
     state = repo.get(sid)
     if not visible(state, kind):
@@ -271,6 +273,8 @@ async def export(request: Request, sid: str, format: Literal["json", "markdown"]
     kinds = ("board", "summary", "change", "conversation", "call", "version", "activity", "diagnostic", "assessment", "tool", "command", "request", "output")
     if state.experiment is not None:
         kinds += ("vote", "plan_completion", "commit", "pr", "process")
+        if state.experiment.publicCheckProfile:
+            kinds += (public_checks.KIND,)
     payload = {"session": state.model_dump(mode="json"), "records": {kind: [r.model_dump(mode="json") for r in svc.repo.all(sid, kind)] for kind in kinds if visible(state, kind)}, "usage": usage_report(svc.repo, sid).model_dump(mode="json")}
     return Response(json.dumps(payload, ensure_ascii=False), media_type="application/json", headers=headers)
 

@@ -625,6 +625,11 @@
   color: var(--ink);
   font-size: 13px;
 }
+.publicChecks { min-height: 0; overflow: auto; padding: 12px 2px; overflow-wrap: anywhere; }
+.publicChecks h3, .publicChecks h4 { margin: 0 0 8px; }
+.publicChecks > div { margin-top: 16px; }
+.publicChecks details { border-top: 1px solid var(--line); padding-block: 8px; }
+.publicChecks pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .repositoryControls {
   display: flex;
   flex-wrap: wrap;

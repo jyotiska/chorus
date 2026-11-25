@@ -39,6 +39,11 @@ function ConditionEditor({ value, catalog, change }: {
       </li>)}
     </ol>
     <button type="button" disabled={value.slots.length >= 15} onClick={() => change({ ...value, slots: [...value.slots, neutral()] })}>Add worker</button>
+    {catalog.publicCheckProfile && <div className="swe-actions"><label>
+      <input type="checkbox" checked={!!value.publicChecks} onChange={e => change({ ...value,
+        publicChecks: e.target.checked ? catalog.publicCheckProfile?.digest : undefined })} />
+      {" "}Allow agents to run public checks · {catalog.publicCheckProfile.profile.name}
+    </label></div>}
     <div className="swe-fields">
       <label>Total model calls<input type="number" min={1} max={10000} required value={value.callLimit || ""} onChange={e => change({ ...value, callLimit: Number(e.target.value) })} /></label>
       <label>Solving time (seconds)<input type="number" min={1} max={86400} required value={value.solvingSeconds || ""} onChange={e => change({ ...value, solvingSeconds: Number(e.target.value) })} /></label>

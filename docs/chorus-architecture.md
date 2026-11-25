@@ -96,6 +96,8 @@ The web launcher creates a campaign even for one trial. SQLite migration 5 adds 
 
 ## Data and live updates
 
+Opted-in repository experiments pin a public check profile and use the `+public-checks-v1` execution and prompt suffix. A Build agent requests a configured check against a full `main` SHA. A disposable offline runner receives only committed regular files and returns bounded text and exit status. The `public_check` records associate a request and outcome with that commit and its author. A newer merge is unchecked until a worker asks for a check. Interruption settles outstanding requests as cancelled, and resuming requires a fresh agent request. Freeze records the latest outcomes for the submitted SHA. Campaign conditions record whether they used the capability and pin its profile. Saved sessions without the capability retain their original versions and recovery behavior. [Public check setup](running-chorus.md#enable-agent-requested-public-checks)
+
 Pydantic models define contracts; `scripts/export_contracts.py` generates JSON Schema, OpenAPI and TypeScript and copies shared client/UI files into `web/`. `--check` detects drift without rewriting files. Nanoville export is explicit. Runtime client validation rejects unexpected response shapes, including errors defined in `chorus/error_codes.py`.
 
 Each session has a current snapshot/revision and ordered durable records. Commands carry an ID and expected revision. Workers publish against cancellation generations; stale cancelled work cannot publish. SQLite writes are serialized within one process; run only one engine per database. Model calls stay outside database transactions.

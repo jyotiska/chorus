@@ -86,7 +86,7 @@ export class HarnessClient {
   async create(config: HarnessConfig): Promise<HarnessSnapshot> {
     return parse(await this.request("/sessions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
   }
-  async createExperiment(config: Pick<ExperimentConfig, "problemId" | "participantIds" | "model" | "judgeModel"> & { customStatement?: string; teamGenerationId?: string }): Promise<HarnessSnapshot> {
+  async createExperiment(config: Pick<ExperimentConfig, "problemId" | "participantIds" | "model" | "judgeModel"> & { customStatement?: string; teamGenerationId?: string; publicChecks?: string }): Promise<HarnessSnapshot> {
     return parse(await this.request("/experiments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(config) }), "HarnessSnapshot");
   }
   async generateTeam(config: Omit<H["teamGenerationRequest"], "customStatement"> & { customStatement?: string }, signal: AbortSignal): Promise<TeamGeneration> {

@@ -4,6 +4,12 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { HarnessRecord, HarnessSnapshot } from "../../lib/api/chorus/harness-client";
 
+const checkProfile = {
+  digest: "b".repeat(64), policy: "agent-requested-v1" as const,
+  profile: { name: "Fixture project", image: `fixture/project@sha256:${"a".repeat(64)}`, platform: "linux/amd64" as const,
+    timeoutSeconds: 45, maxRuns: 12, commands: [{ id: "unit", argv: ["npm", "test"] }] },
+};
+
 test("repository experiment defaults and explicit selections survive changes to the brief", async ({ page }) => {
   await page.goto("/?experiment=1");
   await expect(page.getByText("6 agents", { exact: true })).toBeVisible();
@@ -895,8 +901,9 @@ test("saved DeepSWE results display the verifier reward after a reload", async (
   const frozen: HarnessSnapshot = {
     ...saved, revision: 99, status: "completed",
     problem: { ...saved.problem, id: "ts-pattern-match-each", title: "TypeScript pattern matching with .each" },
-    experiment: { ...experiment, phase: "verify", rubric: "deepswe-v1",
-      frozen: { mainCommit: commit, specRevision: 0, evidenceThrough: 0, artifactChecks: [] },
+    experiment: { ...experiment, phase: "verify", rubric: "deepswe-v1", publicCheckProfile: checkProfile,
+      frozen: { mainCommit: commit, specRevision: 0, evidenceThrough: 0, artifactChecks: [],
+        publicChecks: [{ checkId: "unit", status: "passed", recordId: "check:fixture" }] },
       deepswe: {
         condition: null,
         task: { id: "ts-pattern-match-each", baseCommit: commit, baseTree: commit, datasetCommit: commit,
@@ -908,16 +915,28 @@ test("saved DeepSWE results display the verifier reward after a reload", async (
     },
   };
   await page.route(`**/api/chorus/v2/sessions/${saved.id}`, (route) => route.fulfill({ json: frozen }));
+  await page.route(`**/api/chorus/v2/sessions/${saved.id}/records?kind=public_check&**`, (route) => route.fulfill({ json: {
+    records: [{ id: "check:fixture", sequence: 1, kind: "public_check", agentId: saved.agents[0].id, turn: 0, createdAt: saved.createdAt,
+      data: { runId: "fixture", checkId: "unit", commit, status: "passed", output: "Public regression passed." } }],
+    cursor: 1, highWater: 1, hasMore: false,
+  } }));
   await page.goto(`/?session=${saved.id}`);
   const results = page.getByRole("region", { name: "DeepSWE results" });
   await expect(results.getByText("Failed", { exact: true })).toBeVisible();
   await expect(results.getByText("7 tests · 6 passed · 1 failed")).toBeVisible();
+  await expect(results.getByRole("region", { name: "Public checks" })).toContainText("unit · Passed");
   await expect(results.getByText(/TS2394: incompatible overload/)).toBeVisible();
   await expect(results.getByRole("link", { name: "Download patch" })).toHaveAttribute("href", /\/deepswe\/patch$/);
   await expect(page.getByRole("button", { name: "Terminal", exact: true })).toHaveCount(0);
   await page.reload();
   await expect(results.getByText("Failed", { exact: true })).toBeVisible();
   await expect(page.getByText("Verify", { exact: true })).toHaveAttribute("aria-current", "step");
+  await page.getByRole("button", { name: "Repository", exact: true }).click();
+  await page.getByRole("button", { name: "Checks", exact: true }).click();
+  const history = page.getByRole("region", { name: "Public checks" });
+  await history.getByText("unit · Passed ·", { exact: false }).click();
+  await expect(history.getByText("Public regression passed.")).toBeVisible();
+  await expect(history.getByText(/Requested by Front-end engineer/)).toBeVisible();
 });
 
 test("DeepSWE launches the previewed campaign and reopens paired scores", async ({ page, request }) => {
@@ -927,12 +946,14 @@ test("DeepSWE launches the previewed campaign and reopens paired scores", async 
   const task = { id: catalog.problem.id, baseCommit: pin, baseTree: pin, datasetCommit: pin,
     image: "fixture/task", verifierImage: "fixture/grade", platform: "linux/amd64", pierVersion: "0.3.1" };
   const models = catalog.models.map((model: { id: string }) => ({ ...model, available: true, unavailableReason: null }));
-  await page.route("**" + base + "/catalog", route => route.fulfill({ json: { ...catalog, models, task, unavailableReason: null } }));
+  await page.route("**" + base + "/catalog", route => route.fulfill({ json: { ...catalog, models, task, unavailableReason: null,
+    publicCheckProfile: checkProfile } }));
   let report: import("../../lib/api/chorus/harness-client").DeepSWECampaign | undefined;
   await page.route("**" + base + "/campaigns", async route => {
     if (route.request().method() === "GET") return route.fulfill({ json: [] });
     const manifest = route.request().postDataJSON();
     expect(manifest.conditions.map((c: { slots: unknown[] }) => c.slots.length)).toEqual([1, 3]);
+    expect(manifest.conditions.map((c: { publicChecks?: string }) => c.publicChecks)).toEqual([checkProfile.digest, undefined]);
     expect(manifest.repeats).toBe(3);
     report = { manifest, id: manifest.requestId, callCeiling: 720, status: "finished", error: "",
       engineVersion: "deepswe-v2", promptVersion: "fixture",
@@ -952,6 +973,10 @@ test("DeepSWE launches the previewed campaign and reopens paired scores", async 
   await page.getByRole("combobox", { name: "Problem source" }).click();
   await page.getByRole("option", { name: "DeepSWE", exact: true }).click();
   await page.getByRole("button", { name: "Use solo vs. team preset" }).click();
+  const soloChecks = page.getByRole("region", { name: "Solo", exact: true }).getByRole("checkbox", { name: /public checks/ });
+  await expect(soloChecks).not.toBeChecked();
+  await soloChecks.check();
+  await expect(page.getByRole("region", { name: "Team of three" }).getByRole("checkbox", { name: /public checks/ })).not.toBeChecked();
   await page.getByRole("button", { name: "Start campaign" }).click();
   await expect(page.getByText("+33.3 pp (3 paired)")).toBeVisible();
   await page.reload();

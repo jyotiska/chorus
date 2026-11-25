@@ -2804,7 +2804,8 @@
                 "plan_completion",
                 "commit",
                 "pr",
-                "process"
+                "process",
+                "public_check"
               ],
               "type": "string",
               "title": "Kind"
@@ -3941,6 +3942,16 @@
           "promptVersion": {
             "type": "string",
             "title": "Promptversion"
+          },
+          "publicCheckProfile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicCheckPin"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -4109,6 +4120,16 @@
               }
             ],
             "title": "Unavailablereason"
+          },
+          "publicCheckProfile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicCheckPin"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -4252,6 +4273,18 @@
             "maximum": 86400.0,
             "minimum": 1.0,
             "title": "Solvingseconds"
+          },
+          "publicChecks": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publicchecks"
           }
         },
         "additionalProperties": false,
@@ -4299,6 +4332,18 @@
             "maximum": 86400.0,
             "minimum": 1.0,
             "title": "Solvingseconds"
+          },
+          "publicChecks": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publicchecks"
           }
         },
         "additionalProperties": false,
@@ -4773,6 +4818,16 @@
             "type": "integer",
             "title": "Customstatementmaxbytes",
             "default": 12000
+          },
+          "publicCheckProfile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicCheckPin"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -4840,6 +4895,18 @@
               }
             ],
             "title": "Teamgenerationid"
+          },
+          "publicChecks": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publicchecks"
           }
         },
         "additionalProperties": false,
@@ -5036,6 +5103,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/DeepSWERun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "publicCheckProfile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicCheckPin"
               },
               {
                 "type": "null"
@@ -5249,6 +5326,13 @@
             },
             "type": "array",
             "title": "Artifactchecks"
+          },
+          "publicChecks": {
+            "items": {
+              "$ref": "#/components/schemas/PublicCheckSummary"
+            },
+            "type": "array",
+            "title": "Publicchecks"
           }
         },
         "additionalProperties": false,
@@ -6179,6 +6263,156 @@
           "version"
         ],
         "title": "Problem"
+      },
+      "PublicCheckCommand": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,39}$",
+            "title": "Id"
+          },
+          "argv": {
+            "items": {
+              "type": "string",
+              "maxLength": 500,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 24,
+            "minItems": 1,
+            "title": "Argv"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "argv"
+        ],
+        "title": "PublicCheckCommand"
+      },
+      "PublicCheckPin": {
+        "properties": {
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Digest"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/PublicCheckProfile"
+          },
+          "policy": {
+            "type": "string",
+            "const": "agent-requested-v1",
+            "title": "Policy",
+            "default": "agent-requested-v1"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "digest",
+          "profile",
+          "policy"
+        ],
+        "title": "PublicCheckPin"
+      },
+      "PublicCheckProfile": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "image": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._/:\\-]+@sha256:[0-9a-f]{64}$",
+            "title": "Image"
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "linux/amd64",
+              "linux/arm64"
+            ],
+            "title": "Platform"
+          },
+          "commands": {
+            "items": {
+              "$ref": "#/components/schemas/PublicCheckCommand"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Commands"
+          },
+          "timeoutSeconds": {
+            "type": "integer",
+            "maximum": 120.0,
+            "minimum": 1.0,
+            "title": "Timeoutseconds",
+            "default": 45
+          },
+          "maxRuns": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Maxruns",
+            "default": 12
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "image",
+          "platform",
+          "commands",
+          "timeoutSeconds",
+          "maxRuns"
+        ],
+        "title": "PublicCheckProfile"
+      },
+      "PublicCheckSummary": {
+        "properties": {
+          "checkId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,39}$",
+            "title": "Checkid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "unchecked",
+              "passed",
+              "failed",
+              "timed_out",
+              "unavailable",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "recordId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recordid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "checkId",
+          "status",
+          "recordId"
+        ],
+        "title": "PublicCheckSummary"
       },
       "Record": {
         "properties": {

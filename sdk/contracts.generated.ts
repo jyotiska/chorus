@@ -329,6 +329,10 @@ export type Status4 = "ready" | "missing" | "invalid" | "unavailable";
 export type Detail = string;
 export type Size = number | null;
 export type Artifactchecks = ArtifactCheck[];
+export type Checkid = string;
+export type Status5 = "unchecked" | "passed" | "failed" | "timed_out" | "unavailable" | "cancelled";
+export type Recordid = string | null;
+export type Publicchecks = PublicCheckSummary[];
 export type Judgeattempts = number;
 export type Summary3 = string;
 export type Score = number | ("not_assessable" | "not_applicable");
@@ -389,6 +393,7 @@ export type Model4 = string | null;
 export type Slots = DeepSWESlot[];
 export type Calllimit = number;
 export type Solvingseconds = number;
+export type Publicchecks1 = string | null;
 export type Id10 = string;
 export type Datasetcommit = string;
 export type Basecommit = string;
@@ -410,10 +415,28 @@ export type Tests = number | null;
 export type Passed = number | null;
 export type Failed = number | null;
 export type Compilationfailure = string | null;
+export type Digest = string;
+export type Name4 = string;
+export type Image1 = string;
+export type Platform1 = "linux/amd64" | "linux/arm64";
+export type Id11 = string;
+/**
+ * @minItems 1
+ * @maxItems 24
+ */
+export type Argv = string[];
+/**
+ * @minItems 1
+ * @maxItems 8
+ */
+export type Commands = PublicCheckCommand[];
+export type Timeoutseconds = number;
+export type Maxruns = number;
+export type Policy = "agent-requested-v1";
 export type Error1 = string;
 export type Createdat3 = string;
 export type Updatedat1 = string;
-export type Id11 = string;
+export type Id12 = string;
 export type Sequence1 = number;
 export type Kind3 = string;
 export type Agentid9 = string;
@@ -461,9 +484,10 @@ export type Participantids3 = string[];
 export type Model5 = string;
 export type Judgemodel1 = string | null;
 export type Teamgenerationid = string | null;
-export type Id12 = string;
-export type Name4 = string;
-export type Status5 = string;
+export type Publicchecks2 = string | null;
+export type Id13 = string;
+export type Name5 = string;
+export type Status6 = string;
 export type Createdat5 = string;
 export type Baseline = string;
 export type Candidate = string;
@@ -477,11 +501,11 @@ export type Baselinepercent = number | null;
 export type Candidatepercent = number | null;
 export type Deltapoints = number | null;
 export type Changedsettings = string[];
-export type Id13 = string;
-export type Status6 = "running" | "paused" | "finished" | "cancelled";
+export type Id14 = string;
+export type Status7 = "running" | "paused" | "finished" | "cancelled";
 export type Error2 = string;
 export type Requestid1 = string;
-export type Name5 = string;
+export type Name6 = string;
 /**
  * @minItems 1
  * @maxItems 8
@@ -492,7 +516,7 @@ export type Seed = number;
 export type Condition = string;
 export type Repeat = number;
 export type Sessionid = string | null;
-export type Status7 = string;
+export type Status8 = string;
 export type Reward1 = (0 | 1) | null;
 export type Calls1 = number;
 export type Walltimems2 = number | null;
@@ -513,7 +537,7 @@ export type Agents9 = Persona[];
 export type Calllimit2 = number;
 export type Solvingseconds2 = number;
 export type Unavailablereason2 = string | null;
-export type Id14 = string;
+export type Id15 = string;
 /**
  * @minItems 3
  * @maxItems 5
@@ -527,7 +551,7 @@ export type Path3 = string;
 export type Kind4 = "directory" | "file" | "link" | "submodule";
 export type Entries = RepositoryEntry[];
 export type Truncated = boolean;
-export type Status8 = "text" | "binary" | "too_large";
+export type Status9 = "text" | "binary" | "too_large";
 export type Size1 = number;
 export type Content = string | null;
 export type Patch = string;
@@ -936,6 +960,7 @@ export interface ExperimentState {
   rubric: Rubric;
   deliverablePlan: DeliverablePlan | null;
   deepswe: DeepSWERun | null;
+  publicCheckProfile?: PublicCheckPin | null;
 }
 export interface PlanningCompletion {
   agentId: Agentid6;
@@ -959,11 +984,17 @@ export interface FrozenExperiment {
   specRevision: Specrevision1;
   evidenceThrough: Evidencethrough;
   artifactChecks: Artifactchecks;
+  publicChecks?: Publicchecks;
 }
 export interface ArtifactCheck {
   status: Status4;
   detail: Detail;
   size: Size;
+}
+export interface PublicCheckSummary {
+  checkId: Checkid;
+  status: Status5;
+  recordId: Recordid;
 }
 export interface ExperimentReport {
   summary: Summary3;
@@ -1014,6 +1045,7 @@ export interface DeepSWECondition {
   slots: Slots;
   callLimit: Calllimit;
   solvingSeconds: Solvingseconds;
+  publicChecks?: Publicchecks1;
 }
 export interface DeepSWESlot {
   guidance: Guidance;
@@ -1037,6 +1069,23 @@ export interface DeepSWEResult {
   failed: Failed;
   compilationFailure: Compilationfailure;
 }
+export interface PublicCheckPin {
+  digest: Digest;
+  profile: PublicCheckProfile;
+  policy: Policy;
+}
+export interface PublicCheckProfile {
+  name: Name4;
+  image: Image1;
+  platform: Platform1;
+  commands: Commands;
+  timeoutSeconds: Timeoutseconds;
+  maxRuns: Maxruns;
+}
+export interface PublicCheckCommand {
+  id: Id11;
+  argv: Argv;
+}
 export interface RecordPage {
   records: Records;
   cursor: Cursor;
@@ -1044,7 +1093,7 @@ export interface RecordPage {
   hasMore: Hasmore;
 }
 export interface Record {
-  id: Id11;
+  id: Id12;
   sequence: Sequence1;
   kind: Kind3;
   agentId: Agentid9;
@@ -1106,6 +1155,7 @@ export interface ExperimentCatalog {
   models: Models2;
   defaultModel: Defaultmodel2;
   customStatementMaxBytes: Customstatementmaxbytes;
+  publicCheckProfile?: PublicCheckPin | null;
 }
 export interface ExperimentConfig {
   problemId: Problemid1;
@@ -1114,11 +1164,12 @@ export interface ExperimentConfig {
   model: Model5;
   judgeModel: Judgemodel1;
   teamGenerationId: Teamgenerationid;
+  publicChecks?: Publicchecks2;
 }
 export interface CampaignSummary {
-  id: Id12;
-  name: Name4;
-  status: Status5;
+  id: Id13;
+  name: Name5;
+  status: Status6;
   createdAt: Createdat5;
 }
 export interface DeepSWEComparison {
@@ -1140,8 +1191,8 @@ export interface DeepSWERequest {
   condition: DeepSWECondition;
 }
 export interface DeepSWECampaign {
-  id: Id13;
-  status: Status6;
+  id: Id14;
+  status: Status7;
   error: Error2;
   manifest: DeepSWECampaignRequest;
   trials: Trials;
@@ -1149,10 +1200,11 @@ export interface DeepSWECampaign {
   callCeiling: Callceiling;
   engineVersion: Engineversion2;
   promptVersion: Promptversion2;
+  publicCheckProfile?: PublicCheckPin | null;
 }
 export interface DeepSWECampaignRequest {
   requestId: Requestid1;
-  name: Name5;
+  name: Name6;
   task: DeepSWETask;
   conditions: Conditions;
   repeats: Repeats;
@@ -1162,7 +1214,7 @@ export interface CampaignTrial {
   condition: Condition;
   repeat: Repeat;
   sessionId: Sessionid;
-  status: Status7;
+  status: Status8;
   reward: Reward1;
   calls: Calls1;
   usage: Usage1 | null;
@@ -1186,9 +1238,10 @@ export interface DeepSWECatalog {
   callLimit: Calllimit2;
   solvingSeconds: Solvingseconds2;
   unavailableReason: Unavailablereason2;
+  publicCheckProfile?: PublicCheckPin | null;
 }
 export interface TeamGeneration {
-  id: Id14;
+  id: Id15;
   agents: Agents10;
 }
 export interface TeamGenerationRequest {
@@ -1206,7 +1259,7 @@ export interface RepositoryEntry {
   kind: Kind4;
 }
 export interface RepositoryFile {
-  status: Status8;
+  status: Status9;
   size: Size1;
   content: Content;
 }
