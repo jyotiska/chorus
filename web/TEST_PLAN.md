@@ -48,13 +48,10 @@ npm run check passed: lint, TypeScript, production build, and 2 browser integrat
 
 Started the production application on http://localhost:43189 with real Chorus and Ollama, then exercised:
 
-- Debate, qwen3.5:2b-mlx, five turns, judge enabled: session `35fe7c6c-f5ae-4575-bb8a-fc3db9fd5f0c`. Pause, reload, and resume preserved two committed contributions. Five contributions and a 2756-character canvas were ultimately saved. Final review paused after invalid model replies; retry also paused without data loss.
-- Creative Team, gemma4:e2b-mlx, five turns, judge enabled: original session `80c1c360-7129-4680-94f1-3150839f9b0e`; retest after explicit response-contract instructions `02e69c29-59be-4cc4-9b4d-8ebdff635b74`. Retest saved five contributions and a 3255-character canvas, but final review still failed validation and displayed Resume.
+- Debate used qwen3.5:2b-mlx for five turns with the judge enabled. Pause, reload, and resume preserved two committed contributions. Five contributions and a 2756-character canvas were ultimately saved. Final review paused after invalid model replies; retry also paused without data loss.
+- Creative Team used gemma4:e2b-mlx for five turns with the judge enabled. After explicit response-contract instructions, the retest saved five contributions and a 3255-character canvas, but final review still failed validation and displayed Resume.
 
 Both scenarios passed discussion/canvas display and safe failure handling. Judge completion did not pass real-model acceptance. The prompt clarification has regression coverage, but is not a verified fix for live reviews. The full automated check passed again (two browser tests use fake Ollama).
-
-Screenshots are saved under `output/browser-tests/`, including `creative-team-retest-paused.jpg` and `creative-team-review-status.jpg`.
-
 
 ## Private adversaries — 30 October 2026
 
