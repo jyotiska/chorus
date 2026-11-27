@@ -144,11 +144,11 @@ test("actual tool loop completes with concise mentions, summaries, usage, and fi
     page.getByRole("heading", { name: "Shared canvas" }),
   ).toBeInViewport();
   await page.screenshot({ path: "test-results/redesign-board.png" });
-  await page.getByRole("button", { name: "Close canvas", exact: true }).click();
+  await page.getByRole("button", { name: "Hide side pane", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Shared canvas" }),
   ).toBeHidden();
-  await page.getByRole("button", { name: "Open beside board" }).click();
+  await page.getByRole("button", { name: "Show side pane" }).click();
   await page
     .getByRole("button", { name: "Results", exact: true })
     .filter({ has: page.getByRole("status") })
@@ -208,6 +208,7 @@ test("actual tool loop completes with concise mentions, summaries, usage, and fi
     page.getByText("Published validated work only.", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
+  // Results takes the full width, so Participants and Usage open as sheets here.
   await page.getByRole("button", { name: "Close Participants" }).click();
   await page.getByRole("button", { name: "Usage", exact: true }).click();
   await expect(
@@ -305,21 +306,29 @@ test("fifty-agent roster is complete, artwork loads, and narrow screens contain 
   ).toBeInViewport();
   const participants = page.getByRole("button", { name: /^Participants/ });
   await participants.click();
-  const roster = page.getByRole("dialog", { name: "Participants" });
+  // Wide screens show the roster in the side pane; narrow ones in a sheet.
+  const roster = page.getByRole("dialog", { name: "Participants" })
+    .or(page.getByRole("complementary", { name: "Side pane" }).getByRole("region", { name: "Participants" }));
   const agents = roster.getByRole("button").filter({ has: page.getByRole("progressbar") });
   await expect(agents).toHaveCount(50);
   await agents.last().click();
   await expect(page.getByRole("dialog", { name: /details$/ })).toBeVisible();
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Close Participants" }).click();
+  if (await page.getByRole("button", { name: "Close Participants" }).isVisible()) {
+    await page.getByRole("button", { name: "Close Participants" }).click();
+  }
   await page.setViewportSize({ width: 768, height: 900 });
   await expect(page.getByRole("heading", { name: "Message board" })).toBeInViewport();
   await expect(page.getByRole("heading", { name: "Shared canvas" })).toBeHidden();
   await participants.click();
   await expect(page.getByRole("progressbar")).toHaveCount(50);
-  const portrait = roster.locator('img[alt="Alex portrait"]');
+  // Packaged portrait artwork appears in the agent's details.
+  await roster.getByRole("button", { name: /^Alex\b/ }).first().click();
+  const details = page.getByRole("dialog", { name: "Alex details" });
+  const portrait = details.locator('img[alt="Alex portrait"]').or(roster.locator('img[alt="Alex portrait"]')).first();
   await expect(portrait).toHaveAttribute("src", /\/api\/chorus\/v2\/assets\/alex\/portrait\.svg/);
   await expect.poll(() => portrait.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  await page.keyboard.press("Escape");
   if (baseURL?.includes(":3100")) {
     await expect(
       page.getByRole("img", { name: /animated sprite/ }),
@@ -374,17 +383,17 @@ test("the desktop split preference persists, with phone navigation and stop cont
     second = await create();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/?session=${first}`);
-  await page.getByRole("button", { name: "Close canvas" }).click();
+  await page.getByRole("button", { name: "Hide side pane" }).click();
   await page.locator(`.run-list a[href="/?session=${second}"]`).click();
   await expect(page).toHaveURL(new RegExp(second));
   await expect(
-    page.getByRole("button", { name: "Open beside board" }),
+    page.getByRole("button", { name: "Show side pane" }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "Open beside board" }),
+    page.getByRole("button", { name: "Show side pane" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Open beside board" }).click();
+  await page.getByRole("button", { name: "Show side pane" }).click();
   await expect(page.getByRole("heading", { name: "Shared canvas" })).toBeInViewport();
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.getByRole("button", { name: "Run actions" }).click();
@@ -429,7 +438,7 @@ test("the desktop split preference persists, with phone navigation and stop cont
   await expect(
     page.getByRole("heading", { name: "Message board" }),
   ).toBeInViewport();
-  await expect(page.getByRole("button", { name: "Open beside board", exact: true })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Show side pane", exact: true })).toBeHidden();
   await page.getByRole("button", { name: "Canvas", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Shared canvas" }),
@@ -512,14 +521,15 @@ test("a long board holds the reading position through incoming posts and a phone
   await expect(drawer.getByRole("alert")).toContainText("Usage temporarily offline.");
   await drawer.getByRole("button", { name: "Retry usage" }).click();
   const totals = page.getByRole("region", { name: "Whole session" });
-  await expect(totals.getByText("$0.01 + $0.002 est. (partial)")).toBeVisible();
+  await expect(totals.getByText("$0.01 + ≈ $0.002 (partial)")).toBeVisible();
   await expect(totals.getByText("40 (partial)")).toBeVisible();
   const outputTokens = totals
     .locator("div")
     .filter({ has: page.getByText("Output tokens", { exact: true }) })
     .locator("dd");
-  await expect(outputTokens).toHaveText("Unknown");
-  await expect(totals).toContainText("$0.01 + $0.002 est. (partial)");
+  // Unknown values show "—" and read "Unknown" to screen readers.
+  await expect(outputTokens).toContainText("Unknown");
+  await expect(totals).toContainText("$0.01 + ≈ $0.002 (partial)");
   await page.keyboard.press("Escape");
   const row = page
     .getByRole("article")

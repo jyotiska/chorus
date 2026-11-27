@@ -4,6 +4,15 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { HarnessRecord, HarnessSnapshot } from "../../lib/api/chorus/harness-client";
 
+/** The roster: in the side pane on wide screens, in a sheet otherwise. */
+const rosterView = (page: import("@playwright/test").Page) => page.getByRole("dialog", { name: "Participants" })
+  .or(page.getByRole("complementary", { name: "Side pane" }).getByRole("region", { name: "Participants" }));
+/** Closes the Participants sheet when the roster is in one; the side pane stays open. */
+async function closeRoster(page: import("@playwright/test").Page) {
+  const close = page.getByRole("button", { name: "Close Participants" });
+  if (await close.isVisible()) await close.click();
+}
+
 const checkProfile = {
   digest: "b".repeat(64), policy: "agent-requested-v1" as const,
   profile: { name: "Fixture project", image: `fixture/project@sha256:${"a".repeat(64)}`, platform: "linux/amd64" as const,
@@ -341,14 +350,14 @@ test("restores SPEC.md and the repository and preserves them after a kill", asyn
   await expect(preview).toContainText("Select a file");
 
   const participants = page.getByRole("button", { name: /^Participants/ });
-  const roster = page.getByRole("dialog", { name: "Participants" });
+  const roster = rosterView(page);
   await participants.click();
   await roster.getByRole("button", { name: /General agent/ }).click();
   const inspector = page.getByRole("dialog", { name: "General agent details" });
   await expect(inspector.getByRole("tab", { name: "Tasks", selected: true })).toBeVisible();
   await expect(inspector.getByText("No to-do items recorded in SPEC.md.")).toBeVisible();
   await inspector.getByRole("button", { name: "Close", exact: true }).click();
-  await roster.getByRole("button", { name: "Close Participants" }).click();
+  await closeRoster(page);
 
   await page.getByRole("button", { name: "Start experiment" }).click();
   const actions = page.getByRole("button", { name: "Run actions" });
@@ -373,7 +382,7 @@ test("restores SPEC.md and the repository and preserves them after a kill", asyn
   expect((await (await summaries).json()).records).toEqual([]);
   await expect(inspector.getByRole("tab")).toHaveText(["Tasks", "Profile", "Usage"]);
   await inspector.getByRole("button", { name: "Close", exact: true }).click();
-  await roster.getByRole("button", { name: "Close Participants" }).click();
+  await closeRoster(page);
   await page.getByRole("button", { name: "SPEC.md", exact: true }).click();
   await page.getByRole("button", { name: "Tasks", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Task Distribution", exact: true })).toBeVisible();
@@ -596,7 +605,7 @@ test("SPEC.md shows task owners and revision diffs while preserving the Board po
 
   const row = board.getByRole("article").filter({ hasText: "Task discussion 15 is ready" });
   await row.scrollIntoViewIfNeeded();
-  const avatar = (await row.getByRole("img", { name: "Front-end engineer portrait" }).boundingBox())!;
+  const avatar = (await row.locator(":scope > span[aria-hidden]").first().boundingBox())!;
   const author = (await row.getByRole("button", { name: "Front-end engineer", exact: true }).boundingBox())!;
   const body = (await row.getByText("Task discussion 15 is ready to review.").boundingBox())!;
   expect(author.y + author.height / 2).toBeCloseTo(avatar.y + avatar.height / 2, 0);
@@ -681,15 +690,15 @@ test("the compact live workspace preserves agent details, phase progress, and Bo
   await expect(page.getByRole("heading", { level: 1, name: run.problem.title })).toBeVisible();
   await page.getByRole("button", { name: "Expand sidebar" }).click();
   await expect(page.getByRole("button", { name: "New experiment", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Close SPEC.md" }).click();
+  await page.getByRole("button", { name: "Hide side pane" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(firstPost).toBeVisible();
   expect((await firstPost.boundingBox())!.y).toBeLessThanOrEqual(250);
-  await expect(page.getByRole("button", { name: "Open beside board" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Show side pane" })).toBeHidden();
 
   const participants = page.getByRole("button", { name: /^Participants/ });
-  const roster = page.getByRole("dialog", { name: "Participants" });
-  const closeParticipants = roster.getByRole("button", { name: "Close Participants" });
+  const roster = rosterView(page);
+  const closeParticipants = page.getByRole("button", { name: "Close Participants" });
   await participants.click();
   const frontend = roster.getByRole("button", { name: /Front-end engineer/ });
   const backend = roster.getByRole("button", { name: /Back-end engineer/ });
@@ -704,7 +713,7 @@ test("the compact live workspace preserves agent details, phase progress, and Bo
   const agentUsage = frontendDetails.getByRole("tabpanel", { name: "Usage" });
   await agentUsage.getByLabel("Tokens, cache, latency and cost for this agent").press("Enter");
   await expect(agentUsage.getByText("1,200", { exact: true })).toBeVisible();
-  await expect(agentUsage.getByText("$0.000450", { exact: true })).toBeVisible();
+  await expect(agentUsage.getByText("≈ $0.000450", { exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(frontend).toBeFocused();
   await closeParticipants.click();
@@ -737,7 +746,7 @@ test("the compact live workspace preserves agent details, phase progress, and Bo
   }));
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.reload();
-  await expect(page.getByRole("button", { name: "Open beside board" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show side pane" })).toBeVisible();
   await expect(page.getByText("1 agent failed", { exact: true })).toBeVisible();
   await participants.click();
   await expect(roster).toHaveCSS("color-scheme", "dark");
@@ -761,16 +770,22 @@ test("the compact live workspace preserves agent details, phase progress, and Bo
   await expect(frontend).toBeHidden();
   await backend.click();
   const tasks = page.getByRole("tabpanel", { name: "Tasks", exact: true });
+  const backendDetails = page.getByRole("dialog", { name: "Back-end engineer details" });
   await expect(tasks.getByRole("status")).toHaveText("2 of 4 complete");
   await expect(tasks.getByRole("checkbox", { checked: true })).toHaveCount(2);
   await expect(tasks.getByText(/Export format is pending/)).toBeVisible();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(tasks.getByRole("heading", { name: /Assigned tasks/ })).toBeInViewport();
-  expect((await page.getByRole("dialog", { name: "Back-end engineer details" }).boundingBox())!.width).toBe(390);
-  await page.screenshot({ path: "test-results/participants-tasks-phone.png" });
-  await page.getByRole("dialog", { name: "Back-end engineer details" }).getByRole("button", { name: "Close", exact: true }).click();
+  await backendDetails.getByRole("button", { name: "Close", exact: true }).click();
   await expect(backend).toBeFocused();
   await expect(roster.getByRole("button", { name: "Finished 1", exact: true })).toHaveAttribute("aria-pressed", "true");
+  // On a phone the roster opens in a sheet and agent details fill the width.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await participants.click();
+  await backend.click();
+  await expect(tasks.getByRole("heading", { name: /Assigned tasks/ })).toBeInViewport();
+  expect((await backendDetails.boundingBox())!.width).toBe(390);
+  await page.screenshot({ path: "test-results/participants-tasks-phone.png" });
+  await backendDetails.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(backend).toBeFocused();
   await closeParticipants.click();
   await expect(participants).toBeFocused();
 

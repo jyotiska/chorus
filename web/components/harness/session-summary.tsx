@@ -66,11 +66,20 @@ export function RunProgress({
     <>
       {experiment && (
         <div className="run-phases" role="group" aria-label="Experiment phase">
-          {["plan", "build", experiment.deepswe ? "verify" : "judge"].map((phase) => (
-            <span key={phase} aria-current={experiment.phase === phase ? "step" : undefined}>
-              {phase[0].toUpperCase() + phase.slice(1)}
-            </span>
-          ))}
+          {(() => {
+            const phases = ["plan", "build", experiment.deepswe ? "verify" : "judge"];
+            const current = snapshot.status === "completed" ? phases.length : phases.indexOf(experiment.phase);
+            return phases.map((phase, index) => (
+              <span
+                key={phase}
+                data-phase={index < current ? "done" : index === current ? "current" : "todo"}
+                aria-current={experiment.phase === phase ? "step" : undefined}
+              >
+                <i aria-hidden="true" />
+                {phase[0].toUpperCase() + phase.slice(1)}
+              </span>
+            ));
+          })()}
         </div>
       )}
       <span className="run-progress">{progress}</span>

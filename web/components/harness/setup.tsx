@@ -289,8 +289,17 @@ export function Launcher({
       options={modelOptions}
     />
   );
+  const appExperiment = experiment && source === "app";
   return (
-    <section className={experiment && source === "app" ? "launcher app-source" : "launcher"}>
+    <section className={appExperiment ? "launcher app-source" : "launcher"}>
+      {experiment && (
+        <p className="setup-intro">
+          Describe the work, choose a team and models, then start. Agents plan together in SPEC.md,
+          build in their own worktrees, and a judge reviews the merged result.
+        </p>
+      )}
+      <div className={appExperiment ? "setup-layout" : "setup-single"}>
+      <div className="setup-main">
       {experiment && (
         <section className="problem-field source-picker">
           <ModelPicker id="problem-source" label="Problem source" value={source} select={(value) => { setSource(value); if (value === "deepswe") setVisitedDeepSWE(true); }}
@@ -386,6 +395,9 @@ export function Launcher({
           Edit team
         </button>
       </div>}
+      </>}
+      </div>
+      {source === "app" && <div className={appExperiment ? "setup-aside" : "setup-settings"}>
       <section className="run-settings" aria-labelledby="model-heading">
         {experiment ? <h2 id="model-heading">Models</h2> : (
           <h3 id="model-heading"><SlidersHorizontal /> Run settings</h3>
@@ -436,6 +448,13 @@ export function Launcher({
         </p>
       )}
       {!experiment && error && <p role="alert">{error}</p>}
+      {appExperiment && (
+        <dl className="setup-summary" aria-label="Run summary">
+          <div><dt>Team</dt><dd>{selected.length} selected</dd></div>
+          <div><dt>Phases</dt><dd><span>Plan</span><span>Build</span><span>Judge</span></dd></div>
+          <div><dt>Workspace</dt><dd>One Git worktree per agent</dd></div>
+        </dl>
+      )}
       <div className="launch-foot">
         {experiment && error && <p role="alert">{error}</p>}
         {!experiment && <span>{invalidCap ? "Turn limit required" : `Up to ${roster.length * Number(cap)} contribution cycles`}</span>}
@@ -448,6 +467,8 @@ export function Launcher({
           {busy ? "Starting…" : launchLabel}
           <ArrowUpRight />
         </button>
+      </div>
+      </div>}
       </div>
       {sheet && (
         <Sheet
@@ -572,7 +593,6 @@ export function Launcher({
       {profile && (
         <ProfileDialog agent={profile} close={() => setProfile(null)} />
       )}
-      </>}
     </section>
   );
 }
