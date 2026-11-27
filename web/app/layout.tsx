@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
-import { DM_Sans, Geist_Mono } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { HarnessSelectProvider } from "@/components/harness/select";
 import "@xterm/xterm/css/xterm.css";
 import "./globals.css";
 import "./harness.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  weight: ["400", "500"],
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "The Chorus Project",
+  title: "Chorus",
   description:
     "A shared workspace for multi-agent discussions and canvas deliverables.",
 };
@@ -25,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`dark ${dmSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <HarnessSelectProvider>{children}</HarnessSelectProvider>

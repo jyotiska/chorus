@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   BookOpen,
   CheckCheck,
   CircleStop,
-  Columns2,
   Ellipsis,
   FileText,
   GitBranch,
@@ -13,6 +12,8 @@ import {
   Gauge,
   Link as LinkIcon,
   MessagesSquare,
+  PanelRightClose,
+  PanelRightOpen,
   Pause,
   Play,
   Terminal,
@@ -29,9 +30,22 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { message, sessionHref, Shell, Sheet } from "./shell";
 import { RunProgress } from "./session-summary";
 import { RepositoryRuntime } from "./runtime";
+import { modKey, type Command } from "./command-palette";
 
 type Tab = "Board" | "Canvas" | "Repository" | "Results" | "Browser" | "Terminal";
-const splitPreferenceKey = "chorus.harness.boardSplit";
+type SideTab = "Canvas" | "Participants" | "Usage";
+// Kept from the earlier split view, so a reader's open or closed choice carries over.
+const sidePreferenceKey = "chorus.harness.boardSplit";
+const sideTabKey = "chorus.harness.sideTab";
+// The side pane needs room for a readable main pane beside its 420px.
+const sidePaneRoom = 860;
+
+/** The side pane sits beside the Board; Results, Repository and the runtime views need the full width. */
+const besideSide = (tab: Tab) => tab === "Board";
+
+function isTyping(target: EventTarget | null) {
+  return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+}
 
 export function LiveWorkspace({
   parts,
@@ -72,22 +86,95 @@ export function LiveWorkspace({
   const boardButton = useRef<HTMLButtonElement>(null);
   const canvasButton = useRef<HTMLButtonElement>(null);
   const panes = useRef<HTMLDivElement>(null);
-  const [roomForBoth, setRoomForBoth] = useState(false);
-  const [splitChoice, setSplitChoice] = useState(
-    () => typeof window === "undefined" || localStorage.getItem(splitPreferenceKey) !== "closed",
+  const [roomForSide, setRoomForSide] = useState(false);
+  const [sideChoice, setSideChoice] = useState(
+    () => typeof window === "undefined" || localStorage.getItem(sidePreferenceKey) !== "closed",
   );
+  const [sideTab, setSideTab] = useState<SideTab>(() => {
+    const saved = typeof window === "undefined" ? null : localStorage.getItem(sideTabKey);
+    return saved === "Participants" || saved === "Usage" ? saved : "Canvas";
+  });
   useEffect(() => {
     if (!panes.current) return;
     const observer = new ResizeObserver(([entry]) =>
-      setRoomForBoth(entry.contentRect.width >= 820),
+      setRoomForSide(entry.contentRect.width >= sidePaneRoom),
     );
     observer.observe(panes.current);
     return () => observer.disconnect();
   }, []);
-  const split = tab === "Board" && roomForBoth && splitChoice;
-  const splitLabel = split
-    ? experiment ? "Close SPEC.md" : "Close canvas"
-    : "Open beside board";
+  const sideAvailable = roomForSide && besideSide(tab);
+  const sideVisible = sideAvailable && sideChoice;
+  const sideLabel = sideVisible ? "Hide side pane" : "Show side pane";
+
+  function chooseSide(open: boolean) {
+    setSideChoice(open);
+    localStorage.setItem(sidePreferenceKey, open ? "open" : "closed");
+  }
+  function showSideTab(next: SideTab) {
+    setSideTab(next);
+    localStorage.setItem(sideTabKey, next);
+  }
+  /** Participants and Usage open in the side pane when it fits, otherwise in a sheet. */
+  function inspect(next: "Participants" | "Usage") {
+    if (sideAvailable) {
+      chooseSide(true);
+      showSideTab(next);
+    } else setDrawer(next);
+  }
+  const view = (next: Tab) => () => {
+    if (next === "Repository") setRepositoryOpened(true);
+    if (next === "Browser" || next === "Terminal") setRuntimeOpened(true);
+    if (next === "Terminal") setTerminalOpened(true);
+    setTab(next);
+  };
+  const mainTabs: { id: Tab; label: string; icon: ReactNode; count?: number }[] = [
+    { id: "Board", label: "Board", icon: <MessagesSquare />, count: snapshot.boardCount },
+    ...(!sideVisible ? [{ id: "Canvas" as Tab, label: documentName, icon: <FileText /> }] : []),
+    ...(experiment ? [{ id: "Repository" as Tab, label: "Repository", icon: <GitBranch /> }] : []),
+    { id: "Results", label: "Results", icon: <CheckCheck /> },
+  ];
+  const mod = modKey();
+  const viewKey = (index: number) => (mod === "⌘" ? ["⌃", String(index + 1)] : ["Alt", String(index + 1)]);
+
+  // Keyboard: Cmd/Ctrl+\ toggles the side pane, Ctrl+1–4 (Alt+1–4 off macOS) picks a view,
+  // and J/K move between Board posts when no field has focus. Browsers keep Cmd+1–9 for tabs.
+  const keys = useRef<(event: KeyboardEvent) => void>(() => {});
+  useEffect(() => {
+    keys.current = (event) => {
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key === "\\") {
+        if (!sideAvailable) return;
+        event.preventDefault();
+        chooseSide(!sideVisible);
+        return;
+      }
+      const digit = /^Digit([1-9])$/.exec(event.code);
+      const viewChord = mod === "⌘" ? event.ctrlKey && !event.altKey : event.altKey && !event.ctrlKey;
+      if (digit && viewChord && !event.shiftKey && !event.metaKey) {
+        const target = mainTabs[Number(digit[1]) - 1];
+        if (!target) return;
+        event.preventDefault();
+        view(target.id)();
+        return;
+      }
+      if ((event.key === "j" || event.key === "k") && !event.metaKey && !event.ctrlKey && !event.altKey
+        && tab === "Board" && !isTyping(event.target) && !document.querySelector("dialog[open]")) {
+        const posts = [...document.querySelectorAll<HTMLElement>(".board-pane article[id]")];
+        if (!posts.length) return;
+        const current = posts.findIndex((post) => post.contains(document.activeElement));
+        const index = current < 0 ? 0 : current + (event.key === "j" ? 1 : -1);
+        const next = posts[Math.max(0, Math.min(posts.length - 1, index))];
+        event.preventDefault();
+        next.focus({ preventScroll: true });
+        next.scrollIntoView({ block: "nearest" });
+      }
+    };
+  });
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => keys.current(event);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(
@@ -157,9 +244,32 @@ export function LiveWorkspace({
       </DropdownMenu>
     </>
   );
+  const commands: Command[] = [
+    ...(snapshot.status === "ready" ? [{ id: "start", group: "Run", label: deepswe ? "Start DeepSWE run" : experiment ? "Start experiment" : "Start session", icon: <Play />, disabled: busy, run: () => void act("start") }] : []),
+    ...(active && !experiment ? [{ id: "pause", group: "Run", label: "Pause", icon: <Pause />, disabled: busy, run: () => void act("pause") }] : []),
+    ...(snapshot.status === "paused" ? [{ id: "resume", group: "Run", label: "Resume", icon: <Play />, disabled: busy, run: () => void act("resume") }] : []),
+    ...(experiment && snapshot.status === "judge_failed" ? [{ id: "retry-judge", group: "Run", label: "Retry judge", disabled: busy, run: () => void act("retry_judge") }] : []),
+    { id: "copy", group: "Run", label: "Copy session link", icon: <LinkIcon />, run: () => void copy() },
+    ...(canKill ? [{ id: "kill", group: "Run", label: "Kill experiment…", icon: <CircleStop />, danger: true, disabled: busy, run: () => killDialog.current?.showModal() }] : []),
+    ...mainTabs.map((item, index) => ({ id: `view-${item.id}`, group: "Views", label: item.label, icon: item.icon, keys: viewKey(index), hint: item.id === "Results" && finished ? outcome : undefined, run: view(item.id) })),
+    ...(sideVisible ? [{ id: "view-canvas", group: "Views", label: `${documentName} in side pane`, icon: <FileText />, run: () => showSideTab("Canvas") }] : []),
+    ...(experiment && !deepswe ? [
+      { id: "view-browser", group: "Views", label: "Browser", icon: <Globe />, run: view("Browser") },
+      { id: "view-terminal", group: "Views", label: "Terminal", icon: <Terminal />, run: view("Terminal") },
+    ] : []),
+    ...(sideAvailable ? [{ id: "side", group: "Views", label: sideLabel, icon: sideVisible ? <PanelRightClose /> : <PanelRightOpen />, keys: [mod, "\\"], run: () => chooseSide(!sideVisible) }] : []),
+    { id: "participants", group: "Views", label: "Participants", icon: <Users />, hint: `${snapshot.agents.length} agents`, run: () => inspect("Participants") },
+    { id: "usage", group: "Views", label: "Usage", icon: <Gauge />, run: () => inspect("Usage") },
+  ];
+  const sideTabs: { id: SideTab; label: string; icon: ReactNode; count?: number }[] = [
+    { id: "Canvas", label: documentName, icon: <FileText /> },
+    { id: "Participants", label: "Participants", icon: <Users />, count: snapshot.agents.length },
+    { id: "Usage", label: "Usage", icon: <Gauge /> },
+  ];
   return (
     <Shell
       title={snapshot.problem.title}
+      commands={commands}
       snapshot={snapshot}
       headerDetails={<RunProgress snapshot={snapshot} usage={usage} active={active} />}
       actions={actions}
@@ -168,89 +278,58 @@ export function LiveWorkspace({
     >
       <div className="workspace-tabs">
         <nav aria-label="Session views">
-          <button
-            ref={boardButton}
-            aria-current={tab === "Board" ? "page" : undefined}
-            onClick={() => setTab("Board")}
-          >
-            <MessagesSquare />
-            Board
-          </button>
-          <button
-            ref={canvasButton}
-            aria-current={tab === "Canvas" ? "page" : undefined}
-            onClick={() => {
-              canvasOpener.current = null;
-              setTab("Canvas");
-            }}
-          >
-            <FileText />
-            {documentName}
-          </button>
-          {experiment && (
-            <button aria-current={tab === "Repository" ? "page" : undefined} onClick={() => {
-              setRepositoryOpened(true);
-              setTab("Repository");
-            }}>
-              <GitBranch />
-              Repository
-            </button>
-          )}
-          <button
-            className="results-tab"
-            aria-label="Results"
-            title={finished ? outcome : undefined}
-            aria-current={tab === "Results" ? "page" : undefined}
-            onClick={() => setTab("Results")}
-          >
-            <CheckCheck />
-            Results
-            {finished && tab !== "Results" && (
-              <span className="result-outcome" data-state={snapshot.status} role="status">
-                <span className="sr-only">{outcome}</span>
-              </span>
-            )}
-          </button>
-          {experiment && !deepswe && <>
-            <button aria-current={tab === "Browser" ? "page" : undefined} onClick={() => {
-              setRuntimeOpened(true);
-              setTab("Browser");
-            }}><Globe />Browser</button>
-            <button aria-current={tab === "Terminal" ? "page" : undefined} onClick={() => {
-              setRuntimeOpened(true);
-              setTerminalOpened(true);
-              setTab("Terminal");
-            }}><Terminal />Terminal</button>
-          </>}
-        </nav>
-        <div className="inspect-buttons">
-          {tab === "Board" && roomForBoth && (
+          {mainTabs.map((item, index) => (
             <button
-              aria-label={splitLabel}
-              title={splitLabel}
-              aria-pressed={split}
+              key={item.id}
+              ref={item.id === "Board" ? boardButton : item.id === "Canvas" ? canvasButton : undefined}
+              className={item.id === "Results" ? "results-tab" : undefined}
+              aria-label={item.label}
+              title={`${item.id === "Results" && finished ? outcome : item.label} (${viewKey(index).join("")})`}
+              aria-current={tab === item.id ? "page" : undefined}
               onClick={() => {
-                setSplitChoice(!split);
-                localStorage.setItem(splitPreferenceKey, split ? "closed" : "open");
+                if (item.id === "Canvas") canvasOpener.current = null;
+                view(item.id)();
               }}
             >
-              <Columns2 />
+              {item.icon}
+              {item.label}
+              {item.count !== undefined && <small className="tab-count" aria-hidden="true">{item.count}</small>}
+              {item.id === "Results" && finished && tab !== "Results" && (
+                <span className="result-outcome" data-state={snapshot.status} role="status">
+                  <span className="sr-only">{outcome}</span>
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+        <div className="inspect-buttons">
+          {!sideVisible && <>
+            <button
+              aria-label={`Participants (${snapshot.agents.length})`}
+              aria-haspopup={sideAvailable ? undefined : "dialog"}
+              title="Participants"
+              onClick={() => inspect("Participants")}
+            >
+              <Users />
+            </button>
+            <button aria-label="Usage" aria-haspopup={sideAvailable ? undefined : "dialog"} title="Usage" onClick={() => inspect("Usage")}>
+              <Gauge />
+            </button>
+          </>}
+          {experiment && !deepswe && <>
+            <span className="inspect-divider" aria-hidden="true" />
+            <button aria-label="Browser" title="Browser" aria-pressed={tab === "Browser"} onClick={view("Browser")}>
+              <Globe />
+            </button>
+            <button aria-label="Terminal" title="Terminal" aria-pressed={tab === "Terminal"} onClick={view("Terminal")}>
+              <Terminal />
+            </button>
+          </>}
+          {sideAvailable && (
+            <button aria-label={sideLabel} title={`${sideLabel} (${mod}\\)`} aria-pressed={sideVisible} onClick={() => chooseSide(!sideVisible)}>
+              {sideVisible ? <PanelRightClose /> : <PanelRightOpen />}
             </button>
           )}
-          <button
-            aria-label={`Participants (${snapshot.agents.length})`}
-            aria-haspopup="dialog"
-            title="Participants"
-            onClick={() => setDrawer("Participants")}
-          >
-            <Users />
-            <span className="inspect-label">Participants</span>
-            <small>{snapshot.agents.length}</small>
-          </button>
-          <button aria-label="Usage" aria-haspopup="dialog" title="Usage" onClick={() => setDrawer("Usage")}>
-            <Gauge />
-            <span className="inspect-label">Usage</span>
-          </button>
         </div>
       </div>
       {initialError && snapshot.status === "ready" && (
@@ -262,23 +341,28 @@ export function LiveWorkspace({
           {notice}
         </p>
       )}
-      <div ref={panes} className={`work-panes ${split ? "beside" : ""}`}>
+      <div ref={panes} className={`work-panes ${sideVisible ? "beside" : ""}`}>
         <div className="board-pane" hidden={tab !== "Board"}>
           <OpenCanvasContext.Provider
             value={
-              split
-                ? null
+              sideVisible
+                ? (opener) => {
+                    canvasOpener.current = opener;
+                    showSideTab("Canvas");
+                  }
                 : (opener) => {
                     canvasOpener.current = opener;
                     setTab("Canvas");
-                    canvasButton.current?.focus();
+                    requestAnimationFrame(() => canvasButton.current?.focus());
                   }
             }
           >
             {parts.board}
           </OpenCanvasContext.Provider>
         </div>
-        <div className="canvas-pane spec-pane" hidden={tab !== "Canvas" && !split}>
+        {/* One SPEC.md container for both places, so its view and open changes survive moving between them. */}
+        <div className={`canvas-pane spec-pane${sideVisible ? " in-side" : ""}`}
+          hidden={!(tab === "Canvas" || (sideVisible && sideTab === "Canvas"))}>
           {tab === "Canvas" && (
             <div className="pane-tools">
               <button
@@ -312,6 +396,23 @@ export function LiveWorkspace({
         {experiment && runtimeOpened && <RepositoryRuntime key={snapshot.id} id={snapshot.id}
           view={tab === "Browser" || tab === "Terminal" ? tab : null} terminalOpened={terminalOpened}
           runtimeReset={() => setTerminalOpened(false)} />}
+        {sideVisible && (
+          <aside className={`side-pane${sideTab === "Canvas" ? " tabs-only" : ""}`} aria-label="Side pane">
+            <nav className="side-tabs" aria-label="Side pane views">
+              {sideTabs.map((item) => (
+                <button key={item.id} aria-label={item.label} aria-current={sideTab === item.id ? "page" : undefined} onClick={() => showSideTab(item.id)}>
+                  {item.icon}
+                  {item.label}
+                  {item.count !== undefined && <small className="tab-count" aria-hidden="true">{item.count}</small>}
+                </button>
+              ))}
+            </nav>
+            {sideTab !== "Canvas" && <div className={`side-content side-${sideTab.toLowerCase()}`} role="region" aria-label={sideTab}>
+              {sideTab === "Participants" ? parts.roster
+                : <SessionUsageView usage={usage} error={usageError} retry={retryUsage} />}
+            </div>}
+          </aside>
+        )}
       </div>
       {drawer && (
         <Sheet key={drawer} title={drawer} className={drawer === "Participants" ? "participants-sheet" : undefined}

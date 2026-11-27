@@ -21,6 +21,7 @@ const legacyClient = new ChorusClient();
 const storageKey = "chorus.harness.session";
 const labels: Record<string, string> = { queued: "Ready", running: "Working", waiting_model: "Waiting for model", waiting_lock: "Waiting for canvas", paused: "Paused", finished: "Finished", capped: "Turn cap reached", failed: "Failed" };
 const money = (value: number) => `$${value.toFixed(6)}`;
+const unknownValue = <span className="chorus-unknown" title="Unknown: the provider did not report this value">—<span className={styles.srOnly}> Unknown</span></span>;
 const number = (value: number) => value.toLocaleString();
 const relativeTime = new Intl.RelativeTimeFormat("en", { numeric: "always" });
 const timeListeners = new Set<() => void>();
@@ -202,7 +203,7 @@ function Markdown({ children, spec, tasks }: { children: string; spec?: SpecMark
         const agent = spec.agents.find(({ id }) => id === node?.properties["data-owner"]);
         const total = Number(node?.properties["data-task-total"]);
         return agent ? <h3 className={styles.specOwner}>
-          <span aria-hidden="true"><Portrait agent={agent} /></span><span>{children}</span>
+          <span aria-hidden="true"><AgentAvatar agent={agent} agents={spec.agents} size={18} /></span><span>{children}</span>
           <small>{total ? `${node?.properties["data-task-done"]} of ${total} done` : "No tasks"}</small>
         </h3> : <h3>{children}</h3>;
       },
@@ -218,6 +219,31 @@ function Markdown({ children, spec, tasks }: { children: string; spec?: SpecMark
 
 type PortraitRenderer = (agent: Persona, className: string) => ReactNode;
 const PortraitContext = createContext<PortraitRenderer | undefined>(undefined);
+
+/** "initials" draws the design system's voice-coloured initials; "portrait" keeps the packaged artwork. */
+export type AvatarStyle = "portrait" | "initials";
+const AvatarStyleContext = createContext<AvatarStyle>("portrait");
+
+function voiceOf(agents: Persona[], id: string) {
+  const index = agents.findIndex((agent) => agent.id === id);
+  return index < 0 ? undefined : (index % 8) + 1;
+}
+
+function agentInitials(name: string) {
+  const parts = name.replace(/[^\p{L}\p{N} -]/gu, "").split(/[\s-]+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+/** An agent's mark in lists and posts: initials on its voice colour, or its portrait in other hosts. */
+export function AgentAvatar({ agent, agents, size = 24 }: { agent: Persona; agents: Persona[]; size?: number }) {
+  const style = useContext(AvatarStyleContext);
+  if (style === "portrait") return <Portrait agent={agent} />;
+  const voice = voiceOf(agents, agent.id);
+  return <span className={styles.avatar} aria-hidden="true" style={{
+    width: size, height: size, fontSize: Math.max(9, Math.round(size * 0.4)),
+    background: voice ? `var(--voice-${voice})` : undefined,
+  }}>{agentInitials(agent.name)}</span>;
+}
 
 export function Portrait({ agent }: { agent: Persona }) {
   const renderPortrait = useContext(PortraitContext);
@@ -261,33 +287,35 @@ export function ProfileDialog({ agent, close }: { agent: Persona; close: () => v
 export function Metrics({ usage, compact = false }: { usage: Usage; compact?: boolean }) {
   const tokens = (count: number, unknown: number) => {
     if (!unknown) return number(count);
-    return unknown === usage.callCount ? "Unknown" : `${number(count)} (partial)`;
+    return unknown === usage.callCount ? unknownValue : `${number(count)} (partial)`;
   };
   return <dl className={compact ? styles.compactMetrics : styles.metrics}>
     <div><dt>Input tokens</dt><dd>{tokens(usage.inputTokens, usage.unknownInputCalls)}</dd></div>
     <div><dt>Output tokens</dt><dd>{tokens(usage.outputTokens, usage.unknownOutputCalls)}</dd></div>
     <div><dt title="Included in input tokens">Cached tokens</dt><dd>{tokens(usage.cachedTokens, usage.unknownCacheCalls)}</dd></div>
     <div><dt>Cache utilization</dt><dd>{usage.cacheUtilizationPercent === null ? "Unavailable" : `${usage.cacheUtilizationPercent.toFixed(1)}%`}</dd></div>
-    <div><dt>Cache used</dt><dd>{usage.cacheUsed === null ? "Unknown" : usage.cacheUsed ? "Yes" : "No"}</dd></div>
+    <div><dt>Cache used</dt><dd>{usage.cacheUsed === null ? unknownValue : usage.cacheUsed ? "Yes" : "No"}</dd></div>
     <div><dt>Calls</dt><dd>{usage.callCount}</dd></div>
     <div><dt>Total call time</dt><dd>{(usage.totalLatencyMs / 1000).toFixed(1)} s</dd></div>
     <div><dt>Mean / p95 latency</dt><dd>{(usage.meanLatencyMs / 1000).toFixed(2)} / {(usage.p95LatencyMs / 1000).toFixed(2)} s</dd></div>
     <div><dt>Reported cost</dt><dd>{money(usage.reportedCostUSD)}</dd></div>
     <div><dt>Calls with unknown cost</dt><dd>{usage.unknownCostCalls}</dd></div>
-    <div><dt>Estimated cost</dt><dd>{money(usage.estimatedCostUSD)}</dd></div>
+    <div><dt>Estimated cost</dt><dd title="Estimated from the saved rate snapshot">≈ {money(usage.estimatedCostUSD)}</dd></div>
     <div><dt>Cache coverage</dt><dd>{usage.cacheCoveredCalls}/{usage.callCount} calls</dd></div>
   </dl>;
 }
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 6 });
 
-function usageCost(usage: Usage) {
+function usageCost(usage: Usage): ReactNode {
   const { reportedCostUSD, estimatedCostUSD, unknownCostCalls, callCount } = usage;
-  if (unknownCostCalls > 0 && unknownCostCalls === callCount) return "Unknown";
+  if (unknownCostCalls > 0 && unknownCostCalls === callCount) return unknownValue;
   const amounts: string[] = [];
   if (reportedCostUSD || !estimatedCostUSD) amounts.push(usd.format(reportedCostUSD));
-  if (estimatedCostUSD) amounts.push(`${usd.format(estimatedCostUSD)} est.`);
-  return amounts.join(" + ") + (unknownCostCalls ? " (partial)" : "");
+  if (estimatedCostUSD) amounts.push(`≈ ${usd.format(estimatedCostUSD)}`);
+  return <span title={estimatedCostUSD ? "≈ marks an estimate from the saved rate snapshot" : undefined}>
+    {amounts.join(" + ") + (unknownCostCalls ? " (partial)" : "")}
+  </span>;
 }
 
 function UsageOverview({ usage, wallTimeMs }: { usage: Usage; wallTimeMs?: number }) {
@@ -494,12 +522,77 @@ function EvidenceLinks({ snapshot, ids }: { snapshot: HarnessSnapshot; ids: stri
   );
 }
 
+// An agent keeps one of eight voice colors, by roster order, for the whole run.
+function voiceStyle(snapshot: HarnessSnapshot, agentId: string): CSSProperties | undefined {
+  const index = snapshot.agents.findIndex((agent) => agent.id === agentId);
+  return index < 0 ? undefined : { ["--voice" as string]: `var(--voice-${(index % 8) + 1})` };
+}
+
+function toolSummary(result: unknown) {
+  if (!result || typeof result !== "object") return text(result).slice(0, 160);
+  const value = result as Record<string, unknown>;
+  if (typeof value.error === "string") return value.error;
+  const keys = ["id", "status", "phase", "revision", "sequence", "commit", "path", "accepted", "checkId"];
+  const parts = keys.filter((key) => value[key] !== undefined && value[key] !== null && typeof value[key] !== "object")
+    .map((key) => `${key} ${String(value[key])}`);
+  return parts.join(" · ") || Object.keys(value).slice(0, 4).join(", ");
+}
+
+function ToolCallRow({ record }: { record: HarnessRecord }) {
+  const result = record.data.result;
+  const failed = !!result && typeof result === "object" && typeof (result as Record<string, unknown>).error === "string";
+  const code = failed ? text((result as Record<string, unknown>).code) : "";
+  const body = JSON.stringify(result, null, 2) ?? "";
+  return <details className={styles.toolCall} data-status={failed ? "error" : "ok"}>
+    <summary>
+      <span className={styles.toolName}>{text(record.data.name)}</span>
+      <span className={styles.toolSummary}>{toolSummary(result)}</span>
+      <span className={styles.toolState}>{failed ? <>✕ {code || "Error"}</> : <span aria-label="Succeeded">✓</span>}</span>
+    </summary>
+    <pre tabIndex={0}>{body.length > 6000 ? `${body.slice(0, 6000)}\n… ${body.length - 6000} more characters` : body}</pre>
+  </details>;
+}
+
+/** The tool calls an agent made since its previous post: the work behind this one. Loaded on request, after the run ends. */
+function PostToolCalls({ snapshot, record, since }: { snapshot: HarnessSnapshot; record: HarnessRecord; since: number }) {
+  const [state, setState] = useState<{ status: "idle" | "loading" | "done" | "error"; calls: HarnessRecord[]; error?: string }>({ status: "idle", calls: [] });
+  const [open, setOpen] = useState(false);
+  async function load() {
+    setState({ status: "loading", calls: [] });
+    try {
+      const calls = new Map<string, HarnessRecord>();
+      let cursor = since;
+      for (let page = 0; page < 5; page += 1) {
+        const result = await client.records(snapshot.id, "tool", cursor, record.agentId);
+        for (const item of result.records) if (item.sequence < record.sequence) calls.set(item.id, item);
+        cursor = result.cursor;
+        if (!result.hasMore || result.records.some((item) => item.sequence > record.sequence)) break;
+      }
+      setState({ status: "done", calls: [...calls.values()].filter((item) => item.data.name !== "board_write").sort((a, b) => a.sequence - b.sequence) });
+    } catch (error) {
+      setState({ status: "error", calls: [], error: error instanceof Error ? error.message : "Could not load tool calls." });
+    }
+  }
+  return <div className={styles.toolCalls}>
+    <button type="button" className={styles.toolToggle} aria-expanded={open} onClick={() => {
+      setOpen(!open);
+      if (!open && state.status === "idle") void load();
+    }}>{open ? "Hide tool calls" : "Tool calls since last post"}</button>
+    {open && (state.status === "loading" ? <p role="status" className={styles.muted}>Loading tool calls…</p>
+      : state.status === "error" ? <div className={styles.viewError}><RecordError message={state.error ?? ""} /><button type="button" onClick={() => void load()}>Retry tool calls</button></div>
+        : state.status === "done" && (state.calls.length
+          ? <div className={styles.toolList}>{state.calls.map((call) => <ToolCallRow key={call.id} record={call} />)}</div>
+          : <p className={styles.muted}>No tool calls were recorded between this agent’s posts.</p>))}
+  </div>;
+}
+
 // Lets a host open its canvas view without coupling the board to its layout.
 export const OpenCanvasContext = createContext<((opener: HTMLButtonElement) => void) | null>(null);
 
 function Board({ snapshot, select, followPosts }: { followPosts?: boolean; snapshot: HarnessSnapshot; select: (id: string) => void }) {
   const { records, error } = useRecords(snapshot, "board");
   const openCanvas = useContext(OpenCanvasContext);
+  const toolsVisible = !!snapshot.experiment && !snapshot.experiment.deepswe && ["completed", "killed"].includes(snapshot.status);
   const feed = useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = useState<number | null>(null);
   const newest = [...records].sort((a, b) => b.sequence - a.sequence);
@@ -508,7 +601,7 @@ function Board({ snapshot, select, followPosts }: { followPosts?: boolean; snaps
   function mentions(content: string): ReactNode[] {
     return content.split(snapshot.experiment ? /(@[A-Za-z][A-Za-z0-9-]*)/g : /(@[A-Za-z]+)/g).map((part, index) => {
       const agent = part.startsWith("@") ? snapshot.agents.find((a) => (snapshot.experiment ? a.id : a.name) === part.slice(1)) : undefined;
-      return agent ? <button className={styles.mention} key={index} onClick={() => select(agent.id)}>{part}</button> : part;
+      return agent ? <button className={styles.mention} style={voiceStyle(snapshot, agent.id)} key={index} onClick={() => select(agent.id)}>{part}</button> : part;
     });
   }
   return <section className={followPosts ? `${styles.panel} ${styles.compactBoard}` : styles.panel} aria-labelledby="board-heading"><div className={styles.panelHeading}><h2 id="board-heading">Message board</h2><small>{snapshot.boardCount} posts{!followPosts && " · one level"}</small></div>{!followPosts && <p className={styles.muted}>One or two sentences per post. Agents can address a peer with @Name.</p>}<RecordError message={error} />
@@ -518,12 +611,21 @@ function Board({ snapshot, select, followPosts }: { followPosts?: boolean; snaps
       else if (newest.length) setAnchor(current => current ?? newest[0].sequence);
     } : undefined}>{visible.map((record) => {
       const author = snapshot.agents.find(person => person.id === record.agentId);
-      return <article key={record.id} id={record.id} className={styles.post}>
-        {followPosts && author && <Portrait agent={author} />}
-        <div><button className={styles.nameLink} onClick={() => select(record.agentId)}>{author?.name || record.agentId}</button>
-          <small>{!snapshot.experiment && `Turn ${record.turn} · `}<Timestamp value={record.createdAt} format={followPosts ? "relative" : "seconds"} /></small></div>
+      const head = <div className={followPosts ? styles.postHead : undefined}>
+        <button className={styles.nameLink} onClick={() => select(record.agentId)}>{author?.name || record.agentId}</button>
+        {followPosts && author?.role && author.role !== author.name && <span className={styles.postRole}>{author.role}</span>}
+        <small>{!snapshot.experiment && `Turn ${record.turn} · `}<Timestamp value={record.createdAt} format={followPosts ? "relative" : "seconds"} /></small></div>;
+      const body = <>
         <p>{mentions(text(record.data.text))}</p>
+        {followPosts && toolsVisible && <PostToolCalls snapshot={snapshot} record={record}
+          since={newest.find((item) => item.agentId === record.agentId && item.sequence < record.sequence)?.sequence ?? 0} />}
         {openCanvas && <button className={styles.postLink} onClick={event => openCanvas(event.currentTarget)}>{snapshot.experiment ? "Open SPEC.md ↗" : "Open canvas ↗"}</button>}
+      </>;
+      return <article key={record.id} id={record.id} className={followPosts ? `${styles.post} ${styles.harnessPost}` : styles.post} style={voiceStyle(snapshot, record.agentId)} tabIndex={-1}>
+        {followPosts ? <>
+          {author ? <AgentAvatar agent={author} agents={snapshot.agents} size={28} /> : <span />}
+          <div className={styles.postMain}>{head}{body}</div>
+        </> : <>{head}{body}</>}
       </article>;
     })}{!records.length && <p className={styles.empty}>Contributions will appear here as agents begin.</p>}</div>
   </section>;
@@ -738,18 +840,46 @@ function repositoryChanges(commits: HarnessRecord[], prs: HarnessRecord[], repos
   return changes.sort((a, b) => b.record.sequence - a.record.sequence);
 }
 
+type DiffRow = { line: string; kind?: "file" | "hunk" | "added" | "removed"; old?: number; next?: number };
+
+function diffRows(lines: string[]): DiffRow[] {
+  let oldLine = 0, newLine = 0, inHunk = false;
+  return lines.map((line) => {
+    if (/^(diff --git|index |--- |\+\+\+ )/.test(line)) {
+      inHunk = false;
+      return { line, kind: "file" };
+    }
+    const hunk = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunk) {
+      oldLine = Number(hunk[1]);
+      newLine = Number(hunk[2]);
+      inHunk = true;
+      return { line, kind: "hunk" };
+    }
+    if (line.startsWith("@@")) return { line, kind: "hunk" };
+    if (line.startsWith("+")) return { line, kind: "added", next: inHunk ? newLine++ : undefined };
+    if (line.startsWith("-")) return { line, kind: "removed", old: inHunk ? oldLine++ : undefined };
+    if (inHunk && !line.startsWith("\\")) return { line, old: oldLine++, next: newLine++ };
+    return { line };
+  });
+}
+
 function DiffPreview({ patch }: { patch: string }) {
   const lines = patch.split("\n");
+  if (lines.length > 5000) return <pre className={styles.repositoryDiff} tabIndex={0} aria-label="Unified diff"><code>{patch}</code></pre>;
+  const added = lines.filter((line) => line.startsWith("+") && !line.startsWith("+++")).length;
+  const removed = lines.filter((line) => line.startsWith("-") && !line.startsWith("---")).length;
   return (
-    <pre className={styles.repositoryDiff} tabIndex={0} aria-label="Unified diff">
+    <pre className={`${styles.repositoryDiff} ${styles.numberedDiff}`} tabIndex={0} aria-label="Unified diff">
+      <span className={styles.diffStat} aria-label={`${added} added, ${removed} removed`}>
+        <span data-tone="added">+{added}</span> <span data-tone="removed">−{removed}</span>
+      </span>
       <code>
-        {lines.length > 5000 ? patch : lines.map((line, index) => (
-          <span key={index} data-line={
-            /^(diff --git|index |--- |\+\+\+ )/.test(line) ? "file" :
-              line.startsWith("@@") ? "hunk" : line.startsWith("+") ? "added" :
-                line.startsWith("-") ? "removed" : undefined
-          }>{line}{index < lines.length - 1 ? "\n" : ""}</span>
-        ))}
+        {diffRows(lines).map((row, index) => <span key={index} data-row={row.kind}>
+          <span className={styles.diffNumber} aria-hidden="true">{row.old ?? ""}</span>
+          <span className={styles.diffNumber} aria-hidden="true">{row.next ?? ""}</span>
+          <span className={styles.diffText} data-line={row.kind}>{row.line}</span>{"\n"}
+        </span>)}
       </code>
     </pre>
   );
@@ -1106,7 +1236,7 @@ function ParticipantsRoster({ snapshot, select }: { snapshot: HarnessSnapshot; s
         const activity = reported || (next ? taskLabel(next) : "");
         const showReason = worker.reason && (needsAttention || status.tone === "waiting");
         return <li key={agent.id}><button type="button" className={styles.participantRow} onClick={() => select(agent.id)}>
-          <span aria-hidden="true"><Portrait agent={agent} /></span>
+          <span aria-hidden="true"><AgentAvatar agent={agent} agents={snapshot.agents} size={28} /></span>
           <span className={styles.participantBody}>
             <span className={styles.participantHeading}><strong>{agent.name}</strong><AgentStatus state={status} /></span>
             {activity && <span className={styles.participantActivity}>{reported ? !isCurrentTask(snapshot, worker) && <small>Last task · </small> : <small>Open task · </small>}{activity}</span>}
@@ -1321,7 +1451,7 @@ function ResultsHeading({ title, outcome, detail, tone }: {
   title: string;
   outcome: string;
   detail?: string;
-  tone?: "positive" | "attention";
+  tone?: "positive" | "attention" | "negative";
 }) {
   return (
     <header className={styles.resultsHeading}>
@@ -1463,7 +1593,7 @@ function ExperimentResults({ snapshot }: { snapshot: HarnessSnapshot }) {
   return (
     <section className={`${styles.panel} ${styles.resultsView}`} aria-label="Experiment results">
       <ResultsHeading title="Experiment results" outcome={outcomes[snapshot.status]}
-        tone={snapshot.status === "completed" ? "positive" : ["judge_failed", "killed", "paused"].includes(snapshot.status) ? "attention" : undefined} />
+        tone={snapshot.status === "completed" ? "positive" : snapshot.status === "judge_failed" ? "negative" : ["killed", "paused"].includes(snapshot.status) ? "attention" : undefined} />
       {report && (
         <section className={styles.resultsSummary} aria-labelledby="experiment-judge-summary">
           <h3 id="experiment-judge-summary">Judge summary</h3>
@@ -1553,7 +1683,7 @@ function DeepSWEResults({ snapshot }: { snapshot: HarnessSnapshot }) {
   return (
     <section className={`${styles.panel} ${styles.resultsView}`} aria-label="DeepSWE results">
       <ResultsHeading title="Chorus on DeepSWE" outcome={outcome} detail={run.task.id}
-        tone={result?.reward === 1 ? "positive" : result?.reward === 0 || snapshot.status === "verify_failed" ? "attention" : undefined} />
+        tone={result?.reward === 1 ? "positive" : result?.reward === 0 ? "negative" : snapshot.status === "verify_failed" ? "attention" : undefined} />
       {snapshot.status === "verify_failed" && <RecordError message={snapshot.error} />}
       {snapshot.status === "reviewing" && <p className={styles.resultsNote} role="status">Pier is grading the frozen patch.</p>}
       {run.stopReason && <p className={styles.resultsNote}>Solving ended at the {run.stopReason === "call_limit" ? "model-call limit" : "deadline"}.</p>}
@@ -1592,7 +1722,7 @@ function Report({ snapshot }: { snapshot: HarnessSnapshot }) {
     <section className={`${styles.panel} ${styles.resultsView}`} aria-label="Final evaluation">
       <ResultsHeading title="Final evaluation" outcome={verification ? `Solution ${verification.status}` : outcomes[snapshot.status]}
         detail={snapshot.endedEarly ? "Stopped early" : undefined}
-        tone={verification?.status === "correct" ? "positive" : verification ? "attention" : undefined} />
+        tone={verification?.status === "correct" ? "positive" : verification ? "negative" : undefined} />
       {report && (
         <section className={styles.resultsSummary} aria-labelledby="benchmark-judge-summary">
           <h3 id="benchmark-judge-summary">Judge summary</h3>
@@ -1664,6 +1794,7 @@ export type RunControls = {
 };
 export type HarnessPresentation = {
   followPosts?: boolean;
+  avatars?: AvatarStyle;
   portrait?: PortraitRenderer;
   brand?: ReactNode;
   className?: string;
@@ -1719,9 +1850,11 @@ export function LiveSession({ snapshot, receive, mode, leave, presentation }: { 
     inspector: agent && <AgentInspector key={agent.id} snapshot={snapshot} agent={agent} usage={usage?.agents[agent.id]} usageLoaded={!!usage} usageError={usageError} retryUsage={retryUsage} close={() => setSelected(null)} />,
   };
   if (presentation?.workspace) {
-    // act only consults the command lock when a control invokes it.
-    // eslint-disable-next-line react-hooks/refs
-    return presentation.workspace(parts, { snapshot, usage, usageError, retryUsage, busy, act, leave });
+    return <AvatarStyleContext.Provider value={presentation.avatars ?? "portrait"}>
+      {/* act only consults the command lock when a control invokes it. */}
+      {/* eslint-disable-next-line react-hooks/refs */}
+      {presentation.workspace(parts, { snapshot, usage, usageError, retryUsage, busy, act, leave })}
+    </AvatarStyleContext.Provider>;
   }
   return <>{parts.heading}{parts.error}{parts.metrics}{parts.scene}{parts.roster}<div className={styles.workGrid}>{parts.board}{parts.canvas}</div>{parts.changes}{parts.report}{parts.inspector}</>;
 

@@ -104,6 +104,7 @@ export function ChorusApp({ legacyCatalog }: { legacyCatalog: boolean }) {
         leave={leave}
         presentation={{
           followPosts: true,
+          avatars: "initials",
           workspace: (parts, controls) => (
             <LiveWorkspace
               parts={parts}
