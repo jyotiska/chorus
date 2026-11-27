@@ -38,7 +38,7 @@ Each experiment has three stages:
 
 Custom experiments support text artifacts such as Markdown and HTML, as well as software changes. Results list the files checked at the final commit and let you open or download them. The plan and Results record requested outputs that require unavailable capabilities, such as image generation or live web research.
 
-The dark workspace keeps the Board beside `SPEC.md` when there’s room. Open **Participants** to see active tasks and blockers, **Repository** to read source and diffs, or **Results** to trace scores to their evidence. With Compose running, **Browser** can start and preview a generated app, and **Terminal** opens a shell in the same temporary workspace. **Usage** shows model calls and costs, and **Archive** helps you find and reopen saved runs. [Chorus Web guide](web/README.md)
+The dark, keyboard-first workspace keeps the Board beside `SPEC.md` when there’s room, and **Cmd+K** opens a command palette for runs, views, and actions. Open **Participants** to see active tasks and blockers, **Repository** to read source and diffs, or **Results** to trace scores to their evidence. With Compose running, **Browser** can start and preview a generated app, and **Terminal** opens a shell in the same temporary workspace. **Usage** shows model calls and costs, and **Archive** helps you find and reopen saved runs. [Chorus Web guide](web/README.md)
 
 **Kill experiment** stops the work and keeps its files and records. If judging fails, **Retry judge** reviews the same saved result.
 
